@@ -3,7 +3,13 @@ using System.Linq;
 using WCDS.ContractUtilization.Models;
 
 namespace WCDS.ContractUtilization.Repositories;
-public class SearchRepository
+
+public interface ISearchRepository
+{
+    List<SearchResult> Query(SearchRequest request);
+}
+
+public class SearchRepository : ISearchRepository
 {
 
     public List<SearchResult> Query(SearchRequest request)

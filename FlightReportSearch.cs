@@ -9,30 +9,36 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using WCDS.ContractUtilization.Models;
 using System.Collections.Generic;
+using WCDS.ContractUtilization.Repositories;
 
 namespace WCDS.ContractUtilization
 {
-    public static class FlightReportSearch
+    public class FlightReportSearch
     {
+        public ISearchRepository SearchRepository { get; }
+        public FlightReportSearch(ISearchRepository searchRepository)
+        {
+            SearchRepository = searchRepository;
+        }
+
         [FunctionName("FlightReportSearch")]
-        public static async Task<IActionResult> Run(
+        public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
             ILogger log)
         {
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var data = JsonConvert.DeserializeObject<SearchRequest>(requestBody);
+            var searchRequest = JsonConvert.DeserializeObject<SearchRequest>(requestBody);
 
 
             var response = new SearchResponse
             {
-                PageNumber = data.PageNumber,
-                PageSize = data.PageSize,
-                Ascending = data.Ascending,
-                SortColumn = data.SortColumn
+                PageNumber = searchRequest.PageNumber,
+                PageSize = searchRequest.PageSize,
+                Ascending = searchRequest.Ascending,
+                SortColumn = searchRequest.SortColumn,
+                SearchResults = SearchRepository.Query(searchRequest)
             };
-            var searchResults = new List<SearchResult>{
-                new SearchResult{}
-            };
+
             return new OkObjectResult(response);
         }
     }
