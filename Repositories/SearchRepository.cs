@@ -16,6 +16,7 @@ public class SearchRepository : ISearchRepository
     {
         var data = SampleData.GetSampleResults()
         .Where(x => x.Vendor.ToUpper().Contains(request.SearchTerm) || x.BusinessId.ToString().Contains(request.SearchTerm))
+        .Where(x => request.ContractType == ContractType.Both || x.Type == request.ContractType)
         .OrderBy(x => x.GetType().GetProperty(request.SortColumn).GetValue(x, null));
 
         // filter, then sort, then page

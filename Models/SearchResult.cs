@@ -23,7 +23,7 @@ public static class SampleData
             results.Add(new SearchResult
             {
                 Vendor = $"Vendor{i}",
-                BusinessId = i,
+                BusinessId = 200 + i,
                 ContractId = 100 + i,
                 Type = (i % 2 == 0) ? ContractType.Casual : ContractType.LongTerm,
                 NumTimeReports = i % 5

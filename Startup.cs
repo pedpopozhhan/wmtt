@@ -16,7 +16,7 @@ namespace MyNamespace
             {
                 return new SearchRepository();
             });
-
+            // TODO: add ILogger
 
         }
     }
