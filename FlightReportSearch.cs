@@ -32,10 +32,7 @@ namespace WCDS.ContractUtilization
 
             var response = new SearchResponse
             {
-                PageNumber = searchRequest.PageNumber,
-                PageSize = searchRequest.PageSize,
-                Ascending = searchRequest.Ascending,
-                SortColumn = searchRequest.SortColumn,
+
                 SearchResults = SearchRepository.Query(searchRequest)
             };
 
