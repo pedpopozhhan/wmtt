@@ -7,6 +7,7 @@ namespace WCDS.ContractUtilization.Repositories;
 public interface ISearchRepository
 {
     List<SearchResult> Query(SearchRequest request);
+    List<SearchResult> Query();
 }
 
 public class SearchRepository : ISearchRepository
@@ -16,12 +17,17 @@ public class SearchRepository : ISearchRepository
     // aviation api for vendor, contractorid
     public List<SearchResult> Query(SearchRequest request)
     {
-        var data = SampleData.GetSampleResults()
-        .Where(x => x.Vendor.ToUpper().Contains(request.SearchTerm) || x.BusinessId.ToString().Contains(request.SearchTerm))
-        .Where(x => request.ContractType == ContractType.Both || x.Type == request.ContractType);
+        var data = SampleData.GetSampleResults();
+        // .Where(x => x.Vendor.ToUpper().Contains(request.SearchTerm) || x.BusinessId.ToString().Contains(request.SearchTerm))
+        // .Where(x => request.ContractType == ContractType.Both || x.Type == request.ContractType);
         // .OrderBy(x => x.GetType().GetProperty(request.SortColumn).GetValue(x, null));
 
         // filter, then sort, then page
         return data.ToList();//.Skip((request.PageNumber - 1) * request.PageSize).Take(request.PageSize).ToList();
+    }
+
+    public List<SearchResult> Query()
+    {
+        return SampleData.GetSampleResults().ToList();
     }
 }

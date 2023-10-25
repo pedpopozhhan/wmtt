@@ -26,7 +26,7 @@ public static class SampleData
                 BusinessId = 200 + i,
                 ContractId = 100 + i,
                 Type = (i % 2 == 0) ? ContractType.Casual : ContractType.LongTerm,
-                NumTimeReports = i % 5
+                NumTimeReports = i
             });
         }
 
