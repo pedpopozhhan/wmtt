@@ -2,7 +2,7 @@
   "profiles": {
     "wcds_web_functions": {
       "commandName": "Project",
-      "commandLineArgs": "--port 7275",
+      "commandLineArgs": "--port 7272",
       "launchBrowser": false
     }
   }
