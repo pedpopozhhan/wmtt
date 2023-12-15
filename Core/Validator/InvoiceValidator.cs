@@ -17,16 +17,16 @@ namespace WCDS.WebFuncions.Core.Validator
         {
             _invoiceController = invoiceController;
             RuleFor(x => x.InvoiceID).NotEmpty().WithMessage("Please provide valid value for Invoice ID.");
-            RuleFor(x => x.InvoiceID).Must(InvoiceIDExists).WithMessage("Invoice ID already exists.");
+            RuleFor(x => x.InvoiceID).Must(InvoiceIDDoesNotExist).WithMessage("Invoice ID already exists.");
             RuleFor(x => x.DateOnInvoice).NotNull().WithMessage("Please provide value for Date On Invoice.");
             RuleFor(x => x.PeriodEndDate).NotNull().WithMessage("Please provide value for Period End Date.");
             RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Invoice Amount should be greater than Zero.");
             RuleFor(x => x.InvoiceReceivedDate).NotNull().WithMessage("Please provide value for Invoice Received Date.");
         }
 
-        private bool InvoiceIDExists(string invoiceID)
+        private bool InvoiceIDDoesNotExist(string invoiceID)
         {
-            return _invoiceController.InvoiceExists(invoiceID);
+            return !_invoiceController.InvoiceExists(invoiceID);
         }
     }
 }

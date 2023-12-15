@@ -2,14 +2,22 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http.Headers;
+using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity;
 using WCDS.WebFuncions.Core.Model;
+using Microsoft.WindowsAzure.Storage;
+using System.Threading.Tasks;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace WCDS.WebFuncions.Controller
 {
@@ -20,6 +28,7 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceExists(string invoiceID);
         public string GetInvoiceByKey(int invoiceKey);
         public string GetInvoiceByID(string invoiceID);
+        public Task<List<InvoiceDetailsByTimeReportsResponseDto>> GetInvoiceDetailsByTimeReports(List<int> lstTimeReport);
     }
 
     public class InvoiceController: IInvoiceController
@@ -191,6 +200,52 @@ namespace WCDS.WebFuncions.Controller
             {
                 _logger.LogError("An error has occured while Retrieving Invoice: " + invoiceID);
                 throw;
+            }
+            return result;
+        }
+
+        public async Task<List<InvoiceDetailsByTimeReportsResponseDto>> GetInvoiceDetailsByTimeReports(List<int> lstTimeReport)
+        {
+            List<InvoiceDetailsByTimeReportsResponseDto> result = null;
+            try
+            {
+                result = await GetCostDetailsByTimeReports(lstTimeReport);
+            }
+            catch
+            {
+                _logger.LogError("An error has occured while Retrieving Invoice Details");
+                throw;
+            }
+            return result;
+        }
+
+        private async Task<List<InvoiceDetailsByTimeReportsResponseDto>> GetCostDetailsByTimeReports(List<int> lstTimeReport)
+        {
+            var result = new List<InvoiceDetailsByTimeReportsResponseDto>();
+            string authApi = "https://wmtt-aviation-reporting-api.azurewebsites.net/api/authentication/authenticate";
+            string costDetailsApi = "https://wmtt-aviation-reporting-api.azurewebsites.net/api/v1.0/flight-report/get/cost-details";
+
+            var credentials = new Dictionary<string, string>()
+                {
+                    { "username", "andrew.mitchell" },
+                    { "password", "password" }
+                };
+
+            HttpClient client = new HttpClient();
+            var content = new StringContent(JsonConvert.SerializeObject(credentials), Encoding.UTF8, "application/json");
+            HttpResponseMessage getAuth = await client.PostAsync(authApi, content);
+            string token = string.Empty;
+            if (getAuth.IsSuccessStatusCode)
+            {
+                token = await getAuth.Content.ReadAsStringAsync();
+            }
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            HttpResponseMessage response = await client.GetAsync(costDetailsApi);
+            if (response.IsSuccessStatusCode)
+            {
+                result = await response.Content.ReadAsAsync<List<InvoiceDetailsByTimeReportsResponseDto>>();
+
             }
             return result;
         }
