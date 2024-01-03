@@ -22,8 +22,10 @@ namespace WCDS.WebFuncions
         {
             log.LogInformation("Trigger function (GetInvoiceDetails) received a request.");
 
+
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
+            var data = JsonConvert.DeserializeObject<InvoiceDetailRowDataRequestDto>(requestBody);
+            log.LogDebug("Request payload", data);
             Console.WriteLine(JsonConvert.SerializeObject(data));
             return new JsonResult(GetSampleResults());
         }
