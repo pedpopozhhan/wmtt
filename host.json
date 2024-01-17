@@ -1,6 +1,11 @@
 {
     "version": "2.0",
     "logging": {
+        "logLevel": {
+            "default": "Debug",
+            "WCDS.WebFuncions.Core.Services.DomainService": "Debug",
+            "WCDS.WebFuncions.Core.Services.TimeReportingService": "Debug"
+        },
         "applicationInsights": {
             "samplingSettings": {
                 "isEnabled": true,
