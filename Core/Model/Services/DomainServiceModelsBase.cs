@@ -3,7 +3,7 @@ using System;
 
 namespace WCDS.WebFuncions.Core.Model.Services
 {
-    public class DomainBase
+    public class DomainServiceModelsBase
     {
         public int OracleId { get; set; }
         public string Type { get; set; }
@@ -17,17 +17,3 @@ namespace WCDS.WebFuncions.Core.Model.Services
 }
 
 
-/*
-        {
-            "rateUnitId": "f33834b9-5b4a-433a-a25f-4038806d2601",
-            "oracleId": 44,
-            "type": "CFU/g",
-            "createTimestamp": "1998-04-02T16:35:31",
-            "createUserId": "FIRE_PROD",
-            "updateTimestamp": null,
-            "updateUserId": null,
-            "effectiveDate": "2023-06-05T14:30:42",
-            "terminationDate": "2024-06-05T14:30:42"
-        },
-
-}*/

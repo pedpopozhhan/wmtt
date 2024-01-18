@@ -19,7 +19,7 @@ namespace WCDS.WebFuncions.Core.Services
         public TimeReportingService(ILogger<TimeReportingService> log, HttpClient httpClient)
         {
             HttpClient = httpClient;
-            Log = log ?? throw new ArgumentNullException(nameof(log)); HttpClient = httpClient;
+            Log = log ?? throw new ArgumentNullException(nameof(log)); 
             ;
         }
 

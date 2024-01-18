@@ -17,17 +17,3 @@ namespace WCDS.WebFuncions.Core.Model.Services
         }
     }
 }
-/*{
-  "search": "",
-  "sortBy": "",
-  "sortOrder": "",
-  "filterBy": {
-    "columnName": "",
-    "columnValue": ""
-  },
-  "paginationInfo": {
-    "perPage": 2000,
-    "page": 1
-  }
-}*/
-

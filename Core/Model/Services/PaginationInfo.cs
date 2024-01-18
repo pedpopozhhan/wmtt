@@ -17,16 +17,3 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public int Total { get; set; }
     }
 }
-/*{
-  "search": "",
-  "sortBy": "",
-  "sortOrder": "",
-  "filterBy": {
-    "columnName": "",
-    "columnValue": ""
-  },
-  "paginationInfo": {
-    "perPage": 2000,
-    "page": 1
-  }
-}*/

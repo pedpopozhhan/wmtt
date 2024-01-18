@@ -21,7 +21,7 @@ namespace WCDS.WebFuncions.Core.Services
         public DomainService(ILogger<DomainService> log, HttpClient httpClient)
         {
             HttpClient = httpClient;
-            Log = log ?? throw new ArgumentNullException(nameof(log)); HttpClient = httpClient;
+            Log = log ?? throw new ArgumentNullException(nameof(log)); 
             ;
         }
 

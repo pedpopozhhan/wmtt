@@ -27,7 +27,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public decimal RatePerUnit { get; set; }
     }
 }
-// export interface IDetailsTableRowData {
+
 //   date: Date;
 //   registrationNumber: string;
 //   reportNumber: number;
