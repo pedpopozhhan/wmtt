@@ -9,27 +9,46 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using WCDS.WebFuncions.Core.Model;
+using WCDS.WebFuncions.Core.Services;
 
 
 namespace WCDS.WebFuncions
 {
-    public static class GetInvoiceDetails
+    public class GetInvoiceDetails
     {
+        private readonly IDomainService DomainService;
+        private readonly ITimeReportingService TimeReportingService;
+
+        public GetInvoiceDetails(IDomainService domainService, ITimeReportingService timeReportingService)
+        {
+            DomainService = domainService;
+            TimeReportingService = timeReportingService;
+        }
         [FunctionName("GetInvoiceDetails")]
-        public static async Task<IActionResult> Run(
+        public async Task<ActionResult<InvoiceDetailRowDataRequestDto[]>> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
             log.LogInformation("Trigger function (GetInvoiceDetails) received a request.");
 
+            log.LogInformation("Reading rateunits from DomainService");
+            var rateUnits = await DomainService.GetRateUnits();
+            log.LogInformation("Reading ratetypes from DomainService");
+            var rateTypes = await DomainService.GetRateTypes();
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             var data = JsonConvert.DeserializeObject<InvoiceDetailRowDataRequestDto>(requestBody);
+
+            if (data != null)
+            {
+                // call time reports api to get cost details           
+
+            }
             log.LogDebug("Request payload", data);
             Console.WriteLine(JsonConvert.SerializeObject(data));
             return new JsonResult(GetSampleResults());
         }
-        private static List<InvoiceDetailRowDataDto> GetSampleResults()
+        private List<InvoiceDetailRowDataDto> GetSampleResults()
         {
             var rows = new List<InvoiceDetailRowDataDto>();
             var date = DateTime.Now;
@@ -59,30 +78,3 @@ namespace WCDS.WebFuncions
         }
     }
 }
-/*export class SampleData {
-  static GetSampleResults() IDetailsTableRowData[] {
-    const results: IDetailsTableRowData[] = [];
-    const date = Date.now();
-    for (let i = 1; i <= 50; i++) {
-      results.push({
-        date: new Date(date + 86400000 * i),
-        registrationNumber: `${i}`,
-        reportNumber: i,
-        aO02Number: `${i}`,
-        rateType: `${i}`,
-        numberOfUnits: i,
-        rateUnit: `${i}`,
-        ratePerUnit: i, //with $0.00
-        cost: i * 1000.25, //with $0.00
-        glAccountNumber: i,
-        profitCentre: `${i}`,
-        costCentre: `${i}`,
-        fireNumber: `${i}`,
-        internalOrder: `${i}`,
-        fund: i,
-      });
-    }
-
-    return results;
-  }
-}*/
