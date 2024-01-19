@@ -4,7 +4,7 @@ using System;
 
 namespace WCDS.WebFuncions.Core.Model
 {
-    public class InvoiceDetailRowDataDto
+    public class InvoiceDetailRowDataDtoOLD
     {
         public DateTime Date { get; set; }
         public string RegistrationNumber { get; set; }

@@ -10,6 +10,10 @@ using Newtonsoft.Json;
 using System.Collections.Generic;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
+using System.Linq;
+using WCDS.WebFuncions.Core.Model.Services;
+using AutoMapper;
+using System.Web.Http;
 
 
 namespace WCDS.WebFuncions
@@ -18,14 +22,16 @@ namespace WCDS.WebFuncions
     {
         private readonly IDomainService DomainService;
         private readonly ITimeReportingService TimeReportingService;
+        private readonly IMapper Mapper;
 
-        public GetInvoiceDetails(IDomainService domainService, ITimeReportingService timeReportingService)
+        public GetInvoiceDetails(IDomainService domainService, ITimeReportingService timeReportingService, IMapper mapper)
         {
             DomainService = domainService;
             TimeReportingService = timeReportingService;
+            Mapper = mapper;
         }
         [FunctionName("GetInvoiceDetails")]
-        public async Task<ActionResult<InvoiceDetailRowDataRequestDto[]>> Run(
+        public async Task<ActionResult<InvoiceDetailsResponse[]>> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
@@ -37,44 +43,31 @@ namespace WCDS.WebFuncions
             var rateTypes = await DomainService.GetRateTypes();
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var data = JsonConvert.DeserializeObject<InvoiceDetailRowDataRequestDto>(requestBody);
+            var data = JsonConvert.DeserializeObject<InvoiceDetailsRequest>(requestBody);
 
-            if (data != null)
+            if (data != null && string.IsNullOrEmpty(rateTypes.ErrorMessage) && string.IsNullOrEmpty(rateTypes.ErrorMessage))
             {
-                // call time reports api to get cost details           
 
-            }
-            log.LogDebug("Request payload", data);
-            Console.WriteLine(JsonConvert.SerializeObject(data));
-            return new JsonResult(GetSampleResults());
-        }
-        private List<InvoiceDetailRowDataDto> GetSampleResults()
-        {
-            var rows = new List<InvoiceDetailRowDataDto>();
-            var date = DateTime.Now;
-            for (int i = 1; i <= 50; i++)
-            {
-                rows.Add(new InvoiceDetailRowDataDto
+                var details = await TimeReportingService.GetTimeReportByIds(data.TimeReportIds);
+
+                var mapped = details.Data.Select(detail =>
                 {
-                    Date = date.AddDays(i),
-                    RegistrationNumber = i.ToString(),
-                    ReportNumber = i,
-                    AO02Number = i.ToString(),
-                    RateType = i.ToString(),
-                    NumberOfUnits = i,
-                    RateUnit = i.ToString(),
-                    RatePerUnit = i,
-                    Cost = i * 1000.25,
-                    GlAccountNumber = i,
-                    ProfitCentre = i.ToString(),
-                    CostCentre = i.ToString(),
-                    FireNumber = i.ToString(),
-                    InternalOrder = i.ToString(),
-                    Fund = i,
+                    var mapped = Mapper.Map<CostDetailDto, CostDetail>(detail);
+                    // set rate unit and rate type
+                    mapped.RateType = rateTypes.Data.SingleOrDefault(x => x.RateTypeId == detail.RateTypeId)?.Type;
+                    mapped.RateUnit = rateUnits.Data.SingleOrDefault(x => x.RateUnitId == detail.RateUnitId)?.Type;
+                    return mapped;
                 });
+                var response = new InvoiceDetailsResponse
+                {
+                    Rows = mapped.ToArray(),
+                    RateTypes = rateTypes.Data.Select(x => x.Type).ToArray()
+                };
+                return new JsonResult(response);
             }
-
-            return rows;
+            log.LogError("Either invalid request, or an error retrieving rateTypes or rateUnits");
+            return new ObjectResult("Either invalid request, or an error retrieving rateTypes or rateUnits");
         }
+
     }
 }
