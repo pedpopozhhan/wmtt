@@ -13,6 +13,7 @@ namespace WCDS.WebFuncions
         {
             builder.Services.AddLogging();
             builder.Services.AddHttpClient();
+            builder.Services.AddAutoMapper(typeof(Startup));
             builder.Services.AddSingleton<IDomainService, DomainService>();
             builder.Services.AddSingleton<ITimeReportingService, TimeReportingService>();
         }
