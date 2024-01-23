@@ -49,8 +49,12 @@ namespace WCDS.WebFuncions
             {
 
                 var details = await TimeReportingService.GetTimeReportByIds(data.TimeReportIds);
-
-                var mapped = details.Data.Select(detail =>
+                if (!string.IsNullOrEmpty(details.ErrorMessage))
+                {
+                    log.LogError(details.ErrorMessage);
+                    return new ObjectResult(details.ErrorMessage);
+                }
+                var mapped = details.Data?.Select(detail =>
                 {
                     var mapped = Mapper.Map<CostDetailDto, CostDetail>(detail);
                     // set rate unit and rate type
@@ -60,7 +64,7 @@ namespace WCDS.WebFuncions
                 });
                 var response = new InvoiceDetailsResponse
                 {
-                    Rows = mapped.ToArray(),
+                    Rows = mapped?.ToArray(),
                     RateTypes = rateTypes.Data.Select(x => x.Type).ToArray()
                 };
                 return new JsonResult(response);
