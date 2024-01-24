@@ -52,7 +52,7 @@ namespace WCDS.WebFuncions
                 if (!string.IsNullOrEmpty(details.ErrorMessage))
                 {
                     log.LogError(details.ErrorMessage);
-                    return new ObjectResult(details.ErrorMessage);
+                    throw new Exception(details.ErrorMessage);
                 }
                 var mapped = details.Data?.Select(detail =>
                 {
@@ -70,7 +70,7 @@ namespace WCDS.WebFuncions
                 return new JsonResult(response);
             }
             log.LogError("Either invalid request, or an error retrieving rateTypes or rateUnits");
-            return new ObjectResult("Either invalid request, or an error retrieving rateTypes or rateUnits");
+            throw new Exception("Either invalid request, or an error retrieving rateTypes or rateUnits");
         }
 
     }
