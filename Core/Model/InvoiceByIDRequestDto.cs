@@ -8,6 +8,6 @@ namespace WCDS.WebFuncions.Core.Model
 {
     public class InvoiceByIDRequestDto
     {
-        public string? InvoiceID { get; set; }
+        public string InvoiceID { get; set; }
     }
 }

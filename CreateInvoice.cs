@@ -11,13 +11,22 @@ using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Validator;
 using FluentValidation;
+using AutoMapper;
+using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
 {
-    public static class CreateInvoice
+    public class CreateInvoice
     {
+        private readonly IMapper _mapper;
+
+        public CreateInvoice(IMapper mapper)
+        {
+            _mapper = mapper;
+        }
+
         [FunctionName("CreateInvoice")]
-        public static async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
         {
             _logger.LogInformation("Trigger function (CreateInvoice) received a request.");
             try
@@ -25,7 +34,7 @@ namespace WCDS.WebFuncions
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
 
-                IInvoiceController iController = new InvoiceController(_logger);
+                IInvoiceController iController = new InvoiceController(_logger, _mapper);
                 InvoiceValidator validationRules = new InvoiceValidator(iController);
                 validationRules.ValidateAndThrow(invoiceObj);
 

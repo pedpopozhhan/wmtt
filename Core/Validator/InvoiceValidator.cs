@@ -22,13 +22,16 @@ namespace WCDS.WebFuncions.Core.Validator
             RuleFor(x => x.PeriodEndDate).NotNull().WithMessage("Please provide value for Period End Date.");
             RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Invoice Amount should be greater than Zero.");
             RuleFor(x => x.InvoiceReceivedDate).NotNull().WithMessage("Please provide value for Invoice Received Date.");
-            //RuleFor(x => x.InvoiceTimeReportCostDetails).NotNull().WithMessage("Invoice does not have Cost Details.");
-            RuleFor(x => x.InvoiceServiceSheet).NotNull().WithMessage("Invoice does not have a Service Sheet");
+            RuleFor(x => new { x.InvoiceTimeReportCostDetails, x.InvoiceOtherCostDetails }).Must(v => TimeReportOrOtherCostExists(v.InvoiceTimeReportCostDetails, v.InvoiceOtherCostDetails)).WithMessage("Invoice must have Time Report Costs or Other Costs");
         }
 
         private bool InvoiceNumberDoesNotExist(string invoiceNumber)
         {
             return !_invoiceController.InvoiceExists(invoiceNumber);
+        }
+        private bool TimeReportOrOtherCostExists(List<InvoiceTimeReportCostDetailDto> invoiceTimeReportCostDetails, List<InvoiceOtherCostDetailDto> invoiceOtherCostDetails) 
+        {
+          return (invoiceTimeReportCostDetails != null || invoiceOtherCostDetails != null);
         }
     }
 }

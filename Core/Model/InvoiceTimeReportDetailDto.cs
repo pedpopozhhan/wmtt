@@ -6,7 +6,7 @@ using WCDS.WebFuncions.Core.Entity;
 
 namespace WCDS.WebFuncions.Core.Model
 {
-    public class InvoiceTimeReportCostDetailRowDataDto
+    public class InvoiceTimeReportCostDetailDto
     {
         public int InvoiceTimeReportCostDetailId { get; set; }
         public Guid TimeReportCostDetailReferenceId { get; set; }

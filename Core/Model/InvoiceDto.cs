@@ -20,8 +20,8 @@ namespace WCDS.WebFuncions.Core.Model
         public string ContractNumber { get; set; }
         public string Type { get; set; }
         public string CreatedBy { get; set; }
-        public List<InvoiceTimeReportCostDetailRowDataDto> InvoiceTimeReportCostDetails { get; set; }
-        public List<InvoiceOtherCostDetailRowDataDto> InvoiceOtherCostDetails { get; set; }
+        public List<InvoiceTimeReportCostDetailDto> InvoiceTimeReportCostDetails { get; set; }
+        public List<InvoiceOtherCostDetailDto> InvoiceOtherCostDetails { get; set; }
         public InvoiceServiceSheetDto InvoiceServiceSheet { get; set;}
     }
 }

@@ -30,15 +30,16 @@ namespace WCDS.WebFuncions.Controller
 
     public class InvoiceController: IInvoiceController
     {
-        private Mapper mapper;
         ApplicationDBContext dbContext;
         ILogger _logger;
+        IMapper _mapper;
 
-        public InvoiceController(ILogger log)
+        public InvoiceController(ILogger log, IMapper mapper)
         {
-            mapper = MapperConfig.InitializeAutomapper();
+
             dbContext = new ApplicationDBContext();
             _logger = log;
+            _mapper = mapper;
         }
 
 
@@ -49,7 +50,7 @@ namespace WCDS.WebFuncions.Controller
             {
                 try
                 {
-                    Invoice invoiceEntity = mapper.Map<Invoice>(invoice);
+                    Invoice invoiceEntity = _mapper.Map<Invoice>(invoice);
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
                     invoice.InvoiceId = invoiceEntity.InvoiceId;

@@ -7,7 +7,7 @@ using WCDS.WebFuncions.Core.Entity;
 
 namespace WCDS.WebFuncions.Core.Model
 {
-    public class InvoiceOtherCostDetailRowDataDto
+    public class InvoiceOtherCostDetailDto
     {
         public int InvoiceOtherCostDetailId { get; set; }
         public int InvoiceId { get; set; }
