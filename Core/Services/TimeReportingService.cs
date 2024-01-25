@@ -19,8 +19,7 @@ namespace WCDS.WebFuncions.Core.Services
         public TimeReportingService(ILogger<TimeReportingService> log, HttpClient httpClient)
         {
             HttpClient = httpClient;
-            Log = log ?? throw new ArgumentNullException(nameof(log)); 
-            ;
+            Log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
         public async Task<Response<CostDetailDto>> GetTimeReportByIds(int[] ids)
@@ -42,7 +41,13 @@ namespace WCDS.WebFuncions.Core.Services
 
             // Handle the http response
             var json = await response.Content.ReadAsStringAsync();
-            Response<CostDetailDto> responseData = JsonConvert.DeserializeObject<Response<CostDetailDto>>(json);
+
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore
+            };
+            Response<CostDetailDto> responseData = JsonConvert.DeserializeObject<Response<CostDetailDto>>(json, settings);
 
             return responseData;
         }
