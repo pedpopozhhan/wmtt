@@ -48,13 +48,13 @@ namespace WCDS.WebFuncions
             Console.WriteLine(JsonConvert.SerializeObject(data));
             return new JsonResult(GetSampleResults());
         }
-        private List<InvoiceDetailRowDataDto> GetSampleResults()
+        private List<InvoiceTimeReportCostDetailRowDataDto> GetSampleResults()
         {
-            var rows = new List<InvoiceDetailRowDataDto>();
+            var rows = new List<InvoiceTimeReportCostDetailRowDataDto>();
             var date = DateTime.Now;
             for (int i = 1; i <= 50; i++)
             {
-                rows.Add(new InvoiceDetailRowDataDto
+                rows.Add(new InvoiceTimeReportCostDetailRowDataDto
                 {
                     Date = date.AddDays(i),
                     RegistrationNumber = i.ToString(),

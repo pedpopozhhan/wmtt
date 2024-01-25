@@ -11,17 +11,16 @@ namespace WCDS.WebFuncions.Core.Common
             var config = new MapperConfiguration(cfg =>
             {
                 cfg.CreateMap<Invoice, InvoiceDto>();
-                //.ForMember(dest => dest.TimeReports, src => src.Ignore());
+                cfg.CreateMap<InvoiceDto, Invoice>();
 
-                cfg.CreateMap<InvoiceDto, Invoice>()
-                .ForMember(dest => dest.TimeReports, src => src.Ignore());
+                cfg.CreateMap<InvoiceTimeReportCostDetails, InvoiceTimeReportCostDetailRowDataDto>();
+                cfg.CreateMap<InvoiceTimeReportCostDetailRowDataDto, InvoiceTimeReportCostDetails>();
 
-                cfg.CreateMap<InvoiceTimeReport, InvoiceTimeReportDto>();
-                cfg.CreateMap<InvoiceTimeReportDto, InvoiceTimeReport>()
-                .ForMember(dest => dest.InvoiceDetails, src => src.Ignore());
+                cfg.CreateMap<InvoiceOtherCostDetails, InvoiceOtherCostDetailRowDataDto>();
+                cfg.CreateMap<InvoiceOtherCostDetailRowDataDto, InvoiceOtherCostDetails>();
 
-                cfg.CreateMap<InvoiceDetail, InvoiceDetailDto>();
-                cfg.CreateMap<InvoiceDetailDto, InvoiceDetail>();
+                cfg.CreateMap<InvoiceServiceSheet, InvoiceServiceSheetDto>();
+                cfg.CreateMap<InvoiceServiceSheetDto, InvoiceServiceSheet>();
             });
             var mapper = new Mapper(config);
             return mapper;

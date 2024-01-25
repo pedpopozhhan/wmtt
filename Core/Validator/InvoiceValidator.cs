@@ -16,17 +16,19 @@ namespace WCDS.WebFuncions.Core.Validator
         public InvoiceValidator(IInvoiceController invoiceController)
         {
             _invoiceController = invoiceController;
-            RuleFor(x => x.InvoiceID).NotEmpty().WithMessage("Please provide valid value for Invoice ID.");
-            RuleFor(x => x.InvoiceID).Must(InvoiceIDDoesNotExist).WithMessage("Invoice ID already exists.");
-            RuleFor(x => x.DateOnInvoice).NotNull().WithMessage("Please provide value for Date On Invoice.");
+            RuleFor(x => x.InvoiceNumber).NotEmpty().WithMessage("Please provide valid value for Invoice Number.");
+            RuleFor(x => x.InvoiceNumber).Must(InvoiceNumberDoesNotExist).WithMessage("Invoice Number already exists.");
+            RuleFor(x => x.InvoiceDate).NotNull().WithMessage("Please provide value for Invoice Date.");
             RuleFor(x => x.PeriodEndDate).NotNull().WithMessage("Please provide value for Period End Date.");
             RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Invoice Amount should be greater than Zero.");
             RuleFor(x => x.InvoiceReceivedDate).NotNull().WithMessage("Please provide value for Invoice Received Date.");
+            //RuleFor(x => x.InvoiceTimeReportCostDetails).NotNull().WithMessage("Invoice does not have Cost Details.");
+            RuleFor(x => x.InvoiceServiceSheet).NotNull().WithMessage("Invoice does not have a Service Sheet");
         }
 
-        private bool InvoiceIDDoesNotExist(string invoiceID)
+        private bool InvoiceNumberDoesNotExist(string invoiceNumber)
         {
-            return !_invoiceController.InvoiceExists(invoiceID);
+            return !_invoiceController.InvoiceExists(invoiceNumber);
         }
     }
 }
