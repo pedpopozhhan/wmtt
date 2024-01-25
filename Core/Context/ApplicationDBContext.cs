@@ -9,8 +9,9 @@ namespace WCDS.WebFuncions.Core.Context
     internal class ApplicationDBContext : DbContext
     {
         public virtual DbSet<Invoice> Invoice { get; set; }
-        public virtual DbSet<InvoiceTimeReport> InvoiceTimeReport { get; set; }
-        public virtual DbSet<InvoiceDetail> InvoiceDetail { get; set; }
+        public virtual DbSet<InvoiceTimeReportCostDetails> InvoiceTimeReportCostDetails { get; set; }
+        public virtual DbSet<InvoiceOtherCostDetails> InvoiceOtherCostDetails { get; set; }
+        public virtual DbSet<InvoiceServiceSheet> InvoiceServiceSheet { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -21,16 +22,10 @@ namespace WCDS.WebFuncions.Core.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-            
-            modelBuilder.Entity<InvoiceTimeReport>()
-                .HasOne(invoiceTimeReport => invoiceTimeReport.Invoice)
-                .WithMany(Invoice => Invoice.TimeReports)
-                .HasForeignKey(invoiceTimeReport => invoiceTimeReport.InvoiceKey);
 
-            modelBuilder.Entity<InvoiceDetail>()
-                .HasOne(invoiceDetail => invoiceDetail.TimeReport)
-                .WithMany(InvoiceTimeReport => InvoiceTimeReport.InvoiceDetails)
-                .HasForeignKey(invoiceDetail => invoiceDetail.InvoiceTimeReportKey);
+            modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceTimeReportCostDetails).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
+            modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceOtherCostDetails).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
+            modelBuilder.Entity<Invoice>().HasOne(i => i.InvoiceServiceSheet).WithOne(i => i.Invoice);
         }
     }
 }

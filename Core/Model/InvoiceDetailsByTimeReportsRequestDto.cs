@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace WCDS.WebFuncions.Core.Model
 {
-    public class InvoiceByIDRequestDto
+    public class InvoiceDetailsByTimeReportsRequestDto
     {
-        public string InvoiceID { get; set; }
+        public List<int> TimeReportNumbers { get; set; }
     }
 }
