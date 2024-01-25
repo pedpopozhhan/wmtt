@@ -34,12 +34,29 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
+    - name: Install EF Tool
+      run: |
+        dotnet new tool-manifest
+        dotnet tool install dotnet-ef --version 6.*
+
     - name: 'Resolve Project Dependencies Using Dotnet'
       shell: pwsh # For Linux, use bash
       run: |
         pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
         dotnet build --configuration Release --output ./output
         popd
+
+    - name: Generate DB migration scripts
+      run: | 
+        dotnet ef migrations script --output /tmp/sql-script.sql --idempotent --context ApplicationDBContext
+      env:
+        connectionstring: ${{ env.SQL_DB_CONN_STR }}
+          
+    - name: Azure SQL Deploy
+      uses: azure/sql-action@v2.2
+      with:
+        connection-string: ${{ env.SQL_DB_CONN_STR }}
+        path: /tmp/sql-script.sql
 
     - name: 'Run Azure Functions Action'
       uses: Azure/functions-action@v1
