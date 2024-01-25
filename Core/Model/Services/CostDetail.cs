@@ -12,7 +12,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public int FlightReportId { get; set; }
         public string Ao02Number { get; set; }
         public string RateType { get; set; }
-        public decimal NumberOfUnits { get; set; }
+        public decimal NoOfUnits { get; set; }
         public string RateUnit { get; set; }
         public decimal RatePerUnit { get; set; }
         public decimal Cost { get; set; }
