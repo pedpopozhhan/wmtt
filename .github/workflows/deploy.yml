@@ -13,6 +13,7 @@ on:
 env:
   AZURE_FUNCTIONAPP_NAME: 'wcds-web-function-app'   # set this to your function app name on Azure
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'       # set this to the path to your function app project, defaults to the repository root
+  SQL_DB_CONN_STR: "${{ secrets.SQL_DB_APPLICATION }}"  
   DOTNET_VERSION: '6.0.x'                   # set this to the dotnet version to use (e.g. '2.1.x', '3.1.x', '5.0.x')
 
 jobs:
