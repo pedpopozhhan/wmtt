@@ -12,7 +12,7 @@ using WCDS.WebFuncions.Core.Context;
 namespace WCDS.WebFuncions.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240125053235_Contracts")]
+    [Migration("20240126193020_Contracts")]
     partial class Contracts
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -196,8 +196,8 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("FireNumber")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Fund")
-                        .HasColumnType("int");
+                    b.Property<string>("Fund")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("GlAccountNumber")
                         .HasColumnType("int");

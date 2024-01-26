@@ -25,6 +25,6 @@ namespace WCDS.WebFuncions.Core.Model
         public string CostCentre { get; set; }
         public string FireNumber { get; set; }
         public string InternalOrder { get; set; }
-        public int Fund { get; set; }
+        public string Fund { get; set; }
     }
 }

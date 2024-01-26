@@ -114,7 +114,7 @@ namespace WCDS.WebFuncions.Migrations
                     CostCentre = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     FireNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     InternalOrder = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Fund = table.Column<int>(type: "int", nullable: false)
+                    Fund = table.Column<string>(type: "nvarchar(max)", nullable: true)
                 },
                 constraints: table =>
                 {
