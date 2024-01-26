@@ -10,7 +10,6 @@ namespace WCDS.WebFuncions.Core.Model
     {
         public int InvoiceTimeReportCostDetailId { get; set; }
         public Guid TimeReportCostDetailReferenceId { get; set; }
-        public int InvoiceId { get; set; }
         public DateTime Date { get; set; }
         public string RegistrationNumber { get; set; }
         public int ReportNumber { get; set; }
@@ -20,7 +19,7 @@ namespace WCDS.WebFuncions.Core.Model
         public string RateUnit { get; set; }
         public double RatePerUnit { get; set; }
         public double Cost { get; set; }
-        public int GlAccountNumber { get; set; }
+        public string GlAccountNumber { get; set; }
         public string ProfitCentre { get; set; }
         public string CostCentre { get; set; }
         public string FireNumber { get; set; }

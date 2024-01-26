@@ -88,8 +88,8 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("Fund")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("GlAccountNumber")
-                        .HasColumnType("int");
+                    b.Property<string>("GlAccountNumber")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("InternalOrder")
                         .HasColumnType("nvarchar(max)");
@@ -197,8 +197,8 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("Fund")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("GlAccountNumber")
-                        .HasColumnType("int");
+                    b.Property<string>("GlAccountNumber")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("InternalOrder")
                         .HasColumnType("nvarchar(max)");

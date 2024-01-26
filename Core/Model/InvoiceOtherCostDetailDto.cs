@@ -10,7 +10,6 @@ namespace WCDS.WebFuncions.Core.Model
     public class InvoiceOtherCostDetailDto
     {
         public int InvoiceOtherCostDetailId { get; set; }
-        public int InvoiceId { get; set; }
         public DateTime From { get; set; }
         public DateTime To { get; set; }
         public string RateType { get; set; }
@@ -18,7 +17,7 @@ namespace WCDS.WebFuncions.Core.Model
         public double RatePerUnit { get; set; }
         public int NumberOfUnits { get; set; }
         public double Cost { get; set; }
-        public int? GlAccountNumber { get; set; }
+        public string GlAccountNumber { get; set; }
         public string ProfitCentre { get; set; }
         public string CostCentre { get; set; }
         public string FireNumber { get; set; }
