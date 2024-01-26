@@ -13,6 +13,7 @@ on:
 env:
   AZURE_FUNCTIONAPP_NAME: 'wcds-web-function-app'   # set this to your function app name on Azure
   AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'       # set this to the path to your function app project, defaults to the repository root
+  SQL_DB_CONN_STR: "${{ secrets.SQL_DB_APPLICATION }}"  
   DOTNET_VERSION: '6.0.x'                   # set this to the dotnet version to use (e.g. '2.1.x', '3.1.x', '5.0.x')
 
 jobs:
@@ -50,12 +51,12 @@ jobs:
       run: | 
         dotnet ef migrations script --output /tmp/sql-script.sql --idempotent --context ApplicationDBContext
       env:
-        connectionstring: ${{ env.SQL_DB_CONN_STR }}
+        connectionstring: ${{ env.SQL_DB_APPLICATION }}
           
     - name: Azure SQL Deploy
       uses: azure/sql-action@v2.2
       with:
-        connection-string: ${{ env.SQL_DB_CONN_STR }}
+        connection-string: ${{ env.SQL_DB_APPLICATION }}
         path: /tmp/sql-script.sql
 
     - name: 'Run Azure Functions Action'
