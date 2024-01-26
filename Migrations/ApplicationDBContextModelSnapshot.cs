@@ -194,8 +194,8 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("FireNumber")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Fund")
-                        .HasColumnType("int");
+                    b.Property<string>("Fund")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("GlAccountNumber")
                         .HasColumnType("int");

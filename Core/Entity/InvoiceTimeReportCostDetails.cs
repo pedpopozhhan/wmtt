@@ -23,7 +23,7 @@ namespace WCDS.WebFuncions.Core.Entity
         public string CostCentre { get; set; }
         public string FireNumber { get; set; }
         public string InternalOrder { get; set; }
-        public int Fund { get; set; }
+        public string Fund { get; set; }
         public Invoice Invoice { get; set; }
     }
 }
