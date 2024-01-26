@@ -51,12 +51,12 @@ jobs:
       run: | 
         dotnet ef migrations script --output /tmp/sql-script.sql --idempotent --context ApplicationDBContext
       env:
-        connectionstring: ${{ env.SQL_DB_APPLICATION }}
+        connectionstring: ${{ env.SQL_DB_CONN_STR }}
           
     - name: Azure SQL Deploy
       uses: azure/sql-action@v2.2
       with:
-        connection-string: ${{ env.SQL_DB_APPLICATION }}
+        connection-string: ${{ env.SQL_DB_CONN_STR }}
         path: /tmp/sql-script.sql
 
     - name: 'Run Azure Functions Action'
