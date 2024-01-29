@@ -32,21 +32,27 @@ namespace WCDS.WebFuncions
 
             log.LogInformation("Reading rateunits from DomainService");
             var rateUnits = await _domainService.GetRateUnits();
+            log.LogInformation("rateunits returned from DomainService are: " + rateUnits.Data.Count());
 
             log.LogInformation("Reading ratetypes from DomainService");
             var rateTypes = await _domainService.GetRateTypes();
+            log.LogInformation("ratetypes returned from DomainService are: " + rateTypes.Data.Count());
 
             log.LogInformation("Reading costCenter from WildFireFinanceApi");
             var costCenter = await _wildfireFinanceService.GetCostCenterForDDL(log);
+            log.LogInformation("costCenters returned from WildFireFinanceApi are: {0} " , costCenter == null ? 0 : costCenter.Count);
 
             log.LogInformation("Reading glAccount from WildFireFinanceApi");
             var glAccount = await _wildfireFinanceService.GetGLAccountForDDL(log);
+            log.LogInformation("glAccounts returned from WildFireFinanceApi are: {0} ", glAccount == null ? 0 : glAccount.Count);
 
             log.LogInformation("Reading internalOrder from WildFireFinanceApi");
             var internalOrder = await _wildfireFinanceService.GetInternalOrderForDDL(log);
+            log.LogInformation("internalOrders returned from WildFireFinanceApi are: {0} ", internalOrder == null ? 0 : internalOrder.Count);
 
             log.LogInformation("Reading Fund from WildFireFinanceApi");
             var fund = await _wildfireFinanceService.GetFundForDDL(log);
+            log.LogInformation("Funds returned from WildFireFinanceApi are: {0} ", fund == null ? 0 : fund.Count);
 
             log.LogInformation("C# HTTP trigger function processed a request.");
 
