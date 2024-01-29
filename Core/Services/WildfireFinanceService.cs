@@ -20,6 +20,8 @@ namespace WCDS.WebFuncions.Core.Services
     {
         private readonly ILogger _log;
         private readonly HttpClient _httpClient;
+        private readonly string _urlKey = "WildfireFinanceServiceApiUrl";
+        private readonly string _serviceApiKey = "WildfireFinanceServiceApiKey";
 
         public WildfireFinanceService(ILogger log, HttpClient httpClient)
         {
@@ -29,18 +31,18 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task<List<CustomlistDto>> GetCostCenterForDDL(ILogger _log)
         {
-            var url = Environment.GetEnvironmentVariable("WildfireFinanceServiceApiUrl");
+            var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
             {
-                _log.LogError("WildfireFinanceServiceApiUrl not found!");
-                throw new Exception("WildfireFinanceServiceApiUrl not found");
+                _log.LogError(_urlKey + " not found!");
+                throw new Exception(_urlKey + " not found");
             }
             
-            url = url + "/api/getcostcenter?listType=OtherCostDDL";
+            url = url + "/getcostcenter?listType=OtherCostDDL";
             _log.LogInformation("getcostcenter url: {url}", url);
             
             var msg = new HttpRequestMessage(HttpMethod.Get, url);
-            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable("xFunctionsKey")); 
+            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey)); 
 
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
@@ -58,18 +60,18 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task<List<CustomlistDto>> GetFundForDDL(ILogger _log)
         {
-            var url = Environment.GetEnvironmentVariable("WildfireFinanceServiceApiUrl");
+            var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
             {
-                _log.LogError("WildfireFinanceServiceApiUrl not found!");
-                throw new Exception("WildfireFinanceServiceApiUrl not found");
+                _log.LogError(_urlKey + " not found!");
+                throw new Exception(_urlKey + " not found");
             }
 
-            url = url + "/api/GetFundMaster?listType=OtherCostDDL";
+            url = url + "/GetFundMaster?listType=OtherCostDDL";
             _log.LogInformation("GetFundMaster url: {url}", url);
 
             var msg = new HttpRequestMessage(HttpMethod.Get, url);
-            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable("xFunctionsKey"));
+            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
 
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
@@ -87,18 +89,18 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task<List<CustomlistDto>> GetGLAccountForDDL(ILogger _log)
         {
-            var url = Environment.GetEnvironmentVariable("WildfireFinanceServiceApiUrl");
+            var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
             {
-                _log.LogError("WildfireFinanceServiceApiUrl not found!");
-                throw new Exception("WildfireFinanceServiceApiUrl not found");
+                _log.LogError(_urlKey + " not found!");
+                throw new Exception(_urlKey + " not found");
             }
 
-            url = url + "/api/GetGLAccount?listType=OtherCostDDL";
+            url = url + "/GetGLAccount?listType=OtherCostDDL";
             _log.LogInformation("GetGLAccount url: {url}", url);
 
             var msg = new HttpRequestMessage(HttpMethod.Get, url);
-            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable("xFunctionsKey"));
+            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
 
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
@@ -116,18 +118,18 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task<List<CustomlistDto>> GetInternalOrderForDDL(ILogger _log)
         {
-            var url = Environment.GetEnvironmentVariable("WildfireFinanceServiceApiUrl");
+            var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
             {
-                _log.LogError("WildfireFinanceServiceApiUrl not found!");
-                throw new Exception("WildfireFinanceServiceApiUrl not found");
+                _log.LogError(_urlKey + " not found!");
+                throw new Exception(_urlKey + " not found");
             }
 
-            url = url + "/api/GetInternalCode?listType=OtherCostDDL";
+            url = url + "/GetInternalCode?listType=OtherCostDDL";
             _log.LogInformation("GetInternalCode url: {url}", url);
 
             var msg = new HttpRequestMessage(HttpMethod.Get, url);
-            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable("xFunctionsKey"));
+            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
 
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
