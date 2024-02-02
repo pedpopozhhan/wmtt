@@ -2,11 +2,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
 {
     public class FilterByRateType : FilterBy
     {
-        public bool Negotiated { get; set; }
-        public FilterByRateType()
-        {
-            Negotiated = true;
-        }
+        public bool? Negotiated { get; set; }
     }
 
     public class FilterByRateUnit : FilterBy
