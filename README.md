@@ -7,7 +7,9 @@ local.settings.json should look like this:
         "AzureWebJobsStorage": "",
         "FUNCTIONS_WORKER_RUNTIME": "dotnet",
         "DomainServiceApiUrl": "<url to domain service api without trailing slash>",
-        "AviationReportingServiceApiUrl": "<url to aviation reporting service api without trailing slash>"
+        "AviationReportingServiceApiUrl": "<url to aviation reporting service api without trailing slash>",
+        "WildfireFinanceServiceApiUrl":"<url to aviation finance service api without trailing slash>"
+        "WildfireFinanceServiceApiKey":"<api key from zaure>"
     },
     "Host": {
         "CORS": "*",
