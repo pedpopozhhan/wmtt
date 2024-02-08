@@ -18,6 +18,8 @@ using WCDS.WebFuncions.Core.Model;
 using Microsoft.WindowsAzure.Storage;
 using System.Threading.Tasks;
 using JsonSerializer = System.Text.Json.JsonSerializer;
+using Microsoft.AspNetCore.Mvc;
+using WCDS.WebFuncions.Core.Model.Services;
 
 namespace WCDS.WebFuncions.Controller
 {
@@ -26,9 +28,10 @@ namespace WCDS.WebFuncions.Controller
         public int CreateInvoice(InvoiceDto invoice);
         public int UpdateInvoice(InvoiceDto invoice);
         public bool InvoiceExists(string invoiceID);
+        public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest);
     }
 
-    public class InvoiceController: IInvoiceController
+    public class InvoiceController : IInvoiceController
     {
         ApplicationDBContext dbContext;
         ILogger _logger;
@@ -94,5 +97,28 @@ namespace WCDS.WebFuncions.Controller
             return bResult;
         }
 
+        public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest)
+        {
+            InvoiceResponseDto response = new InvoiceResponseDto();
+            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    List<Invoice> items = dbContext.Invoice.Where(x => x.ContractNumber == invoiceRequest.ContractNumber).ToList();
+                    var mapped = items.Select(item =>
+                    {
+                        return _mapper.Map<Invoice, InvoiceDto>(item);
+                    });
+                    response.Invoices = mapped.ToArray();
+                }
+                catch
+                {
+                    _logger.LogError("An error has occured while retrieving Invoices for: " + invoiceRequest.ContractNumber);
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            return response;
+        }
     }
 }
