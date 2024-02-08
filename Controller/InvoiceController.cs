@@ -1,25 +1,11 @@
 ﻿using AutoMapper;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity;
 using WCDS.WebFuncions.Core.Model;
-using Microsoft.WindowsAzure.Storage;
-using System.Threading.Tasks;
-using JsonSerializer = System.Text.Json.JsonSerializer;
-using Microsoft.AspNetCore.Mvc;
-using WCDS.WebFuncions.Core.Model.Services;
 
 namespace WCDS.WebFuncions.Controller
 {
