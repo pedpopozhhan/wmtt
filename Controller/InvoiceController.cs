@@ -26,6 +26,7 @@ namespace WCDS.WebFuncions.Controller
         public int CreateInvoice(InvoiceDto invoice);
         public int UpdateInvoice(InvoiceDto invoice);
         public bool InvoiceExists(string invoiceID);
+        public string UpdateInvoiceServiceSheet(UpdateServiceSheetDto invoiceServiceSheet);
     }
 
     public class InvoiceController: IInvoiceController
@@ -67,6 +68,31 @@ namespace WCDS.WebFuncions.Controller
             return result;
         }
 
+        public string UpdateInvoiceServiceSheet(UpdateServiceSheetDto invoiceServiceSheet)
+        {
+            string result = string.Empty;
+            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    var invoiceServiceSheetRecord = dbContext.InvoiceServiceSheet.FirstOrDefault(ss => ss.InvoiceId == invoiceServiceSheet.InvoiceKey);
+                    if (invoiceServiceSheetRecord != null)
+                    {
+                        invoiceServiceSheetRecord.UniqueServiceSheetName = invoiceServiceSheet.UniqueServiceSheetName;
+                        dbContext.SaveChanges();
+                        transaction.Commit();
+                        result = invoiceServiceSheetRecord.UniqueServiceSheetName;
+                    }
+                }
+                catch
+                {
+                    _logger.LogError("An error has occured while Updating Invoice Service Sheet for Invoice Id: " + invoiceServiceSheet.InvoiceKey);
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            return result;
+        }
 
         public int UpdateInvoice(InvoiceDto invoice)
         {
