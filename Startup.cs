@@ -16,6 +16,7 @@ namespace WCDS.WebFuncions
             builder.Services.AddAutoMapper(typeof(Startup));
             builder.Services.AddSingleton<IDomainService, DomainService>();
             builder.Services.AddSingleton<ITimeReportingService, TimeReportingService>();
+            builder.Services.AddSingleton<IWildfireFinanceService, WildfireFinanceService>();
         }
     }
 }
