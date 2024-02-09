@@ -7,7 +7,7 @@ namespace WCDS.WebFuncions.Core.Model
     public class InvoiceServiceSheetDto
     {
         public int InvoiceServiceSheetId { get; set; }
-        public int InvoiceId { get; set; }
+        public int InvoiceKey { get; set; }
         public string UniqueServiceSheetName { get; set; }
         public string PurchaseGroup { get; set; }
         public string ServiceDescription { get; set; }

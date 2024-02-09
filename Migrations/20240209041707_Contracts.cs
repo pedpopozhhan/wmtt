@@ -13,13 +13,14 @@ namespace WCDS.WebFuncions.Migrations
                 name: "Invoice",
                 columns: table => new
                 {
-                    InvoiceId = table.Column<int>(type: "int", nullable: false)
+                    InvoiceKey = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    InvoiceNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    InvoiceId = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     InvoiceAmount = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     InvoiceDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     PeriodEndDate = table.Column<DateTime>(type: "datetime2", nullable: true),
                     InvoiceReceivedDate = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    PaymentStatus = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Vendor = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AssignedTo = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ContractNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -28,7 +29,7 @@ namespace WCDS.WebFuncions.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Invoice", x => x.InvoiceId);
+                    table.PrimaryKey("PK_Invoice", x => x.InvoiceKey);
                 });
 
             migrationBuilder.CreateTable(
@@ -37,7 +38,7 @@ namespace WCDS.WebFuncions.Migrations
                 {
                     InvoiceOtherCostDetailId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    InvoiceId = table.Column<int>(type: "int", nullable: false),
+                    InvoiceKey = table.Column<int>(type: "int", nullable: false),
                     From = table.Column<DateTime>(type: "datetime2", nullable: false),
                     To = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RateType = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -57,10 +58,10 @@ namespace WCDS.WebFuncions.Migrations
                 {
                     table.PrimaryKey("PK_InvoiceOtherCostDetails", x => x.InvoiceOtherCostDetailId);
                     table.ForeignKey(
-                        name: "FK_InvoiceOtherCostDetails_Invoice_InvoiceId",
-                        column: x => x.InvoiceId,
+                        name: "FK_InvoiceOtherCostDetails_Invoice_InvoiceKey",
+                        column: x => x.InvoiceKey,
                         principalTable: "Invoice",
-                        principalColumn: "InvoiceId",
+                        principalColumn: "InvoiceKey",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -70,7 +71,7 @@ namespace WCDS.WebFuncions.Migrations
                 {
                     InvoiceServiceSheetId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    InvoiceId = table.Column<int>(type: "int", nullable: false),
+                    InvoiceKey = table.Column<int>(type: "int", nullable: false),
                     UniqueServiceSheetName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     PurchaseGroup = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ServiceDescription = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -85,10 +86,10 @@ namespace WCDS.WebFuncions.Migrations
                 {
                     table.PrimaryKey("PK_InvoiceServiceSheet", x => x.InvoiceServiceSheetId);
                     table.ForeignKey(
-                        name: "FK_InvoiceServiceSheet_Invoice_InvoiceId",
-                        column: x => x.InvoiceId,
+                        name: "FK_InvoiceServiceSheet_Invoice_InvoiceKey",
+                        column: x => x.InvoiceKey,
                         principalTable: "Invoice",
-                        principalColumn: "InvoiceId",
+                        principalColumn: "InvoiceKey",
                         onDelete: ReferentialAction.Cascade);
                 });
 
@@ -99,7 +100,7 @@ namespace WCDS.WebFuncions.Migrations
                     InvoiceTimeReportCostDetailId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     TimeReportCostDetailReferenceId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    InvoiceId = table.Column<int>(type: "int", nullable: false),
+                    InvoiceKey = table.Column<int>(type: "int", nullable: false),
                     Date = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RegistrationNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ReportNumber = table.Column<int>(type: "int", nullable: false),
@@ -120,28 +121,28 @@ namespace WCDS.WebFuncions.Migrations
                 {
                     table.PrimaryKey("PK_InvoiceTimeReportCostDetails", x => x.InvoiceTimeReportCostDetailId);
                     table.ForeignKey(
-                        name: "FK_InvoiceTimeReportCostDetails_Invoice_InvoiceId",
-                        column: x => x.InvoiceId,
+                        name: "FK_InvoiceTimeReportCostDetails_Invoice_InvoiceKey",
+                        column: x => x.InvoiceKey,
                         principalTable: "Invoice",
-                        principalColumn: "InvoiceId",
+                        principalColumn: "InvoiceKey",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_InvoiceOtherCostDetails_InvoiceId",
+                name: "IX_InvoiceOtherCostDetails_InvoiceKey",
                 table: "InvoiceOtherCostDetails",
-                column: "InvoiceId");
+                column: "InvoiceKey");
 
             migrationBuilder.CreateIndex(
-                name: "IX_InvoiceServiceSheet_InvoiceId",
+                name: "IX_InvoiceServiceSheet_InvoiceKey",
                 table: "InvoiceServiceSheet",
-                column: "InvoiceId",
+                column: "InvoiceKey",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_InvoiceTimeReportCostDetails_InvoiceId",
+                name: "IX_InvoiceTimeReportCostDetails_InvoiceKey",
                 table: "InvoiceTimeReportCostDetails",
-                column: "InvoiceId");
+                column: "InvoiceKey");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
