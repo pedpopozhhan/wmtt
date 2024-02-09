@@ -16,27 +16,25 @@ using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
 {
-    public class UpdateInvoiceServiceSheet
+    public class UpdateProcessedInvoice
     {
         private readonly IMapper _mapper;
 
-        public UpdateInvoiceServiceSheet(IMapper mapper)
+        public UpdateProcessedInvoice(IMapper mapper)
         {
             _mapper = mapper;
         }
 
-        [FunctionName("UpdateInvoiceServiceSheet")]
+        [FunctionName("UpdateProcessedInvoice")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
-            _logger.LogInformation("Trigger function (UpdateInvoiceServiceSheet) received a request.");
+            _logger.LogInformation("Trigger function (UpdateProcessedInvoice) received a request.");
             try
             {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var invoiceObj = JsonConvert.DeserializeObject<UpdateServiceSheetDto>(requestBody);
-
+                var invoiceObj = JsonConvert.DeserializeObject<InvoiceServiceSheetDto>(requestBody);
                 IInvoiceController iController = new InvoiceController(_logger, _mapper);
-
-                string result = iController.UpdateInvoiceServiceSheet(invoiceObj);
+                string result = iController.UpdateProcessedInvoice(invoiceObj);
                 return new OkObjectResult(result.ToString());
             }
             catch (Exception ex)

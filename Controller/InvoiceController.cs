@@ -15,7 +15,7 @@ namespace WCDS.WebFuncions.Controller
         public int UpdateInvoice(InvoiceDto invoice);
         public bool InvoiceExists(string invoiceID);
         public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest);
-        public string UpdateInvoiceServiceSheet(UpdateServiceSheetDto invoiceServiceSheet);
+        public string UpdateProcessedInvoice(InvoiceServiceSheetDto invoiceServiceSheet);
     }
 
     public class InvoiceController : IInvoiceController
@@ -43,13 +43,13 @@ namespace WCDS.WebFuncions.Controller
                     Invoice invoiceEntity = _mapper.Map<Invoice>(invoice);
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
-                    invoice.InvoiceId = invoiceEntity.InvoiceId;
-                    result = invoice.InvoiceId;
+                    invoice.InvoiceKey = invoiceEntity.InvoiceKey;
+                    result = invoice.InvoiceKey;
                     transaction.Commit();
                 }
                 catch
                 {
-                    _logger.LogError("An error has occured while Saving Invoice: " + invoice.InvoiceNumber);
+                    _logger.LogError("An error has occured while Saving Invoice: " + invoice.InvoiceKey);
                     transaction.Rollback();
                     throw;
                 }
@@ -57,20 +57,24 @@ namespace WCDS.WebFuncions.Controller
             return result;
         }
 
-        public string UpdateInvoiceServiceSheet(UpdateServiceSheetDto invoiceServiceSheet)
+        public string UpdateProcessedInvoice(InvoiceServiceSheetDto invoiceServiceSheet)
         {
             string result = string.Empty;
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    var invoiceServiceSheetRecord = dbContext.InvoiceServiceSheet.FirstOrDefault(ss => ss.InvoiceId == invoiceServiceSheet.InvoiceKey);
+                    var invoiceServiceSheetRecord = dbContext.InvoiceServiceSheet.FirstOrDefault(ss => ss.InvoiceKey == invoiceServiceSheet.InvoiceKey);
                     if (invoiceServiceSheetRecord != null)
                     {
                         invoiceServiceSheetRecord.UniqueServiceSheetName = invoiceServiceSheet.UniqueServiceSheetName;
                         dbContext.SaveChanges();
                         transaction.Commit();
                         result = invoiceServiceSheetRecord.UniqueServiceSheetName;
+                    }
+                    else
+                    {
+                        throw new System.Exception($"No Service Sheet Record found for InvoiceKey - {invoiceServiceSheet.InvoiceKey} in Database.");
                     }
                 }
                 catch
@@ -88,20 +92,20 @@ namespace WCDS.WebFuncions.Controller
             return 0;
         }
 
-        public bool InvoiceExists(string invoiceNumber)
+        public bool InvoiceExists(string invoiceId)
         {
             bool bResult = false;
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    Invoice invoice = dbContext.Invoice.Where(x => x.InvoiceNumber == invoiceNumber).FirstOrDefault();
+                    Invoice invoice = dbContext.Invoice.Where(x => x.InvoiceId == invoiceId).FirstOrDefault();
                     if (invoice != null)
                         bResult = true;
                 }
                 catch
                 {
-                    _logger.LogError("An error has occured while Saving Invoice: " + invoiceNumber);
+                    _logger.LogError("An error has occured while Saving Invoice: " + invoiceId);
                     transaction.Rollback();
                     throw;
                 }

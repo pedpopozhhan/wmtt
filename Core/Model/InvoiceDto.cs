@@ -9,8 +9,8 @@ namespace WCDS.WebFuncions.Core.Model
 {
     public class InvoiceDto: BaseDto
     {
-        public int InvoiceId { get; set; }
-        public string InvoiceNumber { get; set; }
+        public int InvoiceKey { get; set; }
+        public string InvoiceId { get; set; }
         public decimal? InvoiceAmount { get; set; }
         public DateTime? InvoiceDate { get; set; }
         public DateTime? PeriodEndDate { get; set; }

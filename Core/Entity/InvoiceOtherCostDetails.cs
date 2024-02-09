@@ -7,7 +7,7 @@ namespace WCDS.WebFuncions.Core.Entity
     {
         [Key]
         public int InvoiceOtherCostDetailId { get; set; }
-        public int InvoiceId { get; set; }
+        public int InvoiceKey { get; set; }
         public DateTime From { get; set; }
         public DateTime To { get; set; }
         public string RateType { get; set; }

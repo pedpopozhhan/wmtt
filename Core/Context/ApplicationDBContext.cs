@@ -23,9 +23,9 @@ namespace WCDS.WebFuncions.Core.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceTimeReportCostDetails).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
-            modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceOtherCostDetails).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
-            modelBuilder.Entity<Invoice>().HasOne(i => i.InvoiceServiceSheet).WithOne(i => i.Invoice);
+            modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceTimeReportCostDetails).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceKey);
+            modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceOtherCostDetails).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceKey);
+            modelBuilder.Entity<Invoice>().HasOne(i => i.InvoiceServiceSheet).WithOne(i => i.Invoice).HasForeignKey<InvoiceServiceSheet>(i => i.InvoiceKey);
         }
     }
 }

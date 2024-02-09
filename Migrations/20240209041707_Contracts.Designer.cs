@@ -12,8 +12,8 @@ using WCDS.WebFuncions.Core.Context;
 namespace WCDS.WebFuncions.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    [Migration("20240208115220_Invoice-ColumnAddition")]
-    partial class InvoiceColumnAddition
+    [Migration("20240209041707_Contracts")]
+    partial class Contracts
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -26,11 +26,11 @@ namespace WCDS.WebFuncions.Migrations
 
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.Invoice", b =>
                 {
-                    b.Property<int>("InvoiceId")
+                    b.Property<int>("InvoiceKey")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvoiceId"), 1L, 1);
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvoiceKey"), 1L, 1);
 
                     b.Property<string>("AssignedTo")
                         .HasColumnType("nvarchar(max)");
@@ -47,7 +47,7 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<DateTime?>("InvoiceDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("InvoiceNumber")
+                    b.Property<string>("InvoiceId")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("InvoiceReceivedDate")
@@ -65,7 +65,7 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("Vendor")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("InvoiceId");
+                    b.HasKey("InvoiceKey");
 
                     b.ToTable("Invoice");
                 });
@@ -99,7 +99,7 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("InternalOrder")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("InvoiceId")
+                    b.Property<int>("InvoiceKey")
                         .HasColumnType("int");
 
                     b.Property<int>("NumberOfUnits")
@@ -125,7 +125,7 @@ namespace WCDS.WebFuncions.Migrations
 
                     b.HasKey("InvoiceOtherCostDetailId");
 
-                    b.HasIndex("InvoiceId");
+                    b.HasIndex("InvoiceKey");
 
                     b.ToTable("InvoiceOtherCostDetails");
                 });
@@ -144,7 +144,7 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("CommunityCode")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("InvoiceId")
+                    b.Property<int>("InvoiceKey")
                         .HasColumnType("int");
 
                     b.Property<string>("MaterialGroup")
@@ -170,7 +170,7 @@ namespace WCDS.WebFuncions.Migrations
 
                     b.HasKey("InvoiceServiceSheetId");
 
-                    b.HasIndex("InvoiceId")
+                    b.HasIndex("InvoiceKey")
                         .IsUnique();
 
                     b.ToTable("InvoiceServiceSheet");
@@ -208,7 +208,7 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("InternalOrder")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("InvoiceId")
+                    b.Property<int>("InvoiceKey")
                         .HasColumnType("int");
 
                     b.Property<int>("NumberOfUnits")
@@ -237,7 +237,7 @@ namespace WCDS.WebFuncions.Migrations
 
                     b.HasKey("InvoiceTimeReportCostDetailId");
 
-                    b.HasIndex("InvoiceId");
+                    b.HasIndex("InvoiceKey");
 
                     b.ToTable("InvoiceTimeReportCostDetails");
                 });
@@ -246,7 +246,7 @@ namespace WCDS.WebFuncions.Migrations
                 {
                     b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
                         .WithMany("InvoiceOtherCostDetails")
-                        .HasForeignKey("InvoiceId")
+                        .HasForeignKey("InvoiceKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -257,7 +257,7 @@ namespace WCDS.WebFuncions.Migrations
                 {
                     b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
                         .WithOne("InvoiceServiceSheet")
-                        .HasForeignKey("WCDS.WebFuncions.Core.Entity.InvoiceServiceSheet", "InvoiceId")
+                        .HasForeignKey("WCDS.WebFuncions.Core.Entity.InvoiceServiceSheet", "InvoiceKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -268,7 +268,7 @@ namespace WCDS.WebFuncions.Migrations
                 {
                     b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
                         .WithMany("InvoiceTimeReportCostDetails")
-                        .HasForeignKey("InvoiceId")
+                        .HasForeignKey("InvoiceKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

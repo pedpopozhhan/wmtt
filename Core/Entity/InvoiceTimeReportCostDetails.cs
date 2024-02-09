@@ -8,7 +8,7 @@ namespace WCDS.WebFuncions.Core.Entity
         [Key]
         public int InvoiceTimeReportCostDetailId { get; set; }
         public Guid TimeReportCostDetailReferenceId { get; set; }
-        public int InvoiceId { get; set; }
+        public int InvoiceKey { get; set; }
         public DateTime Date { get; set; }
         public string RegistrationNumber { get; set; }
         public int ReportNumber { get; set; }
