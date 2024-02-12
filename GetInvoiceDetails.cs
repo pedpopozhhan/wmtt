@@ -23,23 +23,23 @@ namespace WCDS.WebFuncions
             _mapper = mapper;
         }
         [FunctionName("GetInvoiceDetails")]
-        public async Task<ActionResult<InvoiceResponseDto>> Run(
+        public async Task<ActionResult<InvoiceDetailResponseDto>> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("Trigger function (GetInvoices) received a request.");
+            log.LogInformation("Trigger function (GetInvoiceDetails) received a request.");
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var data = JsonConvert.DeserializeObject<InvoiceRequestDto>(requestBody);
+            var data = JsonConvert.DeserializeObject<InvoiceDetailRequestDto>(requestBody);
 
             if (data != null)
             {
-                var responseDto = new InvoiceController(log, _mapper).GetInvoices(data);
+                var responseDto = new InvoiceController(log, _mapper).GetInvoiceDetails(data);
                 return new JsonResult(responseDto);
             }
-            log.LogError("Either invalid request, or an error retrieving invoices");
-            throw new Exception("Either invalid request, or an error retrieving invoices");
-        }
 
+            log.LogError("Either invalid request, or an error retrieving details of invoice");
+            throw new Exception("Either invalid request, or an error retrieving details of invoice");
+        }
     }
 }

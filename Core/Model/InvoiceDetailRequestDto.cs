@@ -8,5 +8,6 @@ namespace WCDS.WebFuncions.Core.Model
 {
     public class InvoiceDetailRequestDto
     {
+        public int InvoiceKey { get; set; }
     }
 }
