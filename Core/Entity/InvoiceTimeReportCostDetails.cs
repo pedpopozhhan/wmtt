@@ -18,7 +18,7 @@ namespace WCDS.WebFuncions.Core.Entity
         public string RateUnit { get; set; }
         public double RatePerUnit { get; set; }
         public double Cost { get; set; }
-        public string GlAccountNumber { get; set; }
+        public string Account { get; set; }
         public string ProfitCentre { get; set; }
         public string CostCentre { get; set; }
         public string FireNumber { get; set; }
