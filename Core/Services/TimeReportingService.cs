@@ -9,7 +9,7 @@ namespace WCDS.WebFuncions.Core.Services
 {
     public interface ITimeReportingService
     {
-        public Task<Response<CostDetailDto>> GetTimeReportByIds(int[] ids);
+        public Task<Response<TimeReportCostDetailDto>> GetTimeReportByIds(int[] ids);
     }
 
     public class TimeReportingService : ITimeReportingService
@@ -22,7 +22,7 @@ namespace WCDS.WebFuncions.Core.Services
             Log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
-        public async Task<Response<CostDetailDto>> GetTimeReportByIds(int[] ids)
+        public async Task<Response<TimeReportCostDetailDto>> GetTimeReportByIds(int[] ids)
         {
             var url = Environment.GetEnvironmentVariable("AviationReportingServiceApiUrl");
             if (url == null)
@@ -47,7 +47,7 @@ namespace WCDS.WebFuncions.Core.Services
                 NullValueHandling = NullValueHandling.Ignore,
                 MissingMemberHandling = MissingMemberHandling.Ignore
             };
-            Response<CostDetailDto> responseData = JsonConvert.DeserializeObject<Response<CostDetailDto>>(json, settings);
+            Response<TimeReportCostDetailDto> responseData = JsonConvert.DeserializeObject<Response<TimeReportCostDetailDto>>(json, settings);
 
             return responseData;
         }

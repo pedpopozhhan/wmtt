@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
@@ -130,6 +131,34 @@ namespace WCDS.WebFuncions.Controller
                 catch
                 {
                     _logger.LogError("An error has occured while retrieving Invoices for: " + invoiceRequest.ContractNumber);
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            return response;
+        }
+
+        public InvoiceDetailResponseDto GetInvoiceDetails(InvoiceDetailRequestDto invoiceDetailRequest)
+        {
+            InvoiceDetailResponseDto response = new InvoiceDetailResponseDto();
+            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    List<Invoice> items = dbContext.Invoice.Where(x => x.InvoiceKey == invoiceDetailRequest.InvoiceKey)
+                        .Include(p => p.InvoiceOtherCostDetails)
+                        .Include(q => q.InvoiceTimeReportCostDetails)
+                        .Include(r => r.InvoiceServiceSheet)
+                        .ToList();
+                    var mapped = items.Select(item =>
+                    {
+                        return _mapper.Map<Invoice, InvoiceDto>(item);
+                    });
+                    response.Invoice = mapped.FirstOrDefault();
+                }
+                catch
+                {
+                    _logger.LogError("An error has occured while retrieving Invoices for: " + invoiceDetailRequest.InvoiceKey);
                     transaction.Rollback();
                     throw;
                 }
