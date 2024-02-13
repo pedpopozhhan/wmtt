@@ -1,8 +1,10 @@
 using System;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model.Services;
 
 namespace WCDS.WebFuncions.Core.Services
@@ -16,10 +18,12 @@ namespace WCDS.WebFuncions.Core.Services
     {
         private readonly ILogger Log;
         private readonly HttpClient HttpClient;
+        ApplicationDBContext dbContext;
         public TimeReportingService(ILogger<TimeReportingService> log, HttpClient httpClient)
         {
             HttpClient = httpClient;
             Log = log ?? throw new ArgumentNullException(nameof(log));
+            dbContext = new ApplicationDBContext();
         }
 
         public async Task<Response<TimeReportCostDetailDto>> GetTimeReportByIds(int[] ids)
@@ -48,6 +52,10 @@ namespace WCDS.WebFuncions.Core.Services
                 MissingMemberHandling = MissingMemberHandling.Ignore
             };
             Response<TimeReportCostDetailDto> responseData = JsonConvert.DeserializeObject<Response<TimeReportCostDetailDto>>(json, settings);
+            if(responseData.Data != null && responseData.Data.Length > 0)
+            {
+                responseData.Data = responseData.Data.Where(i => !dbContext.InvoiceTimeReportCostDetails.Any(r => r.TimeReportCostDetailReferenceId == i.FlyingHoursId)).ToArray();
+            }
 
             return responseData;
         }
