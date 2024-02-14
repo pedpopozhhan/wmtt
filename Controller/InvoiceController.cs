@@ -69,6 +69,8 @@ namespace WCDS.WebFuncions.Controller
                     if (invoiceServiceSheetRecord != null)
                     {
                         invoiceServiceSheetRecord.UniqueServiceSheetName = invoiceServiceSheet.UniqueServiceSheetName;
+                        invoiceServiceSheetRecord.UpdatedBy = invoiceServiceSheet.UpdatedBy;
+                        invoiceServiceSheetRecord.UpdatedByDateTime = invoiceServiceSheet.UpdatedByDateTime;
                         dbContext.SaveChanges();
                         transaction.Commit();
                         result = invoiceServiceSheetRecord.UniqueServiceSheetName;
