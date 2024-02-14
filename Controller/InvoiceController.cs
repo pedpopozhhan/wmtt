@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using WCDS.WebFuncions.Core.Context;
@@ -24,6 +25,7 @@ namespace WCDS.WebFuncions.Controller
         ApplicationDBContext dbContext;
         ILogger _logger;
         IMapper _mapper;
+        private const string defaultUser = "System";
 
         public InvoiceController(ILogger log, IMapper mapper)
         {
@@ -42,6 +44,29 @@ namespace WCDS.WebFuncions.Controller
                 try
                 {
                     Invoice invoiceEntity = _mapper.Map<Invoice>(invoice);
+                    invoiceEntity.CreatedBy = defaultUser;
+                    invoiceEntity.CreatedByDateTime = DateTime.Now;
+                    if(invoiceEntity.InvoiceTimeReportCostDetails  != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
+                    {
+                        foreach (var item in invoiceEntity.InvoiceTimeReportCostDetails)
+                        {
+                            item.CreatedBy = defaultUser;
+                            item.CreatedByDateTime = DateTime.Now;
+                        }
+                    }
+                    if (invoiceEntity.InvoiceOtherCostDetails != null && invoiceEntity.InvoiceOtherCostDetails.Count() > 0)
+                    {
+                        foreach (var item in invoiceEntity.InvoiceOtherCostDetails)
+                        {
+                            item.CreatedBy = defaultUser;
+                            item.CreatedByDateTime = DateTime.Now;
+                        }
+                    }
+                    if(invoiceEntity.InvoiceServiceSheet != null)
+                    {
+                        invoiceEntity.InvoiceServiceSheet.CreatedBy = defaultUser;
+                        invoiceEntity.InvoiceServiceSheet.CreatedByDateTime = DateTime.Now;
+                    }
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
                     invoice.InvoiceKey = invoiceEntity.InvoiceKey;
@@ -69,8 +94,8 @@ namespace WCDS.WebFuncions.Controller
                     if (invoiceServiceSheetRecord != null)
                     {
                         invoiceServiceSheetRecord.UniqueServiceSheetName = invoiceServiceSheet.UniqueServiceSheetName;
-                        invoiceServiceSheetRecord.UpdatedBy = invoiceServiceSheet.UpdatedBy;
-                        invoiceServiceSheetRecord.UpdatedByDateTime = invoiceServiceSheet.UpdatedByDateTime;
+                        invoiceServiceSheetRecord.UpdatedBy = defaultUser;
+                        invoiceServiceSheetRecord.UpdatedByDateTime = DateTime.Now;
                         dbContext.SaveChanges();
                         transaction.Commit();
                         result = invoiceServiceSheetRecord.UniqueServiceSheetName;
