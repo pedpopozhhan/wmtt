@@ -17,6 +17,10 @@ namespace WCDS.WebFuncions.Core.Entity
         public int Quantity { get; set; }
         public string UnitOfMeasure { get; set; }
         public decimal Price { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime? CreatedByDateTime { get; set; }
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedByDateTime { get; set; }
         public Invoice Invoice { get; set; }
 
     }

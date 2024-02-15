@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WCDS.WebFuncions.Core.Context;
 
@@ -11,9 +12,10 @@ using WCDS.WebFuncions.Core.Context;
 namespace WCDS.WebFuncions.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240213220839_Adding_CreatedBy_UpdatedBy_Name_DateTime")]
+    partial class Adding_CreatedBy_UpdatedBy_Name_DateTime
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -135,12 +137,6 @@ namespace WCDS.WebFuncions.Migrations
 
                     b.Property<string>("Unit")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedByDateTime")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("InvoiceOtherCostDetailId");
 
@@ -271,12 +267,6 @@ namespace WCDS.WebFuncions.Migrations
 
                     b.Property<Guid>("TimeReportCostDetailReferenceId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedByDateTime")
-                        .HasColumnType("datetime2");
 
                     b.HasKey("InvoiceTimeReportCostDetailId");
 

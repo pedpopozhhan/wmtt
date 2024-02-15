@@ -24,6 +24,10 @@ namespace WCDS.WebFuncions.Core.Entity
         public string FireNumber { get; set; }
         public string InternalOrder { get; set; }
         public string Fund { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime? CreatedByDateTime { get; set; }
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedByDateTime { get; set; }
         public Invoice Invoice { get; set; }
     }
 }

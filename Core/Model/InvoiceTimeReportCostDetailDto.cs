@@ -25,5 +25,9 @@ namespace WCDS.WebFuncions.Core.Model
         public string FireNumber { get; set; }
         public string InternalOrder { get; set; }
         public string Fund { get; set; }
+        public string CreatedBy { get; set; }
+        public DateTime? CreatedByDateTime { get; set; }
+        public string UpdatedBy { get; set; }
+        public DateTime? UpdatedByDateTime { get; set; }
     }
 }
