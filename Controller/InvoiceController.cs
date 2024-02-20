@@ -18,6 +18,7 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceExists(string invoiceID);
         public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest);
         public string UpdateProcessedInvoice(InvoiceServiceSheetDto invoiceServiceSheet);
+        public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
     }
 
     public class InvoiceController : IInvoiceController
@@ -25,7 +26,8 @@ namespace WCDS.WebFuncions.Controller
         ApplicationDBContext dbContext;
         ILogger _logger;
         IMapper _mapper;
-        private const string defaultUser = "System";
+        private const string DEFAULT_USER = "System";
+        private const string CONTRACTS_API_PATH_PROCESSEDINVOICE = "ProcessedInvoice/{0}";
 
         public InvoiceController(ILogger log, IMapper mapper)
         {
@@ -44,13 +46,13 @@ namespace WCDS.WebFuncions.Controller
                 try
                 {
                     Invoice invoiceEntity = _mapper.Map<Invoice>(invoice);
-                    invoiceEntity.CreatedBy = defaultUser;
+                    invoiceEntity.CreatedBy = DEFAULT_USER;
                     invoiceEntity.CreatedByDateTime = DateTime.Now;
                     if(invoiceEntity.InvoiceTimeReportCostDetails  != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
                     {
                         foreach (var item in invoiceEntity.InvoiceTimeReportCostDetails)
                         {
-                            item.CreatedBy = defaultUser;
+                            item.CreatedBy = DEFAULT_USER;
                             item.CreatedByDateTime = DateTime.Now;
                         }
                     }
@@ -58,13 +60,13 @@ namespace WCDS.WebFuncions.Controller
                     {
                         foreach (var item in invoiceEntity.InvoiceOtherCostDetails)
                         {
-                            item.CreatedBy = defaultUser;
+                            item.CreatedBy = DEFAULT_USER;
                             item.CreatedByDateTime = DateTime.Now;
                         }
                     }
                     if(invoiceEntity.InvoiceServiceSheet != null)
                     {
-                        invoiceEntity.InvoiceServiceSheet.CreatedBy = defaultUser;
+                        invoiceEntity.InvoiceServiceSheet.CreatedBy = DEFAULT_USER;
                         invoiceEntity.InvoiceServiceSheet.CreatedByDateTime = DateTime.Now;
                     }
                     dbContext.Invoice.Add(invoiceEntity);
@@ -94,7 +96,7 @@ namespace WCDS.WebFuncions.Controller
                     if (invoiceServiceSheetRecord != null)
                     {
                         invoiceServiceSheetRecord.UniqueServiceSheetName = invoiceServiceSheet.UniqueServiceSheetName;
-                        invoiceServiceSheetRecord.UpdatedBy = defaultUser;
+                        invoiceServiceSheetRecord.UpdatedBy = DEFAULT_USER;
                         invoiceServiceSheetRecord.UpdatedByDateTime = DateTime.Now;
                         dbContext.SaveChanges();
                         transaction.Commit();
@@ -186,6 +188,67 @@ namespace WCDS.WebFuncions.Controller
                 catch
                 {
                     _logger.LogError("An error has occured while retrieving Invoices for: " + invoiceDetailRequest.InvoiceKey);
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            return response;
+        }
+
+        public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request)
+        {
+            CostDetailsResponseDto response = new CostDetailsResponseDto();
+            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    if (request != null && request.FlightReportCostDetailIds != null && request.FlightReportCostDetailIds.Count() > 0)
+                    {
+                        request.FlightReportCostDetailIds.ForEach(item =>
+                        {
+                            if(!dbContext.InvoiceTimeReportCostDetails.Any(c => c.TimeReportCostDetailReferenceId == item))
+                            {
+                                response.CostDetails.Add(new CostDetailsResponseDto.CostDetailsResult()
+                                {
+                                    FlightReportId = request.FlightReportId,
+                                    FlightReportCostDetailId = item,
+                                    InvoiceId = string.Empty,
+                                    PaymentStatus = string.Empty,
+                                    RedirectionURL = string.Empty
+                                });
+                            }
+                            else
+                            {
+                                var result = (from trc in dbContext.InvoiceTimeReportCostDetails
+                                              join i in dbContext.Invoice.DefaultIfEmpty()
+                                              on trc.InvoiceKey equals i.InvoiceKey
+                                                where trc.TimeReportCostDetailReferenceId == item
+                                              select new
+                                              {
+                                                  FlyingHoursId = item,
+                                                  Invoicekey = i.InvoiceKey,
+                                                  InvoiceId = i.InvoiceId,
+                                                  PaymentStatus = i.PaymentStatus
+                                              }).FirstOrDefault();
+
+                                if (result != null)
+                                {
+                                    response.CostDetails.Add(new CostDetailsResponseDto.CostDetailsResult()
+                                    {
+                                        FlightReportId = request.FlightReportId,
+                                        FlightReportCostDetailId = result.FlyingHoursId,
+                                        InvoiceId = result.InvoiceId,
+                                        PaymentStatus = !string.IsNullOrEmpty(result.PaymentStatus) ? result.PaymentStatus : string.Empty,
+                                        RedirectionURL = string.Format(Environment.GetEnvironmentVariable("ContractAppUrl") + CONTRACTS_API_PATH_PROCESSEDINVOICE, result.Invoicekey)
+                                    }) ;
+                                }
+                            }
+                        });
+                    }
+                }
+                catch(Exception ex)
+                {
+                    _logger.LogError("GetCostDetails: Error retrieving processed cost details - Message:{0}, StackTrace:{1}, InnerException:{2}", ex.Message, ex.StackTrace, ex.InnerException);
                     transaction.Rollback();
                     throw;
                 }

@@ -9,7 +9,8 @@ local.settings.json should look like this:
         "DomainServiceApiUrl": "<url to domain service api without trailing slash>",
         "AviationReportingServiceApiUrl": "<url to aviation reporting service api without trailing slash>",
         "WildfireFinanceServiceApiUrl":"<url to aviation finance service api without trailing slash>"
-        "WildfireFinanceServiceApiKey":"<api key from zaure>"
+        "WildfireFinanceServiceApiKey":"<api key from zaure>",
+        "ContractAppUrl": "<Contracts App Base Url>"
     },
     "Host": {
         "CORS": "*",
