@@ -18,7 +18,7 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceExists(string invoiceID);
         public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest);
         public string UpdateProcessedInvoice(InvoiceServiceSheetDto invoiceServiceSheet);
-        public ProcessedCostDetailsResponseDto GetProcessedCostDetails(ProcessedCostDetailsRequestDto request);
+        public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
     }
 
     public class InvoiceController : IInvoiceController
@@ -195,9 +195,9 @@ namespace WCDS.WebFuncions.Controller
             return response;
         }
 
-        public ProcessedCostDetailsResponseDto GetProcessedCostDetails(ProcessedCostDetailsRequestDto request)
+        public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request)
         {
-            ProcessedCostDetailsResponseDto response = new ProcessedCostDetailsResponseDto();
+            CostDetailsResponseDto response = new CostDetailsResponseDto();
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
             {
                 try
@@ -208,7 +208,7 @@ namespace WCDS.WebFuncions.Controller
                         {
                             if(!dbContext.InvoiceTimeReportCostDetails.Any(c => c.TimeReportCostDetailReferenceId == item))
                             {
-                                response.ProcessedCostDetails.Add(new ProcessedCostDetailsResponseDto.ProcessedCostDetailsResult()
+                                response.CostDetails.Add(new CostDetailsResponseDto.CostDetailsResult()
                                 {
                                     FlightReportId = request.FlightReportId,
                                     FlightReportCostDetailId = item,
@@ -233,7 +233,7 @@ namespace WCDS.WebFuncions.Controller
 
                                 if (result != null)
                                 {
-                                    response.ProcessedCostDetails.Add(new ProcessedCostDetailsResponseDto.ProcessedCostDetailsResult()
+                                    response.CostDetails.Add(new CostDetailsResponseDto.CostDetailsResult()
                                     {
                                         FlightReportId = request.FlightReportId,
                                         FlightReportCostDetailId = result.FlyingHoursId,
@@ -246,9 +246,9 @@ namespace WCDS.WebFuncions.Controller
                         });
                     }
                 }
-                catch
+                catch(Exception ex)
                 {
-                    _logger.LogError("An error has occured while retrieving processed cost details");
+                    _logger.LogError("GetCostDetails: Error retrieving processed cost details - Message:{0}, StackTrace:{1}, InnerException:{2}", ex.Message, ex.StackTrace, ex.InnerException);
                     transaction.Rollback();
                     throw;
                 }

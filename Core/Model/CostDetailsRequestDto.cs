@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WCDS.WebFuncions.Core.Model
 {
-    public class ProcessedCostDetailsRequestDto
+    public class CostDetailsRequestDto
     {
         public int FlightReportId { get; set; }
         public List<Guid> FlightReportCostDetailIds { get; set;}

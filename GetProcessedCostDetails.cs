@@ -31,17 +31,17 @@ namespace WCDS.WebFuncions
         }
 
 
-        [FunctionName("GetProcessedCostDetails")]
-        public async Task<ActionResult<ProcessedCostDetailsResponseDto[]>> Run(
+        [FunctionName("GetCostDetails")]
+        public async Task<ActionResult<CostDetailsResponseDto[]>> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
             try
             {
-                log.LogInformation("Trigger function (GetProcessedCostDetails) received a request.");
+                log.LogInformation("Trigger function (GetCostDetails) received a request.");
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var data = JsonConvert.DeserializeObject<ProcessedCostDetailsRequestDto>(requestBody);
+                var data = JsonConvert.DeserializeObject<CostDetailsRequestDto>(requestBody);
 
                 if (data == null || data.FlightReportCostDetailIds == null || data.FlightReportCostDetailIds.Count() == 0)
                 {
@@ -52,13 +52,13 @@ namespace WCDS.WebFuncions
                     return new BadRequestObjectResult("Invalid Input: FlightReportId is missing or not valid.");
                 }
 
-                var responseDto = new InvoiceController(log, _mapper).GetProcessedCostDetails(data);
+                var responseDto = new InvoiceController(log, _mapper).GetCostDetails(data);
                 return new OkObjectResult(responseDto);
 
             }
-            catch (Exception ex)
+            catch
             {
-                log.LogError("GetProcessedCostDetails: Error retrieving processed cost details - Message:{0}, StackTrace:{1}, InnerException:{2}", ex.Message, ex.StackTrace, ex.InnerException);
+                log.LogError("GetCostDetails: Error retrieving processed cost details.");
                 return new InternalServerErrorResult();
             }
 

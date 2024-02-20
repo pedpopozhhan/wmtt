@@ -7,14 +7,14 @@ using WCDS.WebFuncions.Core.Model.Services;
 
 namespace WCDS.WebFuncions.Core.Model
 {
-    public class ProcessedCostDetailsResponseDto
+    public class CostDetailsResponseDto
     {
-        public ProcessedCostDetailsResponseDto()
+        public CostDetailsResponseDto()
         {
-            ProcessedCostDetails = new List<ProcessedCostDetailsResult>();
+            CostDetails = new List<CostDetailsResult>();
         }
-        public List<ProcessedCostDetailsResult> ProcessedCostDetails;
-        public class ProcessedCostDetailsResult
+        public List<CostDetailsResult> CostDetails;
+        public class CostDetailsResult
         {
             public Guid FlightReportCostDetailId { get; set; }
             public int FlightReportId { get; set; }
