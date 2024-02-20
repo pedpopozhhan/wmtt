@@ -239,7 +239,7 @@ namespace WCDS.WebFuncions.Controller
                                         FlightReportCostDetailId = result.FlyingHoursId,
                                         InvoiceId = result.InvoiceId,
                                         PaymentStatus = !string.IsNullOrEmpty(result.PaymentStatus) ? result.PaymentStatus : string.Empty,
-                                        RedirectionURL = string.Format(Environment.GetEnvironmentVariable("ContractsAppUrl") + CONTRACTS_API_PATH_PROCESSEDINVOICE, result.Invoicekey)
+                                        RedirectionURL = string.Format(Environment.GetEnvironmentVariable("ContractAppUrl") + CONTRACTS_API_PATH_PROCESSEDINVOICE, result.Invoicekey)
                                     }) ;
                                 }
                             }
