@@ -16,7 +16,7 @@ namespace WCDS.WebFuncions.Core.Model
         public List<CostDetailsResult> CostDetails;
         public class CostDetailsResult
         {
-            public Guid FlightReportCostDetailId { get; set; }
+            public Guid FlightReportCostDetailsId { get; set; }
             public int FlightReportId { get; set; }
             public string InvoiceId { get; set; }
             public string PaymentStatus { get; set; }
