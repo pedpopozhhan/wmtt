@@ -16,9 +16,7 @@ local.settings.json should look like this:
         "CORS": "*",
         "CORSCredentials": false
     },
-    "ConnectionStrings": {
-        "SQLConnectionString": "<sqlclient-connection-string>"
-    },
+
     "logging": {
         "logLevel": {
             "default": "Debug",
@@ -27,5 +25,12 @@ local.settings.json should look like this:
         }
     }
 }
+
+set an env variable:
+$env:connectionstring="Server=V-VD-PD-0-1367\SQLEXPRESS;Database=Contracts;Trusted_Connection=true;TrustServerCertificate=true;"
+
+You might have to run management studio as an admin and then create a user with the dbcreator perms.
+Run the migration command
+dotnet ef database update
 
 ```
