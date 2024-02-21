@@ -21,11 +21,11 @@ namespace WCDS.WebFuncions
     /// <summary>
     /// This service pulls cost details from aviation for a flight report[s] based on the flight report id[s] passed.
     /// </summary>
-    public class GetProcessedCostDetails
+    public class GetCostDetails
     {
         private readonly IMapper _mapper;
 
-        public GetProcessedCostDetails(IMapper mapper)
+        public GetCostDetails(IMapper mapper)
         {
             _mapper = mapper;
         }
