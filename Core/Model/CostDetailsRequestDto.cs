@@ -8,7 +8,7 @@ namespace WCDS.WebFuncions.Core.Model
 {
     public class CostDetailsRequestDto
     {
-        public int FlightReportId { get; set; }
+        public int? FlightReportId { get; set; }
         public List<Guid> FlightReportCostDetailIds { get; set;}
     }
 }

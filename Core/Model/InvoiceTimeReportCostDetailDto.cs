@@ -8,8 +8,7 @@ namespace WCDS.WebFuncions.Core.Model
 {
     public class InvoiceTimeReportCostDetailDto
     {
-        public int InvoiceTimeReportCostDetailId { get; set; }
-        public Guid TimeReportCostDetailReferenceId { get; set; }
+        public Guid FlightReportCostDetailsId { get; set; }
         public DateTime Date { get; set; }
         public string RegistrationNumber { get; set; }
         public int FlightReportId { get; set; }

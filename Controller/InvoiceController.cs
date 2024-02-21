@@ -206,12 +206,12 @@ namespace WCDS.WebFuncions.Controller
                     {
                         request.FlightReportCostDetailIds.ForEach(item =>
                         {
-                            if(!dbContext.InvoiceTimeReportCostDetails.Any(c => c.TimeReportCostDetailReferenceId == item))
+                            if(!dbContext.InvoiceTimeReportCostDetails.Any(c => c.FlightReportCostDetailsId == item && c.FlightReportId == request.FlightReportId))
                             {
                                 response.CostDetails.Add(new CostDetailsResponseDto.CostDetailsResult()
                                 {
-                                    FlightReportId = request.FlightReportId,
-                                    FlightReportCostDetailId = item,
+                                    FlightReportId = request.FlightReportId.Value,
+                                    FlightReportCostDetailsId = item,
                                     InvoiceId = string.Empty,
                                     PaymentStatus = string.Empty,
                                     RedirectionURL = string.Empty
@@ -222,10 +222,10 @@ namespace WCDS.WebFuncions.Controller
                                 var result = (from trc in dbContext.InvoiceTimeReportCostDetails
                                               join i in dbContext.Invoice.DefaultIfEmpty()
                                               on trc.InvoiceKey equals i.InvoiceKey
-                                                where trc.TimeReportCostDetailReferenceId == item
+                                                where trc.FlightReportCostDetailsId == item
                                               select new
                                               {
-                                                  FlyingHoursId = item,
+                                                  FlightReportCostDetailsId = item,
                                                   Invoicekey = i.InvoiceKey,
                                                   InvoiceId = i.InvoiceId,
                                                   PaymentStatus = i.PaymentStatus
@@ -235,8 +235,8 @@ namespace WCDS.WebFuncions.Controller
                                 {
                                     response.CostDetails.Add(new CostDetailsResponseDto.CostDetailsResult()
                                     {
-                                        FlightReportId = request.FlightReportId,
-                                        FlightReportCostDetailId = result.FlyingHoursId,
+                                        FlightReportId = request.FlightReportId.Value,
+                                        FlightReportCostDetailsId = result.FlightReportCostDetailsId,
                                         InvoiceId = result.InvoiceId,
                                         PaymentStatus = !string.IsNullOrEmpty(result.PaymentStatus) ? result.PaymentStatus : string.Empty,
                                         RedirectionURL = string.Format(Environment.GetEnvironmentVariable("ContractAppUrl") + CONTRACTS_API_PATH_PROCESSEDINVOICE, result.Invoicekey)

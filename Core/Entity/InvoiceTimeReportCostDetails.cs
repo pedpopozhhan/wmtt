@@ -6,12 +6,11 @@ namespace WCDS.WebFuncions.Core.Entity
     internal class InvoiceTimeReportCostDetails
     {
         [Key]
-        public int InvoiceTimeReportCostDetailId { get; set; }
-        public Guid TimeReportCostDetailReferenceId { get; set; }
+        public Guid FlightReportCostDetailsId { get; set; }
         public int InvoiceKey { get; set; }
         public DateTime Date { get; set; }
         public string RegistrationNumber { get; set; }
-        public int ReportNumber { get; set; }
+        public int FlightReportId { get; set; }
         public string AO02Number { get; set; }
         public string RateType { get; set; }
         public int NumberOfUnits { get; set; }

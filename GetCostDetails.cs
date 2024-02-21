@@ -6,6 +6,7 @@ using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -39,19 +40,33 @@ namespace WCDS.WebFuncions
             try
             {
                 log.LogInformation("Trigger function (GetCostDetails) received a request.");
+                List<string> validationErrors = new List<string>();
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<CostDetailsRequestDto>(requestBody);
 
-                if (data == null || data.FlightReportCostDetailIds == null || data.FlightReportCostDetailIds.Count() == 0)
+                if (data == null)
                 {
-                    return new BadRequestObjectResult("Invalid Input: FlightReportCostDetailIds not found.");
+                    validationErrors.Add("Invalid Request: Request can not be null or empty.");
+                    return new BadRequestObjectResult(validationErrors);
                 }
-                if (data.FlightReportId == 0)
+                else
                 {
-                    return new BadRequestObjectResult("Invalid Input: FlightReportId is missing or not valid.");
+                    if (data.FlightReportId == null || data.FlightReportId == 0)
+                    {
+                        validationErrors.Add("Invalid Request: FlightReportId can not be null or 0");
+                    }
+                    if (data.FlightReportCostDetailIds == null || data.FlightReportCostDetailIds.Count() == 0)
+                    {
+                        validationErrors.Add("Invalid Request: FlightReportCostDetailIds can not be empty or null");
+                    }
                 }
 
+                if(validationErrors.Count > 0)
+                {
+                    return new BadRequestObjectResult(validationErrors);
+                }
+               
                 var responseDto = new InvoiceController(log, _mapper).GetCostDetails(data);
                 return new OkObjectResult(responseDto);
 
