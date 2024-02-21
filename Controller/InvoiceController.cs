@@ -27,7 +27,7 @@ namespace WCDS.WebFuncions.Controller
         ILogger _logger;
         IMapper _mapper;
         private const string DEFAULT_USER = "System";
-        private const string CONTRACTS_API_PATH_PROCESSEDINVOICE = "ProcessedInvoice/{0}";
+        private const string CONTRACTS_API_PATH_PROCESSEDINVOICE = "/ProcessedInvoice/{0}";
 
         public InvoiceController(ILogger log, IMapper mapper)
         {
