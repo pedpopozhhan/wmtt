@@ -11,7 +11,7 @@ namespace WCDS.WebFuncions.Core.Common
         {
             CreateMap<TimeReportCostDetailDto, TimeReportCostDetail>().ForMember(dest => dest.TimeReportCostDetailReferenceId, opt => opt.MapFrom(src => src.FlyingHoursId)).ReverseMap();
             CreateMap<Invoice, InvoiceDto>().ReverseMap();
-            CreateMap<InvoiceTimeReportCostDetails, InvoiceTimeReportCostDetailDto>().ReverseMap();
+            CreateMap<InvoiceTimeReportCostDetails, InvoiceTimeReportCostDetailDto>().ForMember(dest => dest.FlightReportId, opt => opt.MapFrom(src => src.ReportNumber)).ReverseMap();
             CreateMap<InvoiceOtherCostDetails, InvoiceOtherCostDetailDto>().ReverseMap();
             CreateMap<InvoiceServiceSheet, InvoiceServiceSheetDto>().ReverseMap();
         }
