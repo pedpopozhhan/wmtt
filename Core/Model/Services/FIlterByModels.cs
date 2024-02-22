@@ -9,7 +9,16 @@ namespace WCDS.WebFuncions.Core.Model.Services
     {
 
     }
-
+    public class FilterByCostRequest : FilterBy
+    {
+        public string ContractNumber { get; set; }
+        public string Status { get; set; }
+        public FilterByCostRequest(string contractNumber, string status)
+        {
+            ContractNumber = contractNumber;
+            Status = status;
+        }
+    }
     public class FilterByCostDetails : FilterBy
     {
         public FlightReportIds FlightReportIds { get; set; }
