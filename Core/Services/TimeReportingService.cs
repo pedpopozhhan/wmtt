@@ -12,6 +12,8 @@ namespace WCDS.WebFuncions.Core.Services
     public interface ITimeReportingService
     {
         public Task<Response<TimeReportCostDetailDto>> GetTimeReportByIds(int[] ids);
+        public Task<Response<TimeReportCostDto>> GetTimeReportCosts(string contractNumber, string status);
+        public Task<Response<ContractSearchResultDto>> GetContracts();
     }
 
     public class TimeReportingService : ITimeReportingService
@@ -52,10 +54,76 @@ namespace WCDS.WebFuncions.Core.Services
                 MissingMemberHandling = MissingMemberHandling.Ignore
             };
             Response<TimeReportCostDetailDto> responseData = JsonConvert.DeserializeObject<Response<TimeReportCostDetailDto>>(json, settings);
-            if(responseData.Data != null && responseData.Data.Length > 0)
+            if (responseData.Data != null && responseData.Data.Length > 0)
             {
                 responseData.Data = responseData.Data.Where(i => !dbContext.InvoiceTimeReportCostDetails.Any(r => r.FlightReportCostDetailsId == i.FlightReportCostDetailsId)).ToArray();
             }
+
+            return responseData;
+        }
+
+        public async Task<Response<TimeReportCostDto>> GetTimeReportCosts(string contractNumber, string status)
+        {
+            var url = Environment.GetEnvironmentVariable("AviationReportingServiceApiUrl");
+            if (url == null)
+            {
+                Log.LogError("AviationReportingServiceApiUrl not found!");
+                throw new Exception("AviationReportingServiceApiUrl not found");
+            }
+            url += "/flight-report-dashboard/cost";
+            Log.LogInformation("GetTimeReportCosts url: {url}", url);
+
+            var request = new Request<FilterByCostRequest>
+            {
+                FilterBy = new FilterByCostRequest(contractNumber, status)
+            };
+            var response = await HttpClient.PostAsJsonAsync(url, request);
+
+            response.EnsureSuccessStatusCode();
+
+            // Handle the http response
+            var json = await response.Content.ReadAsStringAsync();
+
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore
+            };
+            Response<TimeReportCostDto> responseData = JsonConvert.DeserializeObject<Response<TimeReportCostDto>>(json, settings);
+
+            return responseData;
+        }
+
+        ///flight-report-dashboard/vendors/get
+
+        public async Task<Response<ContractSearchResultDto>> GetContracts()
+        {
+            var url = Environment.GetEnvironmentVariable("AviationReportingServiceApiUrl");
+            if (url == null)
+            {
+                Log.LogError("AviationReportingServiceApiUrl not found!");
+                throw new Exception("AviationReportingServiceApiUrl not found");
+            }
+            url += "/flight-report-dashboard/vendors/get";
+            Log.LogInformation("GetContracts url: {url}", url);
+
+            var request = new Request<FilterBy>
+            {
+                FilterBy = new FilterBy()
+            };
+            var response = await HttpClient.PostAsJsonAsync(url, request);
+
+            response.EnsureSuccessStatusCode();
+
+            // Handle the http response
+            var json = await response.Content.ReadAsStringAsync();
+
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore
+            };
+            Response<ContractSearchResultDto> responseData = JsonConvert.DeserializeObject<Response<ContractSearchResultDto>>(json, settings);
 
             return responseData;
         }
