@@ -5,7 +5,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
     public class TimeReportCostDetailDto
     {
         public int FlightReportId { get; set; }
-        public Guid FlyingHoursId { get; set; }
+        public Guid FlightReportCostDetailsId { get; set; }
         public DateTime FlightReportDate { get; set; }
         public string Ao02Number { get; set; }
         public string Status { get; set; }

@@ -56,7 +56,7 @@ namespace WCDS.WebFuncions.Core.Services
             Response<TimeReportCostDetailDto> responseData = JsonConvert.DeserializeObject<Response<TimeReportCostDetailDto>>(json, settings);
             if (responseData.Data != null && responseData.Data.Length > 0)
             {
-                responseData.Data = responseData.Data.Where(i => !dbContext.InvoiceTimeReportCostDetails.Any(r => r.TimeReportCostDetailReferenceId == i.FlyingHoursId)).ToArray();
+                responseData.Data = responseData.Data.Where(i => !dbContext.InvoiceTimeReportCostDetails.Any(r => r.FlightReportCostDetailsId == i.FlightReportCostDetailsId)).ToArray();
             }
 
             return responseData;
