@@ -33,7 +33,7 @@ namespace WCDS.WebFuncions
 
         [FunctionName("GetContracts")]
         public async Task<ActionResult<ContractsResponse[]>> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             ILogger log)
         {
             log.LogInformation("Trigger function (GetContracts) received a request.");
