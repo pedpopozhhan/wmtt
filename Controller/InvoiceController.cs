@@ -66,6 +66,10 @@ namespace WCDS.WebFuncions.Controller
                     }
                     if(invoiceEntity.InvoiceServiceSheet != null)
                     {
+                        if (!string.IsNullOrEmpty(invoiceEntity.InvoiceServiceSheet.UniqueServiceSheetName))
+                        {
+                            invoiceEntity.PaymentStatus = Constants.PAYMENTSTATUS_SUBMITTED;
+                        }
                         invoiceEntity.InvoiceServiceSheet.CreatedBy = DEFAULT_USER;
                         invoiceEntity.InvoiceServiceSheet.CreatedByDateTime = DateTime.Now;
                     }
@@ -96,6 +100,11 @@ namespace WCDS.WebFuncions.Controller
                     if (invoiceServiceSheetRecord != null)
                     {
                         invoiceServiceSheetRecord.UniqueServiceSheetName = invoiceServiceSheet.UniqueServiceSheetName;
+                        var invoiceRecord = dbContext.Invoice.FirstOrDefault(i => i.InvoiceKey == invoiceServiceSheetRecord.InvoiceKey);
+                        if (invoiceRecord != null)
+                        {
+                            invoiceRecord.PaymentStatus = Constants.PAYMENTSTATUS_SUBMITTED;
+                        }
                         invoiceServiceSheetRecord.UpdatedBy = DEFAULT_USER;
                         invoiceServiceSheetRecord.UpdatedByDateTime = DateTime.Now;
                         dbContext.SaveChanges();
@@ -153,6 +162,7 @@ namespace WCDS.WebFuncions.Controller
                     List<Invoice> items = dbContext.Invoice.Where(x => x.ContractNumber == invoiceRequest.ContractNumber).ToList();
                     var mapped = items.Select(item =>
                     {
+                        item.InvoiceServiceSheet = dbContext.InvoiceServiceSheet.FirstOrDefault(i => i.InvoiceKey == item.InvoiceKey);
                         return _mapper.Map<Invoice, InvoiceDto>(item);
                     });
                     response.Invoices = mapped.ToArray();

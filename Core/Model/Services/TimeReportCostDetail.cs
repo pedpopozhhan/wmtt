@@ -10,7 +10,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public DateTime FlightReportDate { get; set; }
         public string ContractRegistrationName { get; set; }
         public int FlightReportId { get; set; }
-        public Guid TimeReportCostDetailReferenceId { get; set; }
+        public Guid FlightReportCostDetailsId { get; set; }
         public string Ao02Number { get; set; }
         public string RateType { get; set; }
         public decimal NoOfUnits { get; set; }
