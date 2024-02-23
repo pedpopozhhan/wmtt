@@ -68,7 +68,7 @@ namespace WCDS.WebFuncions.Controller
                     {
                         if (!string.IsNullOrEmpty(invoiceEntity.InvoiceServiceSheet.UniqueServiceSheetName))
                         {
-                            invoiceEntity.PaymentStatus = Constants.PAYMENTSTATUS_SUBMITTED;
+                            invoiceEntity.PaymentStatus = Enums.PaymentStatus.Submitted.ToString();
                         }
                         invoiceEntity.InvoiceServiceSheet.CreatedBy = DEFAULT_USER;
                         invoiceEntity.InvoiceServiceSheet.CreatedByDateTime = DateTime.Now;
@@ -103,7 +103,7 @@ namespace WCDS.WebFuncions.Controller
                         var invoiceRecord = dbContext.Invoice.FirstOrDefault(i => i.InvoiceKey == invoiceServiceSheetRecord.InvoiceKey);
                         if (invoiceRecord != null)
                         {
-                            invoiceRecord.PaymentStatus = Constants.PAYMENTSTATUS_SUBMITTED;
+                            invoiceRecord.PaymentStatus = Enums.PaymentStatus.Submitted.ToString();
                         }
                         invoiceServiceSheetRecord.UpdatedBy = DEFAULT_USER;
                         invoiceServiceSheetRecord.UpdatedByDateTime = DateTime.Now;
@@ -159,10 +159,9 @@ namespace WCDS.WebFuncions.Controller
             {
                 try
                 {
-                    List<Invoice> items = dbContext.Invoice.Where(x => x.ContractNumber == invoiceRequest.ContractNumber).ToList();
+                    List<Invoice> items = dbContext.Invoice.Where(x => x.ContractNumber == invoiceRequest.ContractNumber).Include(i => i.InvoiceServiceSheet).ToList();
                     var mapped = items.Select(item =>
                     {
-                        item.InvoiceServiceSheet = dbContext.InvoiceServiceSheet.FirstOrDefault(i => i.InvoiceKey == item.InvoiceKey);
                         return _mapper.Map<Invoice, InvoiceDto>(item);
                     });
                     response.Invoices = mapped.ToArray();
