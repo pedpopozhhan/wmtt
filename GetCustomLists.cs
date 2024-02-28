@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using WCDS.WebFuncions.Core.Services;
 using System.Linq;
 using WCDS.WebFuncions.Core.Model.Services;
+using WCDS.WebFuncions.Core.Common;
 
 namespace WCDS.WebFuncions
 {
@@ -58,8 +59,8 @@ namespace WCDS.WebFuncions
 
             var response = new CustomlistsResponse
             {
-                RateTypes = rateTypes.Data.Select(x => x.Type).ToArray(),
-                RateUnits = rateUnits.Data.Select(x => x.Type).ToArray(),
+                RateTypes = rateTypes.Data.Where(p => Common.filteredRateTypes.Contains(p.Type)).Select(x => x.Type).ToArray(),
+                RateUnits = rateUnits.Data.Where(p => Common.filteredRateUnits.Contains(p.Type)).Select(x => x.Type).ToArray(),
                 CostCenterList = costCenter.Select(x => x.Value).ToArray(),
                 GLAccountList = glAccount.Select(x => x.Value).ToArray(),
                 InternalOrderList = internalOrder.Select(x => x.Value).ToArray(),
