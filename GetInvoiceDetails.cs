@@ -17,6 +17,7 @@ namespace WCDS.WebFuncions
     public class GetInvoiceDetails
     {
         private readonly IMapper _mapper;
+        string errorMessage = "Error : {0}, InnerException: {1}";
 
         public GetInvoiceDetails(IMapper mapper)
         {
@@ -27,19 +28,32 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("Trigger function (GetInvoiceDetails) received a request.");
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var data = JsonConvert.DeserializeObject<InvoiceDetailRequestDto>(requestBody);
-
-            if (data != null)
+            try
             {
-                var responseDto = new InvoiceController(log, _mapper).GetInvoiceDetails(data);
-                return new JsonResult(responseDto);
+                log.LogInformation("Trigger function (GetInvoiceDetails) received a request.");
+
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var data = JsonConvert.DeserializeObject<InvoiceDetailRequestDto>(requestBody);
+
+                if (data != null)
+                {
+                    var responseDto = new InvoiceController(log, _mapper).GetInvoiceDetails(data);
+                    return new JsonResult(responseDto);
+                }
+                else
+                {
+                    return new BadRequestObjectResult("Invalid Request");
+                }
+
             }
 
-            log.LogError("Either invalid request, or an error retrieving details of invoice");
-            throw new Exception("Either invalid request, or an error retrieving details of invoice");
+            catch (Exception ex)
+            {
+                log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
+            }
         }
     }
 }

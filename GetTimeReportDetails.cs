@@ -23,6 +23,7 @@ namespace WCDS.WebFuncions
         private readonly IDomainService DomainService;
         private readonly ITimeReportingService TimeReportingService;
         private readonly IMapper Mapper;
+        string errorMessage = "Error : {0}, InnerException: {1}";
 
         public GetTimeReportDetails(IDomainService domainService, ITimeReportingService timeReportingService, IMapper mapper)
         {
@@ -37,42 +38,56 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("Trigger function (GetTimeReportDetails) received a request.");
-
-            log.LogInformation("Reading rateunits from DomainService");
-            var rateUnits = await DomainService.GetRateUnits();
-            log.LogInformation("Reading ratetypes from DomainService");
-            var rateTypes = await DomainService.GetRateTypes();
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var data = JsonConvert.DeserializeObject<TimeReportDetailsRequest>(requestBody);
-
-            if (data != null && string.IsNullOrEmpty(rateTypes.ErrorMessage) && string.IsNullOrEmpty(rateTypes.ErrorMessage))
+            try
             {
+                log.LogInformation("Trigger function (GetTimeReportDetails) received a request.");
 
-                var details = await TimeReportingService.GetTimeReportByIds(data.TimeReportIds);
-                if (!string.IsNullOrEmpty(details.ErrorMessage))
+                log.LogInformation("Reading rateunits from DomainService");
+                var rateUnits = await DomainService.GetRateUnits();
+                log.LogInformation("Reading ratetypes from DomainService");
+                var rateTypes = await DomainService.GetRateTypes();
+
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var data = JsonConvert.DeserializeObject<TimeReportDetailsRequest>(requestBody);
+
+                if (data == null)
                 {
-                    log.LogError(details.ErrorMessage);
-                    throw new Exception(details.ErrorMessage);
+                    return new BadRequestObjectResult("Invalid Request");
                 }
-                var mapped = details.Data?.Select(detail =>
+
+                if (string.IsNullOrEmpty(rateTypes.ErrorMessage) && string.IsNullOrEmpty(rateTypes.ErrorMessage))
                 {
-                    var mapped = Mapper.Map<TimeReportCostDetailDto, TimeReportCostDetail>(detail);
-                    // set rate unit and rate type
-                    mapped.RateType = rateTypes.Data.SingleOrDefault(x => x.RateTypeId == detail.RateTypeId)?.Type;
-                    mapped.RateUnit = rateUnits.Data.SingleOrDefault(x => x.RateUnitId == detail.RateUnitId)?.Type;
-                    return mapped;
-                });
-                var response = new TimeReportDetailsResponse
-                {
-                    Rows = mapped?.ToArray(),
-                    RateTypes = rateTypes.Data.Select(x => x.Type).ToArray()
-                };
-                return new JsonResult(response);
+                    var details = await TimeReportingService.GetTimeReportByIds(data.TimeReportIds);
+                    if (!string.IsNullOrEmpty(details.ErrorMessage))
+                    {
+                        throw new Exception(details.ErrorMessage);
+                    }
+                    var mapped = details.Data?.Select(detail =>
+                    {
+                        var mapped = Mapper.Map<TimeReportCostDetailDto, TimeReportCostDetail>(detail);
+                        // set rate unit and rate type
+                        mapped.RateType = rateTypes.Data.SingleOrDefault(x => x.RateTypeId == detail.RateTypeId)?.Type;
+                        mapped.RateUnit = rateUnits.Data.SingleOrDefault(x => x.RateUnitId == detail.RateUnitId)?.Type;
+                        return mapped;
+                    });
+                    var response = new TimeReportDetailsResponse
+                    {
+                        Rows = mapped?.ToArray(),
+                        RateTypes = rateTypes.Data.Select(x => x.Type).ToArray()
+                    };
+                    return new JsonResult(response);
+                }
+
+                throw new Exception("Error retrieving rateTypes or rateUnits");
+
             }
-            log.LogError("Either invalid request, or an error retrieving rateTypes or rateUnits");
-            throw new Exception("Either invalid request, or an error retrieving rateTypes or rateUnits");
+            catch (Exception ex)
+            {
+                log.LogError(ex.Message);
+                var result = new ObjectResult(ex.Message);
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
+            }
         }
     }
 }
