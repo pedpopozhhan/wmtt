@@ -39,19 +39,19 @@ namespace WCDS.WebFuncions
             log.LogInformation("ratetypes returned from DomainService are: " + rateTypes.Data.Count());
 
             log.LogInformation("Reading costCenter from WildFireFinanceApi");
-            var costCenter = await _wildfireFinanceService.GetCostCenterForDDL(log);
-            log.LogInformation("costCenters returned from WildFireFinanceApi are: {0} " , costCenter == null ? 0 : costCenter.Count);
+            var costCenter = await _wildfireFinanceService.GetCostCenterForDDL();
+            log.LogInformation("costCenters returned from WildFireFinanceApi are: {0} ", costCenter == null ? 0 : costCenter.Count);
 
             log.LogInformation("Reading glAccount from WildFireFinanceApi");
-            var glAccount = await _wildfireFinanceService.GetGLAccountForDDL(log);
+            var glAccount = await _wildfireFinanceService.GetGLAccountForDDL();
             log.LogInformation("glAccounts returned from WildFireFinanceApi are: {0} ", glAccount == null ? 0 : glAccount.Count);
 
             log.LogInformation("Reading internalOrder from WildFireFinanceApi");
-            var internalOrder = await _wildfireFinanceService.GetInternalOrderForDDL(log);
+            var internalOrder = await _wildfireFinanceService.GetInternalOrderForDDL();
             log.LogInformation("internalOrders returned from WildFireFinanceApi are: {0} ", internalOrder == null ? 0 : internalOrder.Count);
 
             log.LogInformation("Reading Fund from WildFireFinanceApi");
-            var fund = await _wildfireFinanceService.GetFundForDDL(log);
+            var fund = await _wildfireFinanceService.GetFundForDDL();
             log.LogInformation("Funds returned from WildFireFinanceApi are: {0} ", fund == null ? 0 : fund.Count);
 
             log.LogInformation("C# HTTP trigger function processed a request.");
@@ -65,7 +65,7 @@ namespace WCDS.WebFuncions
                 InternalOrderList = internalOrder.Select(x => x.Value).ToArray(),
                 FundList = fund.Select(x => x.Value).ToArray()
             };
-            
+
             return new JsonResult(response);
         }
     }

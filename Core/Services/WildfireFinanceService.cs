@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Protocols;
 using Newtonsoft.Json;
@@ -11,38 +12,42 @@ namespace WCDS.WebFuncions.Core.Services
 {
     public interface IWildfireFinanceService
     {
-        public Task<List<CustomlistDto>> GetGLAccountForDDL(ILogger _log);
-        public Task<List<CustomlistDto>> GetCostCenterForDDL(ILogger _log);
-        public Task<List<CustomlistDto>> GetInternalOrderForDDL(ILogger _log);
-        public Task<List<CustomlistDto>> GetFundForDDL(ILogger _log);
+        public Task<List<CustomlistDto>> GetGLAccountForDDL();
+        public Task<List<CustomlistDto>> GetCostCenterForDDL();
+        public Task<List<CustomlistDto>> GetInternalOrderForDDL();
+        public Task<List<CustomlistDto>> GetFundForDDL();
     }
     public class WildfireFinanceService : IWildfireFinanceService
     {
         private readonly ILogger _log;
         private readonly HttpClient _httpClient;
+        private readonly IHttpContextAccessor httpContextAccessor;
         private readonly string _urlKey = "WildfireFinanceServiceApiUrl";
         private readonly string _serviceApiKey = "WildfireFinanceServiceApiKey";
 
-        public WildfireFinanceService(ILogger log, HttpClient httpClient)
+        public WildfireFinanceService(ILogger<WildfireFinanceService> log, HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
         {
-            _log = log ;
+            _log = log ?? throw new ArgumentNullException(nameof(log));
             _httpClient = httpClient;
+            this.httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<List<CustomlistDto>> GetCostCenterForDDL(ILogger _log)
+        public async Task<List<CustomlistDto>> GetCostCenterForDDL()
         {
+
             var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
             {
                 _log.LogError(_urlKey + " not found!");
                 throw new Exception(_urlKey + " not found");
             }
-            
+
             url = url + "/getcostcenter?listType=OtherCostDDL";
             _log.LogInformation("getcostcenter url: {url}", url);
-            
+
             var msg = new HttpRequestMessage(HttpMethod.Get, url);
-            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey)); 
+            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
+            msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
 
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
@@ -58,7 +63,7 @@ namespace WCDS.WebFuncions.Core.Services
             return responseData;
         }
 
-        public async Task<List<CustomlistDto>> GetFundForDDL(ILogger _log)
+        public async Task<List<CustomlistDto>> GetFundForDDL()
         {
             var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
@@ -72,6 +77,7 @@ namespace WCDS.WebFuncions.Core.Services
 
             var msg = new HttpRequestMessage(HttpMethod.Get, url);
             msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
+            msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
 
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
@@ -87,7 +93,7 @@ namespace WCDS.WebFuncions.Core.Services
             return responseData;
         }
 
-        public async Task<List<CustomlistDto>> GetGLAccountForDDL(ILogger _log)
+        public async Task<List<CustomlistDto>> GetGLAccountForDDL()
         {
             var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
@@ -101,6 +107,7 @@ namespace WCDS.WebFuncions.Core.Services
 
             var msg = new HttpRequestMessage(HttpMethod.Get, url);
             msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
+            msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
 
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
@@ -116,7 +123,7 @@ namespace WCDS.WebFuncions.Core.Services
             return responseData;
         }
 
-        public async Task<List<CustomlistDto>> GetInternalOrderForDDL(ILogger _log)
+        public async Task<List<CustomlistDto>> GetInternalOrderForDDL()
         {
             var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
@@ -130,6 +137,7 @@ namespace WCDS.WebFuncions.Core.Services
 
             var msg = new HttpRequestMessage(HttpMethod.Get, url);
             msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
+            msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
 
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
@@ -143,6 +151,17 @@ namespace WCDS.WebFuncions.Core.Services
             List<CustomlistDto> responseData = JsonConvert.DeserializeObject<List<CustomlistDto>>(json, settings);
 
             return responseData;
+        }
+
+        private string GetToken()
+        {
+            var token = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
+            if (string.IsNullOrEmpty(token))
+            {
+                _log.LogError("No Authorization header found");
+                throw new UnauthorizedAccessException();
+            }
+            return (string)token;
         }
     }
 }
