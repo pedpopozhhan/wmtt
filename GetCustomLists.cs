@@ -79,7 +79,7 @@ namespace WCDS.WebFuncions
                 result.StatusCode = StatusCodes.Status500InternalServerError;
                 return result;
             }
-           
+
         }
     }
 }
