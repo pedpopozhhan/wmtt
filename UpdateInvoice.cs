@@ -12,12 +12,14 @@ using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Validator;
 using FluentValidation;
 using AutoMapper;
+using System.Linq;
 
 namespace WCDS.WebFuncions
 {
     public  class UpdateInvoice
     {
         private readonly IMapper _mapper;
+        string errorMessage = "Error : {0}, InnerException: {1}";
         public UpdateInvoice(IMapper mapper)
         {
             _mapper = mapper;
@@ -31,18 +33,31 @@ namespace WCDS.WebFuncions
             {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
+                if (invoiceObj != null)
+                {
+                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                    InvoiceValidator validationRules = new InvoiceValidator(iController);
+                    var validationResult = validationRules.Validate(invoiceObj);
+                    if (!validationResult.IsValid)
+                    {
+                        return new BadRequestObjectResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
+                    }
 
-                IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                InvoiceValidator validationRules = new InvoiceValidator(iController);
-                validationRules.ValidateAndThrow(invoiceObj);
+                    int result = iController.UpdateInvoice(invoiceObj);
+                    return new OkObjectResult(result.ToString());
+                }
+                else
+                {
+                    return new BadRequestObjectResult("Invalid Request");
+                }
 
-                int result = iController.UpdateInvoice(invoiceObj);
-                return new OkObjectResult(result.ToString());
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.ToString());
-                return new BadRequestObjectResult(ex.ToString() + ex.StackTrace);
+                _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
             }
         }
     }

@@ -22,6 +22,7 @@ namespace WCDS.WebFuncions
     {
         private readonly ITimeReportingService TimeReportingService;
         private readonly IMapper Mapper;
+        string errorMessage = "Error : {0}, InnerException: {1}";
 
         public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper)
         {
@@ -36,29 +37,40 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("Trigger function (GetTimeReportCosts) received a request.");
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var data = JsonConvert.DeserializeObject<TimeReportCostsRequest>(requestBody);
-
-            if (data != null)
+            try
             {
+                log.LogInformation("Trigger function (GetTimeReportCosts) received a request.");
 
-                var costs = await TimeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
-                if (!string.IsNullOrEmpty(costs.ErrorMessage))
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var data = JsonConvert.DeserializeObject<TimeReportCostsRequest>(requestBody);
+
+                if (data != null)
                 {
-                    log.LogError(costs.ErrorMessage);
-                    throw new Exception(costs.ErrorMessage);
+                    var costs = await TimeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
+                    if (!string.IsNullOrEmpty(costs.ErrorMessage))
+                    {
+                        throw new Exception(costs.ErrorMessage);
+                    }
+
+                    var response = new TimeReportCostsResponse
+                    {
+                        Rows = costs.Data
+                    };
+                    return new JsonResult(response);
+                }
+                else
+                {
+                    return new BadRequestObjectResult("Invalid Request");
                 }
 
-                var response = new TimeReportCostsResponse
-                {
-                    Rows = costs.Data
-                };
-                return new JsonResult(response);
             }
-            log.LogError("Either invalid request, or an error retrieving cost data");
-            throw new Exception("Either invalid request, or an error retrieving cost data");
+            catch (Exception ex)
+            {
+                log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
+            }
         }
     }
 }

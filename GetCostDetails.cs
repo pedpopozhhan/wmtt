@@ -25,6 +25,7 @@ namespace WCDS.WebFuncions
     public class GetCostDetails
     {
         private readonly IMapper _mapper;
+        string errorMessage = "Error : {0}, InnerException: {1}";
 
         public GetCostDetails(IMapper mapper)
         {
@@ -48,7 +49,6 @@ namespace WCDS.WebFuncions
                 if (data == null)
                 {
                     validationErrors.Add("Invalid Request: Request can not be null or empty.");
-                    return new BadRequestObjectResult(validationErrors);
                 }
                 else
                 {
@@ -71,12 +71,13 @@ namespace WCDS.WebFuncions
                 return new OkObjectResult(responseDto);
 
             }
-            catch
+            catch (Exception ex)
             {
-                log.LogError("GetCostDetails: Error retrieving processed cost details.");
-                return new InternalServerErrorResult();
+                log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
             }
-
         }
     }
 }
