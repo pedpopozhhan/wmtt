@@ -49,9 +49,6 @@ namespace WCDS.WebFuncions.Core.Services
             url = url + "/flight-report/get/cost-details";
             Log.LogInformation("GetTimeReportById url: {url}", url);
 
-            // var request = new Request<FilterByCostDetails>();
-            // request.FilterBy = new FilterByCostDetails(ids);
-            // var response = await HttpClient.PostAsJsonAsync<Request<FilterByCostDetails>>(url, request);
             var requestObject = new Request<FilterByCostDetails> { FilterBy = new FilterByCostDetails(ids) };
             var jsonRequest = JsonConvert.SerializeObject(requestObject);
             var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");

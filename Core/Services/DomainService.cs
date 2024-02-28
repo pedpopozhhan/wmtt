@@ -76,36 +76,6 @@ namespace WCDS.WebFuncions.Core.Services
 
             return responseData;
         }
-        // private async Task<Response<T>> GetDomainObjects<T, U>(U filterBy, string relativePath) where U : IFilterBy
-        // {
-        //     var token = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
-        //     if (string.IsNullOrEmpty(token))
-        //     {
-        //         Log.LogError("No Authorization header found");
-        //         throw new UnauthorizedAccessException();
-        //     }
-
-        //     var url = Environment.GetEnvironmentVariable("DomainServiceApiUrl");
-        //     if (url == null)
-        //     {
-        //         Log.LogError("DomainServiceApiUrl not found!");
-        //         throw new Exception("DomainServiceApiUrl not found");
-        //     }
-        //     url = url + relativePath;
-        //     Log.LogInformation("Domain service url: {url}", url);
-
-        //     var request = new Request<U>();
-        //     request.FilterBy = filterBy;
-        //     var response = await HttpClient.PostAsJsonAsync<Request<U>>(url, request);
-
-        //     response.EnsureSuccessStatusCode();
-
-        //     // Handle the http response
-        //     var json = await response.Content.ReadAsStringAsync();
-        //     Response<T> responseData = JsonConvert.DeserializeObject<Response<T>>(json);
-
-        //     return responseData;
-        // }
     }
 }
 
