@@ -20,6 +20,8 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
 
+        string errorMessage = "Error : {0}, InnerException: {1}";
+
         public UpdateProcessedInvoice(IMapper mapper)
         {
             _mapper = mapper;
@@ -33,14 +35,23 @@ namespace WCDS.WebFuncions
             {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceServiceSheetDto>(requestBody);
-                IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                string result = iController.UpdateProcessedInvoice(invoiceObj);
-                return new OkObjectResult(result.ToString());
+                if (invoiceObj != null)
+                {
+                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                    string result = iController.UpdateProcessedInvoice(invoiceObj);
+                    return new OkObjectResult(result.ToString());
+                }
+                else
+                {
+                    return new BadRequestObjectResult("Invalid Request");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.ToString());
-                return new BadRequestObjectResult(ex.ToString() + ex.StackTrace);
+                _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
             }
         }
     }
