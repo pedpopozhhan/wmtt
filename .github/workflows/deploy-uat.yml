@@ -1,0 +1,62 @@
+# To configure this workflow:
+# 1. Set up the following secrets in your repository:
+#   - AZURE_FUNCTIONAPP_PUBLISH_PROFILE
+# 2. Change env variables for your configuration.
+#
+
+name: Deploy DotNet project to Azure Function App
+
+on:
+  push:
+    branches: ["uat"]
+
+env:
+  AZURE_FUNCTIONAPP_NAME: 'wcds-web-function-app'   # set this to your function app name on Azure
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'       # set this to the path to your function app project, defaults to the repository root
+  SQL_DB_CONN_STR: "${{ secrets.SQL_DB_APPLICATION }}"  
+  DOTNET_VERSION: '6.0.x'                   # set this to the dotnet version to use (e.g. '2.1.x', '3.1.x', '5.0.x')
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest # For Linux, use ubuntu-latest
+    environment: uat
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@v3
+
+    - name: Setup DotNet ${{ env.DOTNET_VERSION }} Environment
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install EF Tool
+      run: |
+        dotnet new tool-manifest
+        dotnet tool install dotnet-ef --version 6.*
+
+    - name: 'Resolve Project Dependencies Using Dotnet'
+      shell: pwsh # For Linux, use bash
+      run: |
+        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+        dotnet build --configuration Release --output ./output
+        popd
+
+    - name: Generate DB migration scripts
+      run: | 
+        dotnet ef migrations script --output /tmp/sql-script.sql --idempotent --context ApplicationDBContext
+      env:
+        connectionstring: ${{ env.SQL_DB_CONN_STR }}
+          
+    - name: Azure SQL Deploy
+      uses: azure/sql-action@v2.2
+      with:
+        connection-string: ${{ env.SQL_DB_CONN_STR }}
+        path: /tmp/sql-script.sql
+
+    - name: 'Run Azure Functions Action'
+      uses: Azure/functions-action@v1
+      id: fa
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: '${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}/output'
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }} # Remove publish-profile to use Azure RBAC
