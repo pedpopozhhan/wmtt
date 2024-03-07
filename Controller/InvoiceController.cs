@@ -78,7 +78,7 @@ namespace WCDS.WebFuncions.Controller
                 }
                 catch
                 {
-                    _logger.LogError("An error has occured while Saving Invoice: " + invoice.InvoiceId);
+                    _logger.LogError("An error has occured while Saving Invoice: " + invoice.InvoiceNumber);
                     transaction.Rollback();
                     throw;
                 }
@@ -108,7 +108,7 @@ namespace WCDS.WebFuncions.Controller
                 }
                 catch
                 {
-                    _logger.LogError("UpdateProcessedInvoice: An error has occured while Updating Invoice for Invoice Id: " + invoice.InvoiceId);
+                    _logger.LogError("UpdateProcessedInvoice: An error has occured while Updating Invoice for Invoice Number: " + invoice.InvoiceNumber);
                     transaction.Rollback();
                     throw;
                 }
