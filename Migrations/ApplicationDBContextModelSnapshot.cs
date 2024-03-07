@@ -111,8 +111,8 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("Account")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Cost")
-                        .HasColumnType("float");
+                    b.Property<decimal>("Cost")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("CostCentre")
                         .HasColumnType("nvarchar(max)");
@@ -144,8 +144,8 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("ProfitCentre")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("RatePerUnit")
-                        .HasColumnType("float");
+                    b.Property<decimal>("RatePerUnit")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("RateType")
                         .HasColumnType("nvarchar(max)");
