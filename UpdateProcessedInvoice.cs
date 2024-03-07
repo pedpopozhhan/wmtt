@@ -34,9 +34,13 @@ namespace WCDS.WebFuncions
             try
             {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var invoiceObj = JsonConvert.DeserializeObject<InvoiceServiceSheetDto>(requestBody);
+                var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
                 if (invoiceObj != null)
                 {
+                    if(string.IsNullOrEmpty(invoiceObj.UniqueServiceSheetName))
+                    {
+                        return new BadRequestObjectResult("Invalid Request: UniqueServiceSheetName can not be null or empty");
+                    }
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
                     string result = iController.UpdateProcessedInvoice(invoiceObj);
                     return new OkObjectResult(result.ToString());

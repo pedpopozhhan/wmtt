@@ -17,7 +17,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public string RateUnit { get; set; }
         public decimal RatePerUnit { get; set; }
         public decimal Cost { get; set; }
-        public string GlAcct { get; set; }
+        public string Account { get; set; }
         public string ProfitCenter { get; set; }
         public string CostCenter { get; set; }
         public string FireNumber { get; set; }
