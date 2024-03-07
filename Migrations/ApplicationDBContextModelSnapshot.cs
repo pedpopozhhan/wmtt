@@ -24,13 +24,17 @@ namespace WCDS.WebFuncions.Migrations
 
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.Invoice", b =>
                 {
-                    b.Property<int>("InvoiceKey")
+                    b.Property<Guid>("InvoiceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvoiceKey"), 1L, 1);
+                    b.Property<string>("AccountType")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("AssignedTo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CommunityCode")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ContractNumber")
@@ -48,11 +52,14 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<DateTime?>("InvoiceDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("InvoiceId")
+                    b.Property<string>("InvoiceNumber")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("InvoiceReceivedDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("MaterialGroup")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PaymentStatus")
                         .HasColumnType("nvarchar(max)");
@@ -60,7 +67,25 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<DateTime?>("PeriodEndDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PurchaseGroup")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ServiceDescription")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UniqueServiceSheetName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UnitOfMeasure")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UpdatedBy")
@@ -72,18 +97,19 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("Vendor")
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("InvoiceKey");
+                    b.HasKey("InvoiceId");
 
                     b.ToTable("Invoice");
                 });
 
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceOtherCostDetails", b =>
                 {
-                    b.Property<int>("InvoiceOtherCostDetailId")
+                    b.Property<Guid>("InvoiceOtherCostDetailId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("uniqueidentifier");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvoiceOtherCostDetailId"), 1L, 1);
+                    b.Property<string>("Account")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double>("Cost")
                         .HasColumnType("float");
@@ -106,151 +132,14 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("Fund")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("GlAcct")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("InternalOrder")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("InvoiceKey")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NumberOfUnits")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ProfitCentre")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("RatePerUnit")
-                        .HasColumnType("float");
-
-                    b.Property<string>("RateType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Remarks")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("To")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Unit")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedByDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("InvoiceOtherCostDetailId");
-
-                    b.HasIndex("InvoiceKey");
-
-                    b.ToTable("InvoiceOtherCostDetails");
-                });
-
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceServiceSheet", b =>
-                {
-                    b.Property<int>("InvoiceServiceSheetId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("InvoiceServiceSheetId"), 1L, 1);
-
-                    b.Property<string>("AccountType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CommunityCode")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("CreatedByDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("InvoiceKey")
-                        .HasColumnType("int");
-
-                    b.Property<string>("MaterialGroup")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("PurchaseGroup")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<string>("ServiceDescription")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UniqueServiceSheetName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UnitOfMeasure")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedByDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("InvoiceServiceSheetId");
-
-                    b.HasIndex("InvoiceKey")
-                        .IsUnique();
-
-                    b.ToTable("InvoiceServiceSheet");
-                });
-
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReportCostDetails", b =>
-                {
-                    b.Property<Guid>("FlightReportCostDetailsId")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("InvoiceId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AO02Number")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<double>("Cost")
-                        .HasColumnType("float");
-
-                    b.Property<string>("CostCentre")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("CreatedByDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FireNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("FlightReportId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Fund")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("GlAcct")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("InternalOrder")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("InvoiceKey")
-                        .HasColumnType("int");
-
-                    b.Property<int>("NumberOfUnits")
-                        .HasColumnType("int");
+                    b.Property<decimal>("NoOfUnits")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("ProfitCentre")
                         .HasColumnType("nvarchar(max)");
@@ -264,7 +153,83 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("RateUnit")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("RegistrationNumber")
+                    b.Property<string>("Remarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("To")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedByDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("InvoiceOtherCostDetailId");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.ToTable("InvoiceOtherCostDetails");
+                });
+
+            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReportCostDetails", b =>
+                {
+                    b.Property<Guid>("FlightReportCostDetailsId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Account")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Ao02Number")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContractRegistrationName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Cost")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("CostCenter")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedByDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("FireNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("FlightReportDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FlightReportId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Fund")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("InternalOrder")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("NoOfUnits")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ProfitCenter")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("RatePerUnit")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("RateType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RateUnit")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UpdatedBy")
@@ -275,38 +240,25 @@ namespace WCDS.WebFuncions.Migrations
 
                     b.HasKey("FlightReportCostDetailsId");
 
-                    b.HasIndex("InvoiceKey");
+                    b.HasIndex("InvoiceId");
 
                     b.ToTable("InvoiceTimeReportCostDetails");
                 });
 
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceOtherCostDetails", b =>
                 {
-                    b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
+                    b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", null)
                         .WithMany("InvoiceOtherCostDetails")
-                        .HasForeignKey("InvoiceKey")
+                        .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Invoice");
-                });
-
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceServiceSheet", b =>
-                {
-                    b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
-                        .WithOne("InvoiceServiceSheet")
-                        .HasForeignKey("WCDS.WebFuncions.Core.Entity.InvoiceServiceSheet", "InvoiceKey")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReportCostDetails", b =>
                 {
                     b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
                         .WithMany("InvoiceTimeReportCostDetails")
-                        .HasForeignKey("InvoiceKey")
+                        .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -316,8 +268,6 @@ namespace WCDS.WebFuncions.Migrations
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.Invoice", b =>
                 {
                     b.Navigation("InvoiceOtherCostDetails");
-
-                    b.Navigation("InvoiceServiceSheet");
 
                     b.Navigation("InvoiceTimeReportCostDetails");
                 });

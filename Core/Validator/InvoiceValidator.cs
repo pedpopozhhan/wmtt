@@ -16,8 +16,8 @@ namespace WCDS.WebFuncions.Core.Validator
         public InvoiceValidator(IInvoiceController invoiceController)
         {
             _invoiceController = invoiceController;
-            RuleFor(x => x.InvoiceId).NotEmpty().WithMessage("Please provide valid value for Invoice ID.");
-            RuleFor(x => x.InvoiceId).Must(InvoiceNumberDoesNotExist).WithMessage("Invoice ID already exists.");
+            RuleFor(x => x.InvoiceId).Must(i => i.Equals(Guid.Empty)).WithMessage("Please provide valid value for Invoice ID.");
+            RuleFor(x => x.InvoiceNumber).Must(InvoiceNumberDoesNotExist).WithMessage("Invoice Number already exists.");
             RuleFor(x => x.InvoiceDate).NotNull().WithMessage("Please provide value for Invoice Date.");
             RuleFor(x => x.PeriodEndDate).NotNull().WithMessage("Please provide value for Period End Date.");
             RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Invoice Amount should be greater than Zero.");
