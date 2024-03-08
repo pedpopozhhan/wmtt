@@ -64,10 +64,10 @@ namespace WCDS.WebFuncions
                 {
                     RateTypes = rateTypes.Data.Where(p => Common.filteredRateTypes.Contains(p.Type)).Select(x => x.Type).ToArray(),
                     RateUnits = rateUnits.Data.Where(p => Common.filteredRateUnits.Contains(p.Type)).Select(x => x.Type).ToArray(),
-                    CostCenterList = costCenter.Select(x => x.Value).ToArray(),
-                    GLAccountList = glAccount.Select(x => x.Value).ToArray(),
-                    InternalOrderList = internalOrder.Select(x => x.Value).ToArray(),
-                    FundList = fund.Select(x => x.Value).ToArray()
+                    CostCenterList = costCenter.ToArray(),
+                    GLAccountList = glAccount.ToArray(),
+                    InternalOrderList = internalOrder.ToArray(),
+                    FundList = fund.ToArray()
                 };
 
                 return new JsonResult(response);
