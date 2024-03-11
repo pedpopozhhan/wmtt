@@ -10,24 +10,27 @@ using Newtonsoft.Json;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Validator;
-using FluentValidation;
+using WCDS.WebFuncions.Core.Services;
 using AutoMapper;
 using System.Linq;
 
 namespace WCDS.WebFuncions
 {
-    public  class UpdateInvoice
+    public class UpdateInvoice
     {
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
-        public UpdateInvoice(IMapper mapper)
+        public UpdateInvoice(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         [FunctionName("UpdateInvoice")]
-        public  async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
         {
+            await _auditLogService.Audit("UpdateInvoice");
             _logger.LogInformation("Trigger function (UpdateInvoice) received a request.");
             try
             {

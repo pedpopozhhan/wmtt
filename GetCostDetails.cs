@@ -25,11 +25,13 @@ namespace WCDS.WebFuncions
     public class GetCostDetails
     {
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public GetCostDetails(IMapper mapper)
+        public GetCostDetails(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
 
@@ -38,6 +40,7 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            await _auditLogService.Audit("GetCostDetails");
             try
             {
                 log.LogInformation("Trigger function (GetCostDetails) received a request.");
@@ -62,11 +65,11 @@ namespace WCDS.WebFuncions
                     }
                 }
 
-                if(validationErrors.Count > 0)
+                if (validationErrors.Count > 0)
                 {
                     return new BadRequestObjectResult(validationErrors);
                 }
-               
+
                 var responseDto = new InvoiceController(log, _mapper).GetCostDetails(data);
                 return new OkObjectResult(responseDto);
 

@@ -20,15 +20,17 @@ namespace WCDS.WebFuncions
     /// </summary>
     public class GetTimeReportCosts
     {
-        private readonly ITimeReportingService TimeReportingService;
-        private readonly IMapper Mapper;
+        private readonly ITimeReportingService _timeReportingService;
+        private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper)
+        public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
         {
 
-            TimeReportingService = timeReportingService;
-            Mapper = mapper;
+            _timeReportingService = timeReportingService;
+            _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
 
@@ -37,6 +39,7 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            await _auditLogService.Audit("GetTimeReportCosts");
             try
             {
                 log.LogInformation("Trigger function (GetTimeReportCosts) received a request.");
@@ -46,7 +49,7 @@ namespace WCDS.WebFuncions
 
                 if (data != null)
                 {
-                    var costs = await TimeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
+                    var costs = await _timeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
                     if (!string.IsNullOrEmpty(costs.ErrorMessage))
                     {
                         throw new Exception(costs.ErrorMessage);

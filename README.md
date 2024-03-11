@@ -33,4 +33,9 @@ You might have to run management studio as an admin and then create a user with 
 Run the migration command
 dotnet ef database update
 
+For adding new entities:
+dotnet ef migrations add AddYourEntity
+then
+dotnet ef database update
+
 ```

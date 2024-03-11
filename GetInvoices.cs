@@ -10,18 +10,20 @@ using System.IO;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
-
+using WCDS.WebFuncions.Core.Services;
 namespace WCDS.WebFuncions
 {
     public class GetInvoices
     {
-        
+
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public GetInvoices( IMapper mapper)
+        public GetInvoices(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         [FunctionName("GetInvoices")]
@@ -29,6 +31,7 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            await _auditLogService.Audit("GetInvoices");
             try
             {
                 log.LogInformation("Trigger function (GetInvoices) received a request.");
