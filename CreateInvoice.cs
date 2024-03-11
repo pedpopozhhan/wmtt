@@ -10,28 +10,28 @@ using Newtonsoft.Json;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Validator;
-using FluentValidation;
 using AutoMapper;
 using WCDS.WebFuncions.Core.Services;
-using System.Collections.Generic;
 using System.Linq;
-using System.Web.Http;
 
 namespace WCDS.WebFuncions
 {
     public class CreateInvoice
     {
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public CreateInvoice(IMapper mapper)
+        public CreateInvoice(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         [FunctionName("CreateInvoice")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
         {
+            await _auditLogService.Audit("CreateInvoice");
             _logger.LogInformation("Trigger function (CreateInvoice) received a request.");
             try
             {

@@ -204,7 +204,7 @@ namespace WCDS.WebFuncions.Controller
                     {
                         request.FlightReportCostDetailIds.ForEach(item =>
                         {
-                            if(!dbContext.InvoiceTimeReportCostDetails.Any(c => c.FlightReportCostDetailsId == item && c.FlightReportId == request.FlightReportId))
+                            if (!dbContext.InvoiceTimeReportCostDetails.Any(c => c.FlightReportCostDetailsId == item && c.FlightReportId == request.FlightReportId))
                             {
                                 response.CostDetails.Add(new CostDetailsResponseDto.CostDetailsResult()
                                 {
@@ -220,7 +220,7 @@ namespace WCDS.WebFuncions.Controller
                                 var result = (from trc in dbContext.InvoiceTimeReportCostDetails
                                               join i in dbContext.Invoice.DefaultIfEmpty()
                                               on trc.InvoiceId equals i.InvoiceId
-                                                where trc.FlightReportCostDetailsId == item
+                                              where trc.FlightReportCostDetailsId == item
                                               select new
                                               {
                                                   FlightReportCostDetailsId = item,
@@ -237,13 +237,13 @@ namespace WCDS.WebFuncions.Controller
                                         InvoiceNumber = result.InvoiceNumber,
                                         PaymentStatus = !string.IsNullOrEmpty(result.PaymentStatus) ? result.PaymentStatus : string.Empty,
                                         RedirectionURL = string.Format(Environment.GetEnvironmentVariable("ContractAppUrl") + CONTRACTS_API_PATH_PROCESSEDINVOICE, result.InvoiceNumber)
-                                    }) ;
+                                    });
                                 }
                             }
                         });
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _logger.LogError("GetCostDetails: Error retrieving processed cost details - Message:{0}, StackTrace:{1}, InnerException:{2}", ex.Message, ex.StackTrace, ex.InnerException);
                     transaction.Rollback();

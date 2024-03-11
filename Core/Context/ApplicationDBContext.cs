@@ -8,6 +8,7 @@ namespace WCDS.WebFuncions.Core.Context
 {
     internal class ApplicationDBContext : DbContext
     {
+        public virtual DbSet<AuditLog> AuditLog { get; set; }
         public virtual DbSet<Invoice> Invoice { get; set; }
         public virtual DbSet<InvoiceTimeReportCostDetails> InvoiceTimeReportCostDetails { get; set; }
         public virtual DbSet<InvoiceOtherCostDetails> InvoiceOtherCostDetails { get; set; }

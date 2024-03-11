@@ -19,17 +19,20 @@ namespace WCDS.WebFuncions
     public class UpdateProcessedInvoice
     {
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public UpdateProcessedInvoice(IMapper mapper)
+        public UpdateProcessedInvoice(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         [FunctionName("UpdateProcessedInvoice")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
+            await _auditLogService.Audit("UpdateProcessedInvoice");
             _logger.LogInformation("Trigger function (UpdateProcessedInvoice) received a request.");
             try
             {
@@ -37,7 +40,7 @@ namespace WCDS.WebFuncions
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
                 if (invoiceObj != null)
                 {
-                    if(string.IsNullOrEmpty(invoiceObj.UniqueServiceSheetName))
+                    if (string.IsNullOrEmpty(invoiceObj.UniqueServiceSheetName))
                     {
                         return new BadRequestObjectResult("Invalid Request: UniqueServiceSheetName can not be null or empty");
                     }

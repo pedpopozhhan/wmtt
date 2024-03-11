@@ -17,12 +17,14 @@ namespace WCDS.WebFuncions
     {
         private readonly IDomainService _domainService;
         private readonly IWildfireFinanceService _wildfireFinanceService;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public GetCustomLists(IDomainService domainService, IWildfireFinanceService wildfireFinanceService)
+        public GetCustomLists(IDomainService domainService, IWildfireFinanceService wildfireFinanceService, IAuditLogService auditLogService)
         {
             _domainService = domainService;
             _wildfireFinanceService = wildfireFinanceService;
+            _auditLogService = auditLogService;
         }
 
         [FunctionName("GetCustomLists")]
@@ -30,6 +32,7 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             ILogger log)
         {
+            await _auditLogService.Audit("GetCustomLists");
             try
             {
                 log.LogInformation("Trigger function (GetCustomLists) received a request.");
