@@ -117,7 +117,10 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<DateTime?>("UpdatedByDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Vendor")
+                    b.Property<string>("VendorBusinessId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("VendorName")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("InvoiceId");
@@ -193,6 +196,34 @@ namespace WCDS.WebFuncions.Migrations
                     b.HasIndex("InvoiceId");
 
                     b.ToTable("InvoiceOtherCostDetails");
+                });
+
+            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceStatusLog", b =>
+                {
+                    b.Property<Guid>("StatusLogId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CurrentStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("PreviousStatus")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("User")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("StatusLogId");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.ToTable("InvoiceStatusLog");
                 });
 
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReportCostDetails", b =>
@@ -277,6 +308,17 @@ namespace WCDS.WebFuncions.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceStatusLog", b =>
+                {
+                    b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
+                        .WithMany("InvoiceStatusLogs")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+                });
+
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReportCostDetails", b =>
                 {
                     b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
@@ -291,6 +333,8 @@ namespace WCDS.WebFuncions.Migrations
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.Invoice", b =>
                 {
                     b.Navigation("InvoiceOtherCostDetails");
+
+                    b.Navigation("InvoiceStatusLogs");
 
                     b.Navigation("InvoiceTimeReportCostDetails");
                 });

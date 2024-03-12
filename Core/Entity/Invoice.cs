@@ -18,7 +18,8 @@ namespace WCDS.WebFuncions.Core.Entity
         public DateTime? PeriodEndDate { get; set; }
         public DateTime? InvoiceReceivedDate { get; set; }
         public string PaymentStatus { get; set; }
-        public string Vendor { get; set; }
+        public string VendorBusinessId { get; set; }
+        public string VendorName { get; set; }
         public string AssignedTo { get; set; }
         public string ContractNumber { get; set; }
         public string Type { get; set; }
@@ -37,5 +38,6 @@ namespace WCDS.WebFuncions.Core.Entity
         public DateTime? CreatedByDateTime { get; set; }
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedByDateTime { get; set; }
+        public List<InvoiceStatusLog> InvoiceStatusLogs { get; set; }
     }
 }
