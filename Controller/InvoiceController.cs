@@ -67,10 +67,18 @@ namespace WCDS.WebFuncions.Controller
                     if (!string.IsNullOrEmpty(invoiceEntity.UniqueServiceSheetName))
                     {
                         invoiceEntity.PaymentStatus = Enums.PaymentStatus.Submitted.ToString();
+                        invoiceEntity.InvoiceStatusLogs = new List<InvoiceStatusLog> { new InvoiceStatusLog()
+                                        {
+                                            InvoiceId = invoiceEntity.InvoiceId,
+                                            CurrentStatus = invoiceEntity.PaymentStatus,
+                                            PreviousStatus = string.Empty,
+                                            User = DEFAULT_USER,
+                                            Timestamp = DateTime.Now
+                                        }};
+
                     }
                     invoiceEntity.CreatedBy = DEFAULT_USER;
                     invoiceEntity.CreatedByDateTime = DateTime.Now;
-
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
                     transaction.Commit();
@@ -99,9 +107,23 @@ namespace WCDS.WebFuncions.Controller
                         throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
                     }
                     invoiceRecord.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
+                    string previousStatus = invoiceRecord.PaymentStatus;
                     invoiceRecord.PaymentStatus = Enums.PaymentStatus.Submitted.ToString();
                     invoiceRecord.UpdatedBy = DEFAULT_USER;
                     invoiceRecord.UpdatedByDateTime = DateTime.Now;
+
+                    if(string.IsNullOrEmpty(previousStatus) || previousStatus != invoiceRecord.PaymentStatus)
+                    {
+                        invoiceRecord.InvoiceStatusLogs = new List<InvoiceStatusLog> { new InvoiceStatusLog()
+                                    {
+                                        InvoiceId = invoiceRecord.InvoiceId,
+                                        CurrentStatus = invoiceRecord.PaymentStatus,
+                                        PreviousStatus = previousStatus,
+                                        User = DEFAULT_USER,
+                                        Timestamp = DateTime.Now
+                                    }};
+                    }
+
                     dbContext.SaveChanges();
                     transaction.Commit();
                     result = invoiceRecord.UniqueServiceSheetName;
