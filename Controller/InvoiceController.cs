@@ -18,6 +18,7 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceExists(string invoiceNumber);
         public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest);
         public string UpdateProcessedInvoice(InvoiceDto invoice);
+        public bool UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request);
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
     }
 
@@ -131,6 +132,47 @@ namespace WCDS.WebFuncions.Controller
                 catch
                 {
                     _logger.LogError("UpdateProcessedInvoice: An error has occured while Updating Invoice for Invoice Number: " + invoice.InvoiceNumber);
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            return result;
+        }
+
+        public bool UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request)
+        {
+            bool result = false;
+            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    var invoiceRecord = dbContext.Invoice.FirstOrDefault(ss => ss.InvoiceId == request.InvoiceId);
+                    if (invoiceRecord == null)
+                    {
+                        throw new System.Exception($"No Invoice found for InvoiceId - {request.InvoiceId} in the Database.");
+                    }
+
+                    if (request.PaymentStatus != invoiceRecord.PaymentStatus)
+                    {
+                        invoiceRecord.InvoiceStatusLogs = new List<InvoiceStatusLog> { new InvoiceStatusLog()
+                                    {
+                                        InvoiceId = invoiceRecord.InvoiceId,
+                                        CurrentStatus = request.PaymentStatus,
+                                        PreviousStatus = invoiceRecord.PaymentStatus,
+                                        User = DEFAULT_USER,
+                                        Timestamp = request.UpdatedDateTime.Value
+                                    }};
+                        invoiceRecord.PaymentStatus = request.PaymentStatus;
+                        invoiceRecord.UpdatedBy = DEFAULT_USER;
+                        invoiceRecord.UpdatedByDateTime = DateTime.Now;
+                        dbContext.SaveChanges();
+                        transaction.Commit();
+                        result = true;
+                    }
+                }
+                catch
+                {
+                    _logger.LogError("UpdateInvoiceStatus: An error has occured while Updating Invoice for Invoice Number: " + request.InvoiceId);
                     transaction.Rollback();
                     throw;
                 }
