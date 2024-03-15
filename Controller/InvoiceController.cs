@@ -206,14 +206,25 @@ namespace WCDS.WebFuncions.Controller
             return bResult;
         }
 
+        /// <summary>
+        /// returns ivoices for a specific contract if passed in request object 
+        /// and if contract number is an empty string it returns all invoices
+        /// </summary>
+        /// <param name="invoiceRequest"></param>
+        /// <returns></returns>
         public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest)
         {
             InvoiceResponseDto response = new InvoiceResponseDto();
+            List<Invoice> items;
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    List<Invoice> items = dbContext.Invoice.Where(x => x.ContractNumber == invoiceRequest.ContractNumber).ToList();
+                    if (invoiceRequest.ContractNumber.Trim().Length == 0)
+                        items = dbContext.Invoice.ToList();
+                    else
+                        items = dbContext.Invoice.Where(x => x.ContractNumber == invoiceRequest.ContractNumber).ToList();
+
                     var mapped = items.Select(item =>
                     {
                         return _mapper.Map<Invoice, InvoiceDto>(item);
