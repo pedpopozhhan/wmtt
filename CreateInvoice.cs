@@ -48,7 +48,7 @@ namespace WCDS.WebFuncions
                         return new BadRequestObjectResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
                     }
 
-                    var result = iController.CreateInvoice(invoiceObj);
+                    var result = await iController.CreateInvoice(invoiceObj);
                     return new OkObjectResult(result);
                 }
                 else

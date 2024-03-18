@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity;
 using WCDS.WebFuncions.Core.Model;
@@ -13,11 +14,11 @@ namespace WCDS.WebFuncions.Controller
 {
     public interface IInvoiceController
     {
-        public Guid CreateInvoice(InvoiceDto invoice);
+        public Task<Guid> CreateInvoice(InvoiceDto invoice);
         public int UpdateInvoice(InvoiceDto invoice);
         public bool InvoiceExists(string invoiceNumber);
         public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest);
-        public string UpdateProcessedInvoice(InvoiceDto invoice);
+        public  Task<string> UpdateProcessedInvoice(InvoiceDto invoice);
         public bool UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request);
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
     }
@@ -39,7 +40,7 @@ namespace WCDS.WebFuncions.Controller
         }
 
 
-        public Guid CreateInvoice(InvoiceDto invoice)
+        public async Task<Guid> CreateInvoice(InvoiceDto invoice)
         {
             Guid result = Guid.Empty;
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
@@ -83,11 +84,36 @@ namespace WCDS.WebFuncions.Controller
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
                     transaction.Commit();
+
+                    await new InvoiceDataSyncMessageHandler().SendCreateInvoiceMessage(new InvoiceDataSyncMessageDto()
+                    {
+                        Action = "create-invoice",
+                        TimeStamp = DateTime.Now,
+                        Invoice = _mapper.Map<InvoiceDto>(invoiceEntity)
+                    });
+
+                    if (invoiceEntity.InvoiceTimeReportCostDetails != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
+                    {
+                        await new InvoiceStatusSyncMessageHandler().SendInvoiceStatusSyncMessage(new InvoiceStatusSyncMessageDto()
+                        {
+                            Action = "update-invoice",
+                            TimeStamp = DateTime.Now,
+                            InvoiceId = invoiceEntity.InvoiceId,
+                            InvoiceNumber = invoiceEntity.InvoiceNumber,
+                            PaymentStatus = invoiceEntity.PaymentStatus,
+                            Details = invoiceEntity.InvoiceTimeReportCostDetails.Select(i => new InvoiceStatusSyncMessageDto.CostDetails()
+                            {
+                                FlightReportCostDetailsId = i.FlightReportCostDetailsId,
+                                FlightReportId = i.FlightReportId
+                            }).ToList()
+                        });
+                    }
+
                     result = invoiceEntity.InvoiceId;
                 }
-                catch
+                catch(Exception ex)
                 {
-                    _logger.LogError("An error has occured while Saving Invoice: " + invoice.InvoiceNumber);
+                    _logger.LogError(string.Format("CreateInvoice: An error has occured while Saving Invoice: {0}, ErrorMessage: {1}, InnerException: {2}", invoice.InvoiceNumber, ex.Message, ex.InnerException));
                     transaction.Rollback();
                     throw;
                 }
@@ -95,7 +121,7 @@ namespace WCDS.WebFuncions.Controller
             return result;
         }
 
-        public string UpdateProcessedInvoice(InvoiceDto invoice)
+        public async Task<string> UpdateProcessedInvoice(InvoiceDto invoice)
         {
             string result = string.Empty;
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
@@ -127,11 +153,19 @@ namespace WCDS.WebFuncions.Controller
 
                     dbContext.SaveChanges();
                     transaction.Commit();
+                    InvoiceDataSyncMessageDto updateInvoiceMessage = new InvoiceDataSyncMessageDto()
+                    {
+                        Action = "update-invoice",
+                        TimeStamp = DateTime.Now,
+                        Invoice = _mapper.Map<InvoiceDto>(invoiceRecord)
+                    };
+
+                    await new InvoiceDataSyncMessageHandler().SendUpdateInvoiceMessage(updateInvoiceMessage);
                     result = invoiceRecord.UniqueServiceSheetName;
                 }
-                catch
+                catch(Exception ex)
                 {
-                    _logger.LogError("UpdateProcessedInvoice: An error has occured while Updating Invoice for Invoice Number: " + invoice.InvoiceNumber);
+                    _logger.LogError(string.Format("UpdateProcessedInvoice: An error has occured while Updating Invoice for Invoice Number:  {0}, ErrorMessage: {1}, InnerException: {2}", invoice.InvoiceNumber, ex.Message, ex.InnerException));
                     transaction.Rollback();
                     throw;
                 }
@@ -326,6 +360,6 @@ namespace WCDS.WebFuncions.Controller
                 }
             }
             return response;
-        }
+        }       
     }
 }

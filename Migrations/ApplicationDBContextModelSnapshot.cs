@@ -51,15 +51,6 @@ namespace WCDS.WebFuncions.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("AccountType")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("AssignedTo")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("CommunityCode")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ContractNumber")
                         .HasColumnType("nvarchar(max)");
 
@@ -81,23 +72,11 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<DateTime?>("InvoiceReceivedDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("MaterialGroup")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("PaymentStatus")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("PeriodEndDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<decimal>("Price")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("PurchaseGroup")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
 
                     b.Property<string>("ServiceDescription")
                         .HasColumnType("nvarchar(max)");
@@ -106,9 +85,6 @@ namespace WCDS.WebFuncions.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UniqueServiceSheetName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UnitOfMeasure")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UpdatedBy")

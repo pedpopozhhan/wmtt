@@ -20,20 +20,12 @@ namespace WCDS.WebFuncions.Core.Entity
         public string PaymentStatus { get; set; }
         public string VendorBusinessId { get; set; }
         public string VendorName { get; set; }
-        public string AssignedTo { get; set; }
         public string ContractNumber { get; set; }
         public string Type { get; set; }
         public List<InvoiceTimeReportCostDetails> InvoiceTimeReportCostDetails { get; set; }
         public List<InvoiceOtherCostDetails> InvoiceOtherCostDetails { get; set; }
         public string UniqueServiceSheetName { get; set; }
-        public string PurchaseGroup { get; set; }
         public string ServiceDescription { get; set; }
-        public string CommunityCode { get; set; }
-        public string MaterialGroup { get; set; }
-        public string AccountType { get; set; }
-        public int Quantity { get; set; }
-        public string UnitOfMeasure { get; set; }
-        public decimal Price { get; set; }
         public string CreatedBy { get; set; }
         public DateTime? CreatedByDateTime { get; set; }
         public string UpdatedBy { get; set; }
