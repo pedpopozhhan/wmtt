@@ -36,30 +36,31 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task Audit(string operation, string info = "")
         {
+            var name = "Unknown";
             var tokenHeader = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
-            if (string.IsNullOrEmpty(tokenHeader))
+            if (!string.IsNullOrEmpty(tokenHeader))
             {
-                Log.LogError("No Authorization header found");
-                throw new UnauthorizedAccessException();
-            }
-            var parts = tokenHeader.ToString().Split(" ");
-            if (parts.Length != 2)
-            {
-                throw new Exception("Malformed Authorization Header");
-            }
-            // pull username out of token
-            var token = DecodeJwtToken(parts[1]);
-            var name = token.Payload?["name"];
-            if (name is string && string.IsNullOrEmpty((string)name))
-            {
-                throw new Exception("No Name found in token");
+
+                var parts = tokenHeader.ToString().Split(" ");
+                if (parts.Length != 2)
+                {
+                    throw new UnauthorizedAccessException("Malformed Authorization Header");
+                }
+                // pull username out of token
+                var token = DecodeJwtToken(parts[1]);
+                var part1 = token.Payload?["name"];
+                if (part1 is string && string.IsNullOrEmpty((string)part1))
+                {
+                    throw new Exception("No Name found in token");
+                }
+                name = (string)part1;
             }
             var auditLog = new AuditLog
             {
                 Info = info,
                 Operation = operation,
                 Timestamp = DateTime.UtcNow,
-                User = (string)name
+                User = name
             };
             dbContext.AuditLog.Add(auditLog);
             await dbContext.SaveChangesAsync();
