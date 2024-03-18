@@ -10,6 +10,7 @@ namespace WCDS.WebFuncions.Core.Common
         public MappingProfile()
         {
             CreateMap<Invoice, InvoiceDto>().ReverseMap();
+            CreateMap<Invoice, InvoiceDataSyncMessageDto>().ReverseMap();
             CreateMap<TimeReportCostDetailDto, TimeReportCostDetail>().ReverseMap();
             CreateMap<InvoiceTimeReportCostDetails, InvoiceTimeReportCostDetailDto>().ReverseMap();
             CreateMap<InvoiceOtherCostDetails, InvoiceOtherCostDetailDto>().ReverseMap();

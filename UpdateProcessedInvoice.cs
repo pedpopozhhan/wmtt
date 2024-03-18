@@ -45,7 +45,7 @@ namespace WCDS.WebFuncions
                         return new BadRequestObjectResult("Invalid Request: UniqueServiceSheetName can not be null or empty");
                     }
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                    string result = iController.UpdateProcessedInvoice(invoiceObj);
+                    string result = await iController.UpdateProcessedInvoice(invoiceObj);
                     return new OkObjectResult(result.ToString());
                 }
                 else
