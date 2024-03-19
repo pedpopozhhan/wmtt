@@ -40,6 +40,10 @@ namespace WCDS.WebFuncions
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
                 if (invoiceObj != null)
                 {
+                    if (invoiceObj.InvoiceId == null || (invoiceObj.InvoiceId != null && invoiceObj.InvoiceId == Guid.Empty))
+                    {
+                        return new BadRequestObjectResult("Invalid Request: InvoiceId can not be null or empty");
+                    }
                     if (string.IsNullOrEmpty(invoiceObj.UniqueServiceSheetName))
                     {
                         return new BadRequestObjectResult("Invalid Request: UniqueServiceSheetName can not be null or empty");

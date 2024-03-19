@@ -9,7 +9,7 @@ namespace WCDS.WebFuncions.Core.Model
     public class InvoiceTimeReportCostDetailDto
     {
         public Guid FlightReportCostDetailsId { get; set; }
-        public Guid InvoiceId { get; set; }
+        public Guid? InvoiceId { get; set; }
         public DateTime FlightReportDate { get; set; }
         public string ContractRegistrationName { get; set; }
         public int FlightReportId { get; set; }

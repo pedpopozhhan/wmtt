@@ -10,7 +10,7 @@ namespace WCDS.WebFuncions.Core.Model
     public class InvoiceOtherCostDetailDto
     {
         public Guid InvoiceOtherCostDetailId { get; set; }
-        public Guid InvoiceId { get; set; }
+        public Guid? InvoiceId { get; set; }
         public DateTime From { get; set; }
         public DateTime To { get; set; }
         public string RateType { get; set; }
