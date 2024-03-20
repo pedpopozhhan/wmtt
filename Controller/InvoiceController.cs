@@ -85,11 +85,18 @@ namespace WCDS.WebFuncions.Controller
                     dbContext.SaveChanges();
                     transaction.Commit();
 
+                    var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceEntity);
+                    messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
+                    {
+                        InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(invoiceEntity.InvoiceTimeReportCostDetails),
+                        InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(invoiceEntity.InvoiceOtherCostDetails)
+                    };
+
                     await new InvoiceDataSyncMessageHandler().SendCreateInvoiceMessage(new InvoiceDataSyncMessageDto()
                     {
                         Action = "create-invoice",
                         TimeStamp = DateTime.Now,
-                        Invoice = _mapper.Map<InvoiceDto>(invoiceEntity)
+                        Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice}
                     });
 
                     if (invoiceEntity.InvoiceTimeReportCostDetails != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
@@ -153,14 +160,21 @@ namespace WCDS.WebFuncions.Controller
 
                     dbContext.SaveChanges();
                     transaction.Commit();
-                    InvoiceDataSyncMessageDto updateInvoiceMessage = new InvoiceDataSyncMessageDto()
+
+                    var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceRecord);
+                    messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
+                    {
+                        InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(invoiceRecord.InvoiceTimeReportCostDetails),
+                        InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(invoiceRecord.InvoiceOtherCostDetails)
+                    };
+
+                    await new InvoiceDataSyncMessageHandler().SendUpdateInvoiceMessage(new InvoiceDataSyncMessageDto()
                     {
                         Action = "update-invoice",
                         TimeStamp = DateTime.Now,
-                        Invoice = _mapper.Map<InvoiceDto>(invoiceRecord)
-                    };
+                        Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
+                    });
 
-                    await new InvoiceDataSyncMessageHandler().SendUpdateInvoiceMessage(updateInvoiceMessage);
                     result = invoiceRecord.UniqueServiceSheetName;
                 }
                 catch(Exception ex)
