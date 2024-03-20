@@ -18,7 +18,7 @@ namespace WCDS.WebFuncions.Core.Model
         {
             public Guid FlightReportCostDetailsId { get; set; }
             public int FlightReportId { get; set; }
-            public string InvoiceId { get; set; }
+            public string InvoiceNumber { get; set; }
             public string PaymentStatus { get; set; }
             public string RedirectionURL { get; set; }
         }

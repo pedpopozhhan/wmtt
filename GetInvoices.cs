@@ -10,17 +10,20 @@ using System.IO;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
-
+using WCDS.WebFuncions.Core.Services;
 namespace WCDS.WebFuncions
 {
     public class GetInvoices
     {
-        
-        private readonly IMapper _mapper;
 
-        public GetInvoices( IMapper mapper)
+        private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
+        string errorMessage = "Error : {0}, InnerException: {1}";
+
+        public GetInvoices(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         [FunctionName("GetInvoices")]
@@ -28,18 +31,32 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("Trigger function (GetInvoices) received a request.");
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            var data = JsonConvert.DeserializeObject<InvoiceRequestDto>(requestBody);
-
-            if (data != null)
+            await _auditLogService.Audit("GetInvoices");
+            try
             {
-                var responseDto = new InvoiceController(log,_mapper).GetInvoices(data);
-                return new JsonResult(responseDto);
+                log.LogInformation("Trigger function (GetInvoices) received a request.");
+
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var data = JsonConvert.DeserializeObject<InvoiceRequestDto>(requestBody);
+
+                if (data != null)
+                {
+                    var responseDto = new InvoiceController(log, _mapper).GetInvoices(data);
+                    return new JsonResult(responseDto);
+                }
+                else
+                {
+                    return new BadRequestObjectResult("Invalid Request");
+                }
             }
-            log.LogError("Either invalid request, or an error retrieving invoices");
-            throw new Exception("Either invalid request, or an error retrieving invoices");
+
+            catch (Exception ex)
+            {
+                log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
+            }
         }
     }
 }

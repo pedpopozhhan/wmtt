@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ActionConstraints;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
@@ -9,6 +10,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web.Http;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Services;
@@ -20,14 +22,17 @@ namespace WCDS.WebFuncions
     /// </summary>
     public class GetContracts
     {
-        private readonly ITimeReportingService TimeReportingService;
-        private readonly IMapper Mapper;
+        private readonly ITimeReportingService _timeReportingService;
+        private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
+        string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public GetContracts(ITimeReportingService timeReportingService, IMapper mapper)
+        public GetContracts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
         {
 
-            TimeReportingService = timeReportingService;
-            Mapper = mapper;
+            _timeReportingService = timeReportingService;
+            _mapper = mapper;
+            this._auditLogService = auditLogService;
         }
 
 
@@ -36,22 +41,30 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             ILogger log)
         {
-            log.LogInformation("Trigger function (GetContracts) received a request.");
-
-            var contracts = await TimeReportingService.GetContracts();
-            if (!string.IsNullOrEmpty(contracts.ErrorMessage))
+            await _auditLogService.Audit("GetContracts");
+            try
             {
-                log.LogError(contracts.ErrorMessage);
-                throw new Exception(contracts.ErrorMessage);
+                log.LogInformation("Trigger function (GetContracts) received a request.");
+
+                var contracts = await _timeReportingService.GetContracts();
+                if (!string.IsNullOrEmpty(contracts.ErrorMessage))
+                {
+                    throw new Exception(contracts.ErrorMessage);
+                }
+
+                var response = new ContractsResponse
+                {
+                    Rows = contracts.Data
+                };
+                return new JsonResult(response);
             }
-
-            var response = new ContractsResponse
+            catch (Exception ex)
             {
-                Rows = contracts.Data
-            };
-            return new JsonResult(response);
-
-
+                log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
+            }
         }
     }
 }

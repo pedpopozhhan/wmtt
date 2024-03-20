@@ -25,10 +25,13 @@ namespace WCDS.WebFuncions
     public class GetCostDetails
     {
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
+        string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public GetCostDetails(IMapper mapper)
+        public GetCostDetails(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
 
@@ -37,6 +40,7 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            await _auditLogService.Audit("GetCostDetails");
             try
             {
                 log.LogInformation("Trigger function (GetCostDetails) received a request.");
@@ -48,7 +52,6 @@ namespace WCDS.WebFuncions
                 if (data == null)
                 {
                     validationErrors.Add("Invalid Request: Request can not be null or empty.");
-                    return new BadRequestObjectResult(validationErrors);
                 }
                 else
                 {
@@ -62,21 +65,22 @@ namespace WCDS.WebFuncions
                     }
                 }
 
-                if(validationErrors.Count > 0)
+                if (validationErrors.Count > 0)
                 {
                     return new BadRequestObjectResult(validationErrors);
                 }
-               
+
                 var responseDto = new InvoiceController(log, _mapper).GetCostDetails(data);
                 return new OkObjectResult(responseDto);
 
             }
-            catch
+            catch (Exception ex)
             {
-                log.LogError("GetCostDetails: Error retrieving processed cost details.");
-                return new InternalServerErrorResult();
+                log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
             }
-
         }
     }
 }

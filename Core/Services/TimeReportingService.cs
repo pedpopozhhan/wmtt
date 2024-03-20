@@ -1,7 +1,9 @@
 using System;
 using System.Linq;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using WCDS.WebFuncions.Core.Context;
@@ -20,16 +22,24 @@ namespace WCDS.WebFuncions.Core.Services
     {
         private readonly ILogger Log;
         private readonly HttpClient HttpClient;
+        private readonly IHttpContextAccessor httpContextAccessor;
         ApplicationDBContext dbContext;
-        public TimeReportingService(ILogger<TimeReportingService> log, HttpClient httpClient)
+        public TimeReportingService(ILogger<TimeReportingService> log, HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
         {
             HttpClient = httpClient;
+            this.httpContextAccessor = httpContextAccessor;
             Log = log ?? throw new ArgumentNullException(nameof(log));
             dbContext = new ApplicationDBContext();
         }
 
         public async Task<Response<TimeReportCostDetailDto>> GetTimeReportByIds(int[] ids)
         {
+            var token = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
+            if (string.IsNullOrEmpty(token))
+            {
+                Log.LogError("No Authorization header found");
+                throw new UnauthorizedAccessException();
+            }
             var url = Environment.GetEnvironmentVariable("AviationReportingServiceApiUrl");
             if (url == null)
             {
@@ -39,10 +49,15 @@ namespace WCDS.WebFuncions.Core.Services
             url = url + "/flight-report/get/cost-details";
             Log.LogInformation("GetTimeReportById url: {url}", url);
 
-            var request = new Request<FilterByCostDetails>();
-            request.FilterBy = new FilterByCostDetails(ids);
-            var response = await HttpClient.PostAsJsonAsync<Request<FilterByCostDetails>>(url, request);
+            var requestObject = new Request<FilterByCostDetails> { FilterBy = new FilterByCostDetails(ids) };
+            var jsonRequest = JsonConvert.SerializeObject(requestObject);
+            var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
+            requestMessage.Headers.TryAddWithoutValidation("Authorization", (string)token);
+            requestMessage.Content = requestContent;
+
+            var response = await HttpClient.SendAsync(requestMessage);
             response.EnsureSuccessStatusCode();
 
             // Handle the http response
@@ -64,6 +79,12 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task<Response<TimeReportCostDto>> GetTimeReportCosts(string contractNumber, string status)
         {
+            var token = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
+            if (string.IsNullOrEmpty(token))
+            {
+                Log.LogError("No Authorization header found");
+                throw new UnauthorizedAccessException();
+            }
             var url = Environment.GetEnvironmentVariable("AviationReportingServiceApiUrl");
             if (url == null)
             {
@@ -73,12 +94,20 @@ namespace WCDS.WebFuncions.Core.Services
             url += "/flight-report-dashboard/cost";
             Log.LogInformation("GetTimeReportCosts url: {url}", url);
 
-            var request = new Request<FilterByCostRequest>
-            {
-                FilterBy = new FilterByCostRequest(contractNumber, status)
-            };
-            var response = await HttpClient.PostAsJsonAsync(url, request);
+            // var request = new Request<FilterByCostRequest>
+            // {
+            //     FilterBy = new FilterByCostRequest(contractNumber, status)
+            // };
+            // var response = await HttpClient.PostAsJsonAsync(url, request);
+            var requestObject = new Request<FilterByCostRequest> { FilterBy = new FilterByCostRequest(contractNumber, status) };
+            var jsonRequest = JsonConvert.SerializeObject(requestObject);
+            var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
+            requestMessage.Headers.TryAddWithoutValidation("Authorization", (string)token);
+            requestMessage.Content = requestContent;
+
+            var response = await HttpClient.SendAsync(requestMessage);
             response.EnsureSuccessStatusCode();
 
             // Handle the http response

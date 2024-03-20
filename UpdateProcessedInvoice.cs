@@ -19,28 +19,50 @@ namespace WCDS.WebFuncions
     public class UpdateProcessedInvoice
     {
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
-        public UpdateProcessedInvoice(IMapper mapper)
+        string errorMessage = "Error : {0}, InnerException: {1}";
+
+        public UpdateProcessedInvoice(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         [FunctionName("UpdateProcessedInvoice")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
+            await _auditLogService.Audit("UpdateProcessedInvoice");
             _logger.LogInformation("Trigger function (UpdateProcessedInvoice) received a request.");
             try
             {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var invoiceObj = JsonConvert.DeserializeObject<InvoiceServiceSheetDto>(requestBody);
-                IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                string result = iController.UpdateProcessedInvoice(invoiceObj);
-                return new OkObjectResult(result.ToString());
+                var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
+                if (invoiceObj != null)
+                {
+                    if (invoiceObj.InvoiceId == null || (invoiceObj.InvoiceId != null && invoiceObj.InvoiceId == Guid.Empty))
+                    {
+                        return new BadRequestObjectResult("Invalid Request: InvoiceId can not be null or empty");
+                    }
+                    if (string.IsNullOrEmpty(invoiceObj.UniqueServiceSheetName))
+                    {
+                        return new BadRequestObjectResult("Invalid Request: UniqueServiceSheetName can not be null or empty");
+                    }
+                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                    string result = await iController.UpdateProcessedInvoice(invoiceObj);
+                    return new OkObjectResult(result.ToString());
+                }
+                else
+                {
+                    return new BadRequestObjectResult("Invalid Request");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex.ToString());
-                return new BadRequestObjectResult(ex.ToString() + ex.StackTrace);
+                _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                result.StatusCode = StatusCodes.Status500InternalServerError;
+                return result;
             }
         }
     }

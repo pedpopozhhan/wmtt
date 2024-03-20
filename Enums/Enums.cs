@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WCDS.WebFuncions.Core.Model
+namespace WCDS.WebFuncions.Enums
 {
-    public class InvoiceDetailRequestDto
+    public enum PaymentStatus
     {
-        public Guid InvoiceId { get; set; }
+        Submitted,
+        Posted,
+        Cleared
     }
 }
