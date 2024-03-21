@@ -5,6 +5,5 @@ namespace WCDS.WebFuncions.Core.Model
     public class TimeReportDetailsResponse
     {
         public TimeReportCostDetail[] Rows;
-        public string[] RateTypes { get; set; }
     }
 }

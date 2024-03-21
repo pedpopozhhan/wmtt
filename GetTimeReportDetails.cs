@@ -45,11 +45,6 @@ namespace WCDS.WebFuncions
             {
                 log.LogInformation("Trigger function (GetTimeReportDetails) received a request.");
 
-                log.LogInformation("Reading rateunits from DomainService");
-                var rateUnits = await _domainService.GetRateUnits();
-                log.LogInformation("Reading ratetypes from DomainService");
-                var rateTypes = await _domainService.GetRateTypes();
-
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<TimeReportDetailsRequest>(requestBody);
 
@@ -58,28 +53,24 @@ namespace WCDS.WebFuncions
                     return new BadRequestObjectResult("Invalid Request");
                 }
 
-                if (string.IsNullOrEmpty(rateTypes.ErrorMessage) && string.IsNullOrEmpty(rateTypes.ErrorMessage))
+
+                var details = await _timeReportingService.GetTimeReportByIds(data.TimeReportIds);
+                if (!string.IsNullOrEmpty(details.ErrorMessage))
                 {
-                    var details = await _timeReportingService.GetTimeReportByIds(data.TimeReportIds);
-                    if (!string.IsNullOrEmpty(details.ErrorMessage))
-                    {
-                        throw new Exception(details.ErrorMessage);
-                    }
-                    var mapped = details.Data?.Select(detail =>
-                    {
-                        var mapped = _mapper.Map<TimeReportCostDetailDto, TimeReportCostDetail>(detail);
-                        // set rate unit and rate type
-                        mapped.RateType = rateTypes.Data.SingleOrDefault(x => x.RateTypeId == detail.RateTypeId)?.Type;
-                        mapped.RateUnit = rateUnits.Data.SingleOrDefault(x => x.RateUnitId == detail.RateUnitId)?.Type;
-                        return mapped;
-                    });
-                    var response = new TimeReportDetailsResponse
-                    {
-                        Rows = mapped?.ToArray(),
-                        RateTypes = rateTypes.Data.Select(x => x.Type).ToArray()
-                    };
-                    return new JsonResult(response);
+                    throw new Exception(details.ErrorMessage);
                 }
+                var mapped = details.Data?.Select(detail =>
+                {
+                    var mapped = _mapper.Map<TimeReportCostDetailDto, TimeReportCostDetail>(detail);
+
+                    return mapped;
+                });
+                var response = new TimeReportDetailsResponse
+                {
+                    Rows = mapped?.ToArray(),
+                };
+                return new JsonResult(response);
+
 
                 throw new Exception("Error retrieving rateTypes or rateUnits");
 
