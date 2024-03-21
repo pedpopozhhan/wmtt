@@ -17,7 +17,7 @@ namespace WCDS.WebFuncions.Core.Services
 {
     public interface IAuditLogService
     {
-        public Task Audit(string operation, string info = "");
+        public Task<string> Audit(string operation, string info = "");
     }
 
     public class AuditLogService : IAuditLogService
@@ -34,7 +34,7 @@ namespace WCDS.WebFuncions.Core.Services
             Log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
-        public async Task Audit(string operation, string info = "")
+        public async Task<string> Audit(string operation, string info = "")
         {
             var name = "Unknown";
             var tokenHeader = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
@@ -64,6 +64,7 @@ namespace WCDS.WebFuncions.Core.Services
             };
             dbContext.AuditLog.Add(auditLog);
             await dbContext.SaveChangesAsync();
+            return name;
 
         }
 

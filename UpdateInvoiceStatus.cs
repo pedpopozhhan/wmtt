@@ -33,7 +33,7 @@ namespace WCDS.WebFuncions
         [FunctionName("UpdateInvoiceStatus")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
-           // await _auditLogService.Audit("UpdateInvoiceStatus");
+           string userName = await _auditLogService.Audit("UpdateInvoiceStatus");
             _logger.LogInformation("Trigger function (UpdateInvoiceStatus) received a request.");
             try
            {
@@ -69,6 +69,7 @@ namespace WCDS.WebFuncions
                         return new BadRequestObjectResult(validationErrors);
                     }
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                    invoiceObj.UpdatedBy = userName;
                     return new OkObjectResult(iController.UpdateInvoiceStatus(invoiceObj));
                 }
                 else

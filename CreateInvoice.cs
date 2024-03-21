@@ -31,14 +31,15 @@ namespace WCDS.WebFuncions
         [FunctionName("CreateInvoice")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
         {
-            await _auditLogService.Audit("CreateInvoice");
-            _logger.LogInformation("Trigger function (CreateInvoice) received a request.");
+            string userName = await _auditLogService.Audit("CreateInvoice");
+            _logger.LogInformation("Trigger function (CreateInvoice) received a request");
             try
             {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
                 if (invoiceObj != null)
                 {
+                    invoiceObj.CreatedBy = userName;
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
                     InvoiceValidator validationRules = new InvoiceValidator(iController);
 
