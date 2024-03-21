@@ -32,7 +32,7 @@ namespace WCDS.WebFuncions
         [FunctionName("UpdateProcessedInvoice")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
-            await _auditLogService.Audit("UpdateProcessedInvoice");
+            string userName = await _auditLogService.Audit("UpdateProcessedInvoice");
             _logger.LogInformation("Trigger function (UpdateProcessedInvoice) received a request.");
             try
             {
@@ -49,6 +49,7 @@ namespace WCDS.WebFuncions
                         return new BadRequestObjectResult("Invalid Request: UniqueServiceSheetName can not be null or empty");
                     }
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                    invoiceObj.UpdatedBy = userName;
                     string result = await iController.UpdateProcessedInvoice(invoiceObj);
                     return new OkObjectResult(result.ToString());
                 }
