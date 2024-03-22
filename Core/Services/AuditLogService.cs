@@ -36,34 +36,19 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task Audit(string operation, string info = "")
         {
-            var name = "Unknown";
-                var tokenHeader = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
-                if (!string.IsNullOrEmpty(tokenHeader))
-                {
-
-                    var parts = tokenHeader.ToString().Split(" ");
-                    if (parts.Length != 2)
-                    {
-                        throw new UnauthorizedAccessException("Malformed Authorization Header");
-                    }
-                    // pull username out of token
-                    var token = DecodeJwtToken(parts[1]);
-                    var part1 = token.Payload?["name"];
-                    if (part1 is string && string.IsNullOrEmpty((string)part1))
-                    {
-                        throw new Exception("No Name found in token");
-                    }
-                    name = (string)part1;
-                }
+            bool tokenParsed = new Common.Common().ParseToken(httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
+            if (tokenParsed)
+            {
                 var auditLog = new AuditLog
                 {
                     Info = info,
                     Operation = operation,
                     Timestamp = DateTime.UtcNow,
-                    User = name
+                    User = parsedTokenResult
                 };
                 dbContext.AuditLog.Add(auditLog);
                 await dbContext.SaveChangesAsync();
+            }
         }
 
         private JwtSecurityToken DecodeJwtToken(string encodedToken)
