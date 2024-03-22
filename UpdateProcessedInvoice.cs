@@ -14,6 +14,7 @@ using FluentValidation;
 using AutoMapper;
 using WCDS.WebFuncions.Core.Services;
 using System.IdentityModel.Tokens.Jwt;
+using WCDS.WebFuncions.Core.Common;
 
 namespace WCDS.WebFuncions
 {
@@ -50,44 +51,31 @@ namespace WCDS.WebFuncions
                     {
                         return new BadRequestObjectResult("Invalid Request: UniqueServiceSheetName can not be null or empty");
                     }
-                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
 
-                    var name = "Unknown";
-                    var tokenHeader = _httpContextAccessor.HttpContext.Request.Headers["Authorization"];
-                    if (!string.IsNullOrEmpty(tokenHeader))
+                    bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
+                    if (tokenParsed)
                     {
-                        var parts = tokenHeader.ToString().Split(" ");
-                        if (parts.Length != 2)
+                        invoiceObj.UpdatedBy = parsedTokenResult;
+                        IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                        string result = await iController.UpdateProcessedInvoice(invoiceObj);
+
+                        try
                         {
-                            return new UnauthorizedObjectResult("Malformed Authorization Header");
+                            await _auditLogService.Audit("UpdateProcessedInvoice");
                         }
-                        // pull username out of token
-                        var token = DecodeJwtToken(parts[1]);
-                        var part1 = token.Payload?["name"];
-                        if (part1 is string && string.IsNullOrEmpty((string)part1))
+                        catch (Exception auditException)
                         {
-                            return new UnauthorizedObjectResult("No Name found in token");
+                            _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
                         }
-                        name = (string)part1;
+
+                        return new OkObjectResult(result.ToString());
                     }
                     else
                     {
-                        return new UnauthorizedObjectResult("No Token Header found in the request");
+                        return new UnauthorizedObjectResult(parsedTokenResult);
                     }
 
-                    invoiceObj.UpdatedBy = name;
-                    string result = await iController.UpdateProcessedInvoice(invoiceObj);
-
-                    try
-                    {
-                        await _auditLogService.Audit("UpdateProcessedInvoice");
-                    }
-                    catch (Exception auditException)
-                    {
-                        _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
-                    }
-
-                    return new OkObjectResult(result.ToString());
+                   
                 }
                 else
                 {
@@ -103,11 +91,5 @@ namespace WCDS.WebFuncions
             }
         }
 
-        private JwtSecurityToken DecodeJwtToken(string encodedToken)
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var token = handler.ReadJwtToken(encodedToken);
-            return token;
-        }
     }
 }

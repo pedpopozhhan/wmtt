@@ -14,6 +14,7 @@ using AutoMapper;
 using WCDS.WebFuncions.Core.Services;
 using System.Linq;
 using System.IdentityModel.Tokens.Jwt;
+using WCDS.WebFuncions.Core.Common;
 
 namespace WCDS.WebFuncions
 {
@@ -41,49 +42,35 @@ namespace WCDS.WebFuncions
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
                 if (invoiceObj != null)
                 {
-                    var name = "Unknown";
-                    var tokenHeader = _httpContextAccessor.HttpContext.Request.Headers["Authorization"];
-                    if (!string.IsNullOrEmpty(tokenHeader))
+                    bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
+                    if(tokenParsed)
                     {
-                        var parts = tokenHeader.ToString().Split(" ");
-                        if (parts.Length != 2)
+                        invoiceObj.CreatedBy = parsedTokenResult;
+                        IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                        InvoiceValidator validationRules = new InvoiceValidator(iController);
+
+                        var validationResult = validationRules.Validate(invoiceObj);
+                        if (!validationResult.IsValid)
                         {
-                            return new UnauthorizedObjectResult("Malformed Authorization Header");
+                            return new BadRequestObjectResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
                         }
-                        // pull username out of token
-                        var token = DecodeJwtToken(parts[1]);
-                        var part1 = token.Payload?["name"];
-                        if (part1 is string && string.IsNullOrEmpty((string)part1))
+
+                        var result = await iController.CreateInvoice(invoiceObj);
+                        try
                         {
-                            return new UnauthorizedObjectResult("No Name found in token");
+                            await _auditLogService.Audit("CreateInvoice");
                         }
-                        name = (string)part1;
+                        catch (Exception auditException)
+                        {
+                            _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
+                        }
+                        return new OkObjectResult(result);
                     }
                     else
                     {
-                        return new UnauthorizedObjectResult("No Token Header found in the request");
+                        return new UnauthorizedObjectResult(parsedTokenResult);
                     }
 
-                    invoiceObj.CreatedBy = name;
-                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                    InvoiceValidator validationRules = new InvoiceValidator(iController);
-
-                    var validationResult = validationRules.Validate(invoiceObj);
-                    if (!validationResult.IsValid)
-                    {
-                        return new BadRequestObjectResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
-                    }
-
-                    var result = await iController.CreateInvoice(invoiceObj);
-                    try
-                    {
-                        await _auditLogService.Audit("CreateInvoice");
-                    }
-                    catch(Exception auditException)
-                    {
-                        _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
-                    }
-                    return new OkObjectResult(result);
                 }
                 else
                 {
@@ -99,11 +86,5 @@ namespace WCDS.WebFuncions
             }
         }
 
-        private JwtSecurityToken DecodeJwtToken(string encodedToken)
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var token = handler.ReadJwtToken(encodedToken);
-            return token;
-        }
     }
 }
