@@ -13,6 +13,7 @@ using WCDS.WebFuncions.Core.Validator;
 using AutoMapper;
 using WCDS.WebFuncions.Core.Services;
 using System.Linq;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace WCDS.WebFuncions
 {
@@ -20,18 +21,19 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public CreateInvoice(IMapper mapper, IAuditLogService auditLogService)
+        public CreateInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [FunctionName("CreateInvoice")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
         {
-            string userName = await _auditLogService.Audit("CreateInvoice");
             _logger.LogInformation("Trigger function (CreateInvoice) received a request");
             try
             {
@@ -39,7 +41,30 @@ namespace WCDS.WebFuncions
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
                 if (invoiceObj != null)
                 {
-                    invoiceObj.CreatedBy = userName;
+                    var name = "Unknown";
+                    var tokenHeader = _httpContextAccessor.HttpContext.Request.Headers["Authorization"];
+                    if (!string.IsNullOrEmpty(tokenHeader))
+                    {
+                        var parts = tokenHeader.ToString().Split(" ");
+                        if (parts.Length != 2)
+                        {
+                            return new UnauthorizedObjectResult("Malformed Authorization Header");
+                        }
+                        // pull username out of token
+                        var token = DecodeJwtToken(parts[1]);
+                        var part1 = token.Payload?["name"];
+                        if (part1 is string && string.IsNullOrEmpty((string)part1))
+                        {
+                            return new UnauthorizedObjectResult("No Name found in token");
+                        }
+                        name = (string)part1;
+                    }
+                    else
+                    {
+                        return new UnauthorizedObjectResult("No Token Header found in the request");
+                    }
+
+                    invoiceObj.CreatedBy = name;
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
                     InvoiceValidator validationRules = new InvoiceValidator(iController);
 
@@ -50,6 +75,14 @@ namespace WCDS.WebFuncions
                     }
 
                     var result = await iController.CreateInvoice(invoiceObj);
+                    try
+                    {
+                        await _auditLogService.Audit("CreateInvoice");
+                    }
+                    catch(Exception auditException)
+                    {
+                        _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
+                    }
                     return new OkObjectResult(result);
                 }
                 else
@@ -64,6 +97,13 @@ namespace WCDS.WebFuncions
                 result.StatusCode = StatusCodes.Status500InternalServerError;
                 return result;
             }
+        }
+
+        private JwtSecurityToken DecodeJwtToken(string encodedToken)
+        {
+            var handler = new JwtSecurityTokenHandler();
+            var token = handler.ReadJwtToken(encodedToken);
+            return token;
         }
     }
 }

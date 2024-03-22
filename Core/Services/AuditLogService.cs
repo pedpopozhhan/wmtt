@@ -17,7 +17,7 @@ namespace WCDS.WebFuncions.Core.Services
 {
     public interface IAuditLogService
     {
-        public Task<string> Audit(string operation, string info = "");
+        public Task Audit(string operation, string info = "");
     }
 
     public class AuditLogService : IAuditLogService
@@ -26,7 +26,7 @@ namespace WCDS.WebFuncions.Core.Services
 
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly ApplicationDBContext dbContext;
-
+      
         public AuditLogService(ILogger<DomainService> log, IHttpContextAccessor httpContextAccessor)
         {
             this.httpContextAccessor = httpContextAccessor;
@@ -34,38 +34,36 @@ namespace WCDS.WebFuncions.Core.Services
             Log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
-        public async Task<string> Audit(string operation, string info = "")
+        public async Task Audit(string operation, string info = "")
         {
             var name = "Unknown";
-            var tokenHeader = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
-            if (!string.IsNullOrEmpty(tokenHeader))
-            {
-
-                var parts = tokenHeader.ToString().Split(" ");
-                if (parts.Length != 2)
+                var tokenHeader = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
+                if (!string.IsNullOrEmpty(tokenHeader))
                 {
-                    throw new UnauthorizedAccessException("Malformed Authorization Header");
-                }
-                // pull username out of token
-                var token = DecodeJwtToken(parts[1]);
-                var part1 = token.Payload?["name"];
-                if (part1 is string && string.IsNullOrEmpty((string)part1))
-                {
-                    throw new Exception("No Name found in token");
-                }
-                name = (string)part1;
-            }
-            var auditLog = new AuditLog
-            {
-                Info = info,
-                Operation = operation,
-                Timestamp = DateTime.UtcNow,
-                User = name
-            };
-            dbContext.AuditLog.Add(auditLog);
-            await dbContext.SaveChangesAsync();
-            return name;
 
+                    var parts = tokenHeader.ToString().Split(" ");
+                    if (parts.Length != 2)
+                    {
+                        throw new UnauthorizedAccessException("Malformed Authorization Header");
+                    }
+                    // pull username out of token
+                    var token = DecodeJwtToken(parts[1]);
+                    var part1 = token.Payload?["name"];
+                    if (part1 is string && string.IsNullOrEmpty((string)part1))
+                    {
+                        throw new Exception("No Name found in token");
+                    }
+                    name = (string)part1;
+                }
+                var auditLog = new AuditLog
+                {
+                    Info = info,
+                    Operation = operation,
+                    Timestamp = DateTime.UtcNow,
+                    User = name
+                };
+                dbContext.AuditLog.Add(auditLog);
+                await dbContext.SaveChangesAsync();
         }
 
         private JwtSecurityToken DecodeJwtToken(string encodedToken)
