@@ -49,6 +49,10 @@ namespace WCDS.WebFuncions.Core.Services
                 dbContext.AuditLog.Add(auditLog);
                 await dbContext.SaveChangesAsync();
             }
+            else
+            {
+                throw new Exception(parsedTokenResult);
+            }
         }
 
         private JwtSecurityToken DecodeJwtToken(string encodedToken)
