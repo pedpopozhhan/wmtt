@@ -13,6 +13,8 @@ using WCDS.WebFuncions.Core.Validator;
 using FluentValidation;
 using AutoMapper;
 using WCDS.WebFuncions.Core.Services;
+using System.IdentityModel.Tokens.Jwt;
+using WCDS.WebFuncions.Core.Common;
 
 namespace WCDS.WebFuncions
 {
@@ -20,19 +22,20 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public UpdateProcessedInvoice(IMapper mapper, IAuditLogService auditLogService)
+        public UpdateProcessedInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [FunctionName("UpdateProcessedInvoice")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
-            string userName = await _auditLogService.Audit("UpdateProcessedInvoice");
             _logger.LogInformation("Trigger function (UpdateProcessedInvoice) received a request.");
             try
             {
@@ -48,10 +51,31 @@ namespace WCDS.WebFuncions
                     {
                         return new BadRequestObjectResult("Invalid Request: UniqueServiceSheetName can not be null or empty");
                     }
-                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                    invoiceObj.UpdatedBy = userName;
-                    string result = await iController.UpdateProcessedInvoice(invoiceObj);
-                    return new OkObjectResult(result.ToString());
+
+                    bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
+                    if (tokenParsed)
+                    {
+                        invoiceObj.UpdatedBy = parsedTokenResult;
+                        IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                        string result = await iController.UpdateProcessedInvoice(invoiceObj);
+
+                        try
+                        {
+                            await _auditLogService.Audit("UpdateProcessedInvoice");
+                        }
+                        catch (Exception auditException)
+                        {
+                            _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
+                        }
+
+                        return new OkObjectResult(result.ToString());
+                    }
+                    else
+                    {
+                        return new UnauthorizedObjectResult(parsedTokenResult);
+                    }
+
+                   
                 }
                 else
                 {
@@ -66,5 +90,6 @@ namespace WCDS.WebFuncions
                 return result;
             }
         }
+
     }
 }
