@@ -10,8 +10,12 @@ local.settings.json should look like this:
         "AviationReportingServiceApiUrl": "<url to aviation reporting service api without trailing slash>",
         "WildfireFinanceServiceApiUrl":"<url to aviation finance service api without trailing slash>"
         "WildfireFinanceServiceApiKey":"<api key from zaure>",
-        "ContractAppUrl": "<Contracts App Base Url>"
-    },
+        "ContractAppUrl": "<Contracts App Base Url>",
+        "InvoiceDataSyncTopicName": "invoices-data-sync",
+        "InvoiceDataSyncTopicConnectionString": "<service bus connection string>",
+        "InvoiceStatusSyncTopicName": "invoices-status-sync",
+        "InvoiceStatusSyncTopicConnectionString": "<service bus connection string>"   
+        },
     "Host": {
         "CORS": "*",
         "CORSCredentials": false
