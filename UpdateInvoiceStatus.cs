@@ -57,9 +57,9 @@ namespace WCDS.WebFuncions
                     }
                     else
                     {
-                        if(invoiceObj.PaymentStatus != Enums.PaymentStatus.Submitted.ToString() && invoiceObj.PaymentStatus != Enums.PaymentStatus.Posted.ToString() && invoiceObj.PaymentStatus != Enums.PaymentStatus.Cleared.ToString())
+                        if(invoiceObj.PaymentStatus != Enums.PaymentStatus.Posted.ToString() && invoiceObj.PaymentStatus != Enums.PaymentStatus.Cleared.ToString())
                         {
-                            validationErrors.Add("Invalid Request: PaymentStatus can not be other than Submitted, Posted or Cleared.");
+                            validationErrors.Add("Invalid Request: PaymentStatus can not be other than Posted or Cleared.");
                         }
                     }
                     if (!invoiceObj.UpdatedDateTime.HasValue)
