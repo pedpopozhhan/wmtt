@@ -21,6 +21,8 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        OkObjectResult okResult = null;
+        BadRequestObjectResult badRequestResult = null;
 
         public CreateInvoice(IMapper mapper, IAuditLogService auditLogService)
         {
@@ -45,15 +47,21 @@ namespace WCDS.WebFuncions
                     var validationResult = validationRules.Validate(invoiceObj);
                     if (!validationResult.IsValid)
                     {
-                        return new BadRequestObjectResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
+                        badRequestResult = new BadRequestObjectResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
+                        badRequestResult.ContentTypes.Add("application/json");
+                        return badRequestResult;
                     }
 
                     var result = await iController.CreateInvoice(invoiceObj);
-                    return new OkObjectResult(result);
+                    okResult = new OkObjectResult(result);
+                    okResult.ContentTypes.Add("application/json");
+                    return okResult;
                 }
                 else
                 {
-                    return new BadRequestObjectResult("Invalid Request");
+                    badRequestResult = new BadRequestObjectResult("Invalid Request");
+                    badRequestResult.ContentTypes.Add("application/json");
+                    return badRequestResult;
                 }
             }
             catch (Exception ex)
@@ -61,6 +69,7 @@ namespace WCDS.WebFuncions
                 _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
                 var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
                 result.StatusCode = StatusCodes.Status500InternalServerError;
+                result.ContentTypes.Add("application/json");
                 return result;
             }
         }

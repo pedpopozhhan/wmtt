@@ -1,18 +1,13 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
+using System;
+using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
-using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Validator;
 using WCDS.WebFuncions.Core.Services;
-using AutoMapper;
-using System.Linq;
 
 namespace WCDS.WebFuncions
 {
@@ -21,6 +16,9 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        OkObjectResult okResult = null;
+        BadRequestObjectResult badRequestResult = null;
+
         public DoesInvoiceNumberExist(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
@@ -40,13 +38,16 @@ namespace WCDS.WebFuncions
                 if (!string.IsNullOrEmpty(invoiceNumber))
                 {
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
-
                     var exists = iController.InvoiceExists(invoiceNumber);
-                    return new OkObjectResult(exists);
+                    okResult = new OkObjectResult(exists);
+                    okResult.ContentTypes.Add("application/json");
+                    return okResult;
                 }
                 else
                 {
-                    return new BadRequestObjectResult("invoiceNumber missing from query params");
+                    badRequestResult = new BadRequestObjectResult("invoiceNumber missing from query params");
+                    badRequestResult.ContentTypes.Add("application/json");
+                    return badRequestResult;
                 }
 
             }
@@ -55,6 +56,7 @@ namespace WCDS.WebFuncions
                 _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
                 var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
                 result.StatusCode = StatusCodes.Status500InternalServerError;
+                result.ContentTypes.Add("application/json");
                 return result;
             }
         }

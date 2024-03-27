@@ -9,12 +9,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
-using System.Web.Http;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
@@ -27,6 +24,8 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        OkObjectResult okResult = null;
+        BadRequestObjectResult badRequestResult = null;
 
         public GetCostDetails(IMapper mapper, IAuditLogService auditLogService)
         {
@@ -67,11 +66,15 @@ namespace WCDS.WebFuncions
 
                 if (validationErrors.Count > 0)
                 {
-                    return new BadRequestObjectResult(validationErrors);
+                    badRequestResult = new BadRequestObjectResult(validationErrors);
+                    badRequestResult.ContentTypes.Add("application/json");
+                    return badRequestResult;
                 }
 
                 var responseDto = new InvoiceController(log, _mapper).GetCostDetails(data);
-                return new OkObjectResult(responseDto);
+                okResult = new OkObjectResult(responseDto);
+                okResult.ContentTypes.Add("application/json");
+                return okResult;
 
             }
             catch (Exception ex)
@@ -79,6 +82,7 @@ namespace WCDS.WebFuncions
                 log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
                 var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
                 result.StatusCode = StatusCodes.Status500InternalServerError;
+                result.ContentTypes.Add("application/json");
                 return result;
             }
         }

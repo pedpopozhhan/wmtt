@@ -1,19 +1,17 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Validator;
-using FluentValidation;
-using AutoMapper;
 using WCDS.WebFuncions.Core.Services;
-using System.Collections.Generic;
 
 namespace WCDS.WebFuncions
 {
@@ -21,6 +19,8 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        OkObjectResult okResult = null;
+        BadRequestObjectResult badRequestResult = null;
 
         string errorMessage = "Error : {0}, InnerException: {1}";
 
@@ -66,14 +66,20 @@ namespace WCDS.WebFuncions
 
                     if (validationErrors.Count > 0)
                     {
-                        return new BadRequestObjectResult(validationErrors);
+                        badRequestResult = new BadRequestObjectResult(validationErrors);
+                        badRequestResult.ContentTypes.Add("application/json");
+                        return badRequestResult;
                     }
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                    return new OkObjectResult(iController.UpdateInvoiceStatus(invoiceObj));
+                    okResult = new OkObjectResult(iController.UpdateInvoiceStatus(invoiceObj));
+                    okResult.ContentTypes.Add("application/json");
+                    return okResult;
                 }
                 else
                 {
-                    return new BadRequestObjectResult("Invalid Request");
+                    badRequestResult = new BadRequestObjectResult("Invalid Request");
+                    badRequestResult.ContentTypes.Add("application/json");
+                    return badRequestResult;
                 }
             }
             catch (Exception ex)
@@ -81,6 +87,7 @@ namespace WCDS.WebFuncions
                 _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
                 var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
                 result.StatusCode = StatusCodes.Status500InternalServerError;
+                result.ContentTypes.Add("application/json");
                 return result;
             }
         }

@@ -25,6 +25,7 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        BadRequestObjectResult badRequestResult = null;
 
         public GetTimeReportDetails(IDomainService domainService, ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
         {
@@ -50,9 +51,10 @@ namespace WCDS.WebFuncions
 
                 if (data == null)
                 {
-                    return new BadRequestObjectResult("Invalid Request");
+                    badRequestResult = new BadRequestObjectResult("Invalid Request");
+                    badRequestResult.ContentTypes.Add("application/json");
+                    return badRequestResult;
                 }
-
 
                 var details = await _timeReportingService.GetTimeReportByIds(data.TimeReportIds);
                 if (!string.IsNullOrEmpty(details.ErrorMessage))
@@ -69,17 +71,15 @@ namespace WCDS.WebFuncions
                 {
                     Rows = mapped?.ToArray(),
                 };
+                
                 return new JsonResult(response);
-
-
-                throw new Exception("Error retrieving rateTypes or rateUnits");
-
             }
             catch (Exception ex)
             {
                 log.LogError(ex.Message);
                 var result = new ObjectResult(ex.Message);
                 result.StatusCode = StatusCodes.Status500InternalServerError;
+                result.ContentTypes.Add("application/json");
                 return result;
             }
         }
