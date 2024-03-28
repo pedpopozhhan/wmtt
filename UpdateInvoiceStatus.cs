@@ -24,6 +24,7 @@ namespace WCDS.WebFuncions
         private readonly IAuditLogService _auditLogService;
         OkObjectResult okResult = null;
         BadRequestObjectResult badRequestResult = null;
+        UnauthorizedObjectResult unauthorizedResult = null;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         string errorMessage = "Error : {0}, InnerException: {1}";
@@ -91,11 +92,15 @@ namespace WCDS.WebFuncions
                             _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
                         }
 
-                        return new OkObjectResult(result);
+                        okResult = new OkObjectResult(result);
+                        okResult.ContentTypes.Add("application/json");
+                        return okResult;
                     }
                     else
                     {
-                        return new UnauthorizedObjectResult(parsedTokenResult);
+                        unauthorizedResult = new UnauthorizedObjectResult(parsedTokenResult);
+                        unauthorizedResult.ContentTypes.Add("application/json");
+                        return unauthorizedResult;
                     }
                 }
                 else

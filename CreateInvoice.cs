@@ -26,6 +26,7 @@ namespace WCDS.WebFuncions
         string errorMessage = "Error : {0}, InnerException: {1}";
         OkObjectResult okResult = null;
         BadRequestObjectResult badRequestResult = null;
+        UnauthorizedObjectResult unauthorizedResult = null;
 
         public CreateInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
         {
@@ -45,19 +46,19 @@ namespace WCDS.WebFuncions
                 if (invoiceObj != null)
                 {
                     bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
-                    if(tokenParsed)
+                    if (tokenParsed)
                     {
                         invoiceObj.CreatedBy = parsedTokenResult;
                         IInvoiceController iController = new InvoiceController(_logger, _mapper);
                         InvoiceValidator validationRules = new InvoiceValidator(iController);
 
-                    var validationResult = validationRules.Validate(invoiceObj);
-                    if (!validationResult.IsValid)
-                    {
-                        badRequestResult = new BadRequestObjectResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
-                        badRequestResult.ContentTypes.Add("application/json");
-                        return badRequestResult;
-                    }
+                        var validationResult = validationRules.Validate(invoiceObj);
+                        if (!validationResult.IsValid)
+                        {
+                            badRequestResult = new BadRequestObjectResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
+                            badRequestResult.ContentTypes.Add("application/json");
+                            return badRequestResult;
+                        }
 
                         var result = await iController.CreateInvoice(invoiceObj);
                         try
@@ -74,7 +75,9 @@ namespace WCDS.WebFuncions
                     }
                     else
                     {
-                        return new UnauthorizedObjectResult(parsedTokenResult);
+                        unauthorizedResult = new UnauthorizedObjectResult(parsedTokenResult);
+                        unauthorizedResult.ContentTypes.Add("application/json");
+                        return unauthorizedResult;
                     }
 
                 }
