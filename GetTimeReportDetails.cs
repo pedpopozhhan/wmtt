@@ -20,16 +20,13 @@ namespace WCDS.WebFuncions
     /// </summary>
     public class GetTimeReportDetails
     {
-        private readonly IDomainService _domainService;
         private readonly ITimeReportingService _timeReportingService;
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
-        string errorMessage = "Error : {0}, InnerException: {1}";
-        BadRequestObjectResult badRequestResult = null;
+        JsonResult jsonResult = null;
 
         public GetTimeReportDetails(IDomainService domainService, ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
         {
-            _domainService = domainService;
             _timeReportingService = timeReportingService;
             _mapper = mapper;
             _auditLogService = auditLogService;
@@ -51,9 +48,9 @@ namespace WCDS.WebFuncions
 
                 if (data == null)
                 {
-                    badRequestResult = new BadRequestObjectResult("Invalid Request");
-                    badRequestResult.ContentTypes.Add("application/json");
-                    return badRequestResult;
+                    jsonResult = new JsonResult("Invalid Request");
+                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    return jsonResult;
                 }
 
                 var details = await _timeReportingService.GetTimeReportByIds(data.TimeReportIds);
@@ -71,16 +68,17 @@ namespace WCDS.WebFuncions
                 {
                     Rows = mapped?.ToArray(),
                 };
-                
-                return new JsonResult(response);
+
+                jsonResult = new JsonResult(response);
+                jsonResult.StatusCode = StatusCodes.Status200OK;
+                return jsonResult;
             }
             catch (Exception ex)
             {
                 log.LogError(ex.Message);
-                var result = new ObjectResult(ex.Message);
-                result.StatusCode = StatusCodes.Status500InternalServerError;
-                result.ContentTypes.Add("application/json");
-                return result;
+                jsonResult = new JsonResult(ex.Message);
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
+                return jsonResult;
             }
         }
     }

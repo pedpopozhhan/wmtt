@@ -17,23 +17,18 @@ namespace WCDS.WebFuncions
     public class GetContracts
     {
         private readonly ITimeReportingService _timeReportingService;
-        private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        JsonResult jsonResult = null;
 
         public GetContracts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
         {
-
             _timeReportingService = timeReportingService;
-            _mapper = mapper;
             this._auditLogService = auditLogService;
         }
 
-
         [FunctionName("GetContracts")]
-        public async Task<ActionResult<ContractsResponse[]>> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
-            ILogger log)
+        public async Task<ActionResult<ContractsResponse[]>> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,ILogger log)
         {
             await _auditLogService.Audit("GetContracts");
             try
@@ -50,15 +45,17 @@ namespace WCDS.WebFuncions
                 {
                     Rows = contracts.Data
                 };
-                return new JsonResult(response);
+
+                jsonResult = new JsonResult(response);
+                jsonResult.StatusCode = StatusCodes.Status200OK;
+                return jsonResult;
             }
             catch (Exception ex)
             {
                 log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
-                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                result.StatusCode = StatusCodes.Status500InternalServerError;
-                result.ContentTypes.Add("application/json");
-                return result;
+                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
+                return jsonResult;
             }
         }
     }

@@ -24,8 +24,7 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
-        OkObjectResult okResult = null;
-        BadRequestObjectResult badRequestResult = null;
+        JsonResult jsonResult = null;
 
         public GetCostDetails(IMapper mapper, IAuditLogService auditLogService)
         {
@@ -35,9 +34,7 @@ namespace WCDS.WebFuncions
 
 
         [FunctionName("GetCostDetails")]
-        public async Task<ActionResult<CostDetailsResponseDto[]>> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-            ILogger log)
+        public async Task<ActionResult<CostDetailsResponseDto[]>> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
         {
             await _auditLogService.Audit("GetCostDetails");
             try
@@ -66,24 +63,23 @@ namespace WCDS.WebFuncions
 
                 if (validationErrors.Count > 0)
                 {
-                    badRequestResult = new BadRequestObjectResult(validationErrors);
-                    badRequestResult.ContentTypes.Add("application/json");
-                    return badRequestResult;
+                    jsonResult = new JsonResult(validationErrors);
+                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    return jsonResult;
                 }
 
                 var responseDto = new InvoiceController(log, _mapper).GetCostDetails(data);
-                okResult = new OkObjectResult(responseDto);
-                okResult.ContentTypes.Add("application/json");
-                return okResult;
 
+                jsonResult = new JsonResult(responseDto);
+                jsonResult.StatusCode = StatusCodes.Status200OK;
+                return jsonResult;
             }
             catch (Exception ex)
             {
                 log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
-                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                result.StatusCode = StatusCodes.Status500InternalServerError;
-                result.ContentTypes.Add("application/json");
-                return result;
+                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
+                return jsonResult;
             }
         }
     }
