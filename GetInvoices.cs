@@ -19,6 +19,7 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        BadRequestObjectResult badRequestResult = null;
 
         public GetInvoices(IMapper mapper, IAuditLogService auditLogService)
         {
@@ -46,7 +47,9 @@ namespace WCDS.WebFuncions
                 }
                 else
                 {
-                    return new BadRequestObjectResult("Invalid Request");
+                    badRequestResult = new BadRequestObjectResult("Invalid Request");
+                    badRequestResult.ContentTypes.Add("application/json");
+                    return badRequestResult;
                 }
             }
 
@@ -55,6 +58,7 @@ namespace WCDS.WebFuncions
                 log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
                 var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
                 result.StatusCode = StatusCodes.Status500InternalServerError;
+                result.ContentTypes.Add("application/json");
                 return result;
             }
         }

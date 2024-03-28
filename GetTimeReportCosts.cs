@@ -7,10 +7,8 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
@@ -24,10 +22,10 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        BadRequestObjectResult badRequestResult = null;
 
         public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
         {
-
             _timeReportingService = timeReportingService;
             _mapper = mapper;
             _auditLogService = auditLogService;
@@ -63,7 +61,9 @@ namespace WCDS.WebFuncions
                 }
                 else
                 {
-                    return new BadRequestObjectResult("Invalid Request");
+                    badRequestResult = new BadRequestObjectResult("Invalid Request");
+                    badRequestResult.ContentTypes.Add("application/json");
+                    return badRequestResult;
                 }
 
             }
@@ -72,6 +72,7 @@ namespace WCDS.WebFuncions
                 log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
                 var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
                 result.StatusCode = StatusCodes.Status500InternalServerError;
+                result.ContentTypes.Add("application/json");
                 return result;
             }
         }

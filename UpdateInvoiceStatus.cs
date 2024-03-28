@@ -1,17 +1,16 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Validator;
-using FluentValidation;
-using AutoMapper;
 using WCDS.WebFuncions.Core.Services;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -23,6 +22,9 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        OkObjectResult okResult = null;
+        BadRequestObjectResult badRequestResult = null;
+        UnauthorizedObjectResult unauthorizedResult = null;
         private readonly IHttpContextAccessor _httpContextAccessor;
 
         string errorMessage = "Error : {0}, InnerException: {1}";
@@ -69,7 +71,9 @@ namespace WCDS.WebFuncions
 
                     if (validationErrors.Count > 0)
                     {
-                        return new BadRequestObjectResult(validationErrors);
+                        badRequestResult = new BadRequestObjectResult(validationErrors);
+                        badRequestResult.ContentTypes.Add("application/json");
+                        return badRequestResult;
                     }
 
                     bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
@@ -88,16 +92,22 @@ namespace WCDS.WebFuncions
                             _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
                         }
 
-                        return new OkObjectResult(result);
+                        okResult = new OkObjectResult(result);
+                        okResult.ContentTypes.Add("application/json");
+                        return okResult;
                     }
                     else
                     {
-                        return new UnauthorizedObjectResult(parsedTokenResult);
+                        unauthorizedResult = new UnauthorizedObjectResult(parsedTokenResult);
+                        unauthorizedResult.ContentTypes.Add("application/json");
+                        return unauthorizedResult;
                     }
                 }
                 else
                 {
-                    return new BadRequestObjectResult("Invalid Request");
+                    badRequestResult = new BadRequestObjectResult("Invalid Request");
+                    badRequestResult.ContentTypes.Add("application/json");
+                    return badRequestResult;
                 }
             }
             catch (Exception ex)
@@ -105,6 +115,7 @@ namespace WCDS.WebFuncions
                 _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
                 var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
                 result.StatusCode = StatusCodes.Status500InternalServerError;
+                result.ContentTypes.Add("application/json");
                 return result;
             }
         }

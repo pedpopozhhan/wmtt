@@ -1,15 +1,14 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using WCDS.WebFuncions.Core.Services;
+using System;
 using System.Linq;
-using WCDS.WebFuncions.Core.Model.Services;
+using System.Threading.Tasks;
 using WCDS.WebFuncions.Core.Common;
+using WCDS.WebFuncions.Core.Model.Services;
+using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
 {
