@@ -18,6 +18,7 @@ namespace WCDS.WebFuncions
         private readonly IWildfireFinanceService _wildfireFinanceService;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        JsonResult jsonResult = null;
 
         public GetCustomLists(IDomainService domainService, IWildfireFinanceService wildfireFinanceService, IAuditLogService auditLogService)
         {
@@ -72,16 +73,17 @@ namespace WCDS.WebFuncions
                     FundList = fund.ToArray()
                 };
 
-                return new JsonResult(response);
+                jsonResult = new JsonResult(response);
+                jsonResult.StatusCode = StatusCodes.Status200OK;
+                return jsonResult;
             }
             catch (Exception ex)
             {
                 log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
-                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                result.StatusCode = StatusCodes.Status500InternalServerError;
-                return result;
+                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
+                return jsonResult;
             }
-
         }
     }
 }

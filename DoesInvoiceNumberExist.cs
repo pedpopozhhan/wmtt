@@ -16,8 +16,7 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
-        OkObjectResult okResult = null;
-        BadRequestObjectResult badRequestResult = null;
+        JsonResult jsonResult = null;
 
         public DoesInvoiceNumberExist(IMapper mapper, IAuditLogService auditLogService)
         {
@@ -39,25 +38,24 @@ namespace WCDS.WebFuncions
                 {
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
                     var exists = iController.InvoiceExists(invoiceNumber);
-                    okResult = new OkObjectResult(exists);
-                    okResult.ContentTypes.Add("application/json");
-                    return okResult;
+
+                    jsonResult = new JsonResult(exists);
+                    jsonResult.StatusCode = StatusCodes.Status200OK;
+                    return jsonResult;
                 }
                 else
                 {
-                    badRequestResult = new BadRequestObjectResult("invoiceNumber missing from query params");
-                    badRequestResult.ContentTypes.Add("application/json");
-                    return badRequestResult;
+                    jsonResult = new JsonResult("invoiceNumber missing from query params");
+                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    return jsonResult;
                 }
-
             }
             catch (Exception ex)
             {
                 _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
-                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                result.StatusCode = StatusCodes.Status500InternalServerError;
-                result.ContentTypes.Add("application/json");
-                return result;
+                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
+                return jsonResult;
             }
         }
     }
