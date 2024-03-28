@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
+using WCDS.WebFuncions.Core.Common;
 
 namespace WCDS.WebFuncions
 {
@@ -21,20 +24,21 @@ namespace WCDS.WebFuncions
         private readonly IAuditLogService _auditLogService;
         OkObjectResult okResult = null;
         BadRequestObjectResult badRequestResult = null;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public UpdateInvoiceStatus(IMapper mapper, IAuditLogService auditLogService)
+        public UpdateInvoiceStatus(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [FunctionName("UpdateInvoiceStatus")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
-           // await _auditLogService.Audit("UpdateInvoiceStatus");
-            _logger.LogInformation("Trigger function (UpdateInvoiceStatus) received a request.");
+           _logger.LogInformation("Trigger function (UpdateInvoiceStatus) received a request.");
             try
            {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
@@ -54,9 +58,9 @@ namespace WCDS.WebFuncions
                     }
                     else
                     {
-                        if(invoiceObj.PaymentStatus != Enums.PaymentStatus.Submitted.ToString() && invoiceObj.PaymentStatus != Enums.PaymentStatus.Posted.ToString() && invoiceObj.PaymentStatus != Enums.PaymentStatus.Cleared.ToString())
+                        if(invoiceObj.PaymentStatus != Enums.PaymentStatus.Posted.ToString() && invoiceObj.PaymentStatus != Enums.PaymentStatus.Cleared.ToString())
                         {
-                            validationErrors.Add("Invalid Request: PaymentStatus can not be other than Submitted, Posted or Cleared.");
+                            validationErrors.Add("Invalid Request: PaymentStatus can not be other than Posted or Cleared.");
                         }
                     }
                     if (!invoiceObj.UpdatedDateTime.HasValue)
@@ -70,10 +74,29 @@ namespace WCDS.WebFuncions
                         badRequestResult.ContentTypes.Add("application/json");
                         return badRequestResult;
                     }
-                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                    okResult = new OkObjectResult(iController.UpdateInvoiceStatus(invoiceObj));
-                    okResult.ContentTypes.Add("application/json");
-                    return okResult;
+
+                    bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
+                    if (tokenParsed)
+                    {
+                        invoiceObj.UpdatedBy = parsedTokenResult;
+                        IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                        bool result = await iController.UpdateInvoiceStatus(invoiceObj);
+
+                        try
+                        {
+                            await _auditLogService.Audit("UpdateInvoiceStatus");
+                        }
+                        catch (Exception auditException)
+                        {
+                            _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
+                        }
+
+                        return new OkObjectResult(result);
+                    }
+                    else
+                    {
+                        return new UnauthorizedObjectResult(parsedTokenResult);
+                    }
                 }
                 else
                 {
@@ -91,5 +114,6 @@ namespace WCDS.WebFuncions
                 return result;
             }
         }
+
     }
 }

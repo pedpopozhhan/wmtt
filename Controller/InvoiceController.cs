@@ -19,7 +19,7 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceExists(string invoiceNumber);
         public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest);
         public  Task<string> UpdateProcessedInvoice(InvoiceDto invoice);
-        public bool UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request);
+        public Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request);
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
     }
 
@@ -48,13 +48,11 @@ namespace WCDS.WebFuncions.Controller
                 try
                 {
                     Invoice invoiceEntity = _mapper.Map<Invoice>(invoice);
-                    invoiceEntity.CreatedBy = DEFAULT_USER;
-                    invoiceEntity.CreatedByDateTime = DateTime.Now;
                     if (invoiceEntity.InvoiceTimeReportCostDetails != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
                     {
                         foreach (var item in invoiceEntity.InvoiceTimeReportCostDetails)
                         {
-                            item.CreatedBy = DEFAULT_USER;
+                            item.CreatedBy = invoice.CreatedBy;
                             item.CreatedByDateTime = DateTime.Now;
                         }
                     }
@@ -62,24 +60,18 @@ namespace WCDS.WebFuncions.Controller
                     {
                         foreach (var item in invoiceEntity.InvoiceOtherCostDetails)
                         {
-                            item.CreatedBy = DEFAULT_USER;
+                            item.CreatedBy = invoice.CreatedBy;
                             item.CreatedByDateTime = DateTime.Now;
                         }
                     }
-                    if (!string.IsNullOrEmpty(invoiceEntity.UniqueServiceSheetName))
-                    {
-                        invoiceEntity.PaymentStatus = Enums.PaymentStatus.Submitted.ToString();
-                        invoiceEntity.InvoiceStatusLogs = new List<InvoiceStatusLog> { new InvoiceStatusLog()
+                    invoiceEntity.InvoiceStatusLogs = new List<InvoiceStatusLog> { new InvoiceStatusLog()
                                         {
                                             InvoiceId = invoiceEntity.InvoiceId,
-                                            CurrentStatus = invoiceEntity.PaymentStatus,
-                                            PreviousStatus = string.Empty,
-                                            User = DEFAULT_USER,
+                                            User = invoice.CreatedBy,
                                             Timestamp = DateTime.Now
                                         }};
 
-                    }
-                    invoiceEntity.CreatedBy = DEFAULT_USER;
+                    invoiceEntity.CreatedBy = invoice.CreatedBy;
                     invoiceEntity.CreatedByDateTime = DateTime.Now;
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
@@ -96,7 +88,7 @@ namespace WCDS.WebFuncions.Controller
                     {
                         Action = "create-invoice",
                         TimeStamp = DateTime.Now,
-                        Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice}
+                        Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
                     });
 
                     if (invoiceEntity.InvoiceTimeReportCostDetails != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
@@ -118,7 +110,7 @@ namespace WCDS.WebFuncions.Controller
 
                     result = invoiceEntity.InvoiceId;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _logger.LogError(string.Format("CreateInvoice: An error has occured while Saving Invoice: {0}, ErrorMessage: {1}, InnerException: {2}", invoice.InvoiceNumber, ex.Message, ex.InnerException));
                     transaction.Rollback();
@@ -141,23 +133,8 @@ namespace WCDS.WebFuncions.Controller
                         throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
                     }
                     invoiceRecord.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
-                    string previousStatus = invoiceRecord.PaymentStatus;
-                    invoiceRecord.PaymentStatus = Enums.PaymentStatus.Submitted.ToString();
-                    invoiceRecord.UpdatedBy = DEFAULT_USER;
+                    invoiceRecord.UpdatedBy = invoice.UpdatedBy;
                     invoiceRecord.UpdatedByDateTime = DateTime.Now;
-
-                    if(string.IsNullOrEmpty(previousStatus) || previousStatus != invoiceRecord.PaymentStatus)
-                    {
-                        invoiceRecord.InvoiceStatusLogs = new List<InvoiceStatusLog> { new InvoiceStatusLog()
-                                    {
-                                        InvoiceId = invoiceRecord.InvoiceId,
-                                        CurrentStatus = invoiceRecord.PaymentStatus,
-                                        PreviousStatus = previousStatus,
-                                        User = DEFAULT_USER,
-                                        Timestamp = DateTime.Now
-                                    }};
-                    }
-
                     dbContext.SaveChanges();
                     transaction.Commit();
 
@@ -187,7 +164,7 @@ namespace WCDS.WebFuncions.Controller
             return result;
         }
 
-        public bool UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request)
+        public async Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request)
         {
             bool result = false;
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
@@ -207,14 +184,29 @@ namespace WCDS.WebFuncions.Controller
                                         InvoiceId = invoiceRecord.InvoiceId,
                                         CurrentStatus = request.PaymentStatus,
                                         PreviousStatus = invoiceRecord.PaymentStatus,
-                                        User = DEFAULT_USER,
+                                        User = request.UpdatedBy,
                                         Timestamp = request.UpdatedDateTime.Value
                                     }};
                         invoiceRecord.PaymentStatus = request.PaymentStatus;
-                        invoiceRecord.UpdatedBy = DEFAULT_USER;
+                        invoiceRecord.UpdatedBy = request.UpdatedBy;
                         invoiceRecord.UpdatedByDateTime = DateTime.Now;
                         dbContext.SaveChanges();
                         transaction.Commit();
+
+                        var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceRecord);
+                        messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
+                        {
+                            InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(invoiceRecord.InvoiceTimeReportCostDetails),
+                            InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(invoiceRecord.InvoiceOtherCostDetails)
+                        };
+
+                        await new InvoiceDataSyncMessageHandler().SendUpdateInvoiceMessage(new InvoiceDataSyncMessageDto()
+                        {
+                            Action = "update-invoice",
+                            TimeStamp = DateTime.Now,
+                            Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
+                        });
+
                         result = true;
                     }
                 }

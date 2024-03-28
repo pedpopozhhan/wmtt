@@ -26,7 +26,7 @@ namespace WCDS.WebFuncions.Core.Services
 
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly ApplicationDBContext dbContext;
-
+      
         public AuditLogService(ILogger<DomainService> log, IHttpContextAccessor httpContextAccessor)
         {
             this.httpContextAccessor = httpContextAccessor;
@@ -36,35 +36,23 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task Audit(string operation, string info = "")
         {
-            var name = "Unknown";
-            var tokenHeader = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
-            if (!string.IsNullOrEmpty(tokenHeader))
+            bool tokenParsed = new Common.Common().ParseToken(httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
+            if (tokenParsed)
             {
-
-                var parts = tokenHeader.ToString().Split(" ");
-                if (parts.Length != 2)
+                var auditLog = new AuditLog
                 {
-                    throw new UnauthorizedAccessException("Malformed Authorization Header");
-                }
-                // pull username out of token
-                var token = DecodeJwtToken(parts[1]);
-                var part1 = token.Payload?["name"];
-                if (part1 is string && string.IsNullOrEmpty((string)part1))
-                {
-                    throw new Exception("No Name found in token");
-                }
-                name = (string)part1;
+                    Info = info,
+                    Operation = operation,
+                    Timestamp = DateTime.UtcNow,
+                    User = parsedTokenResult
+                };
+                dbContext.AuditLog.Add(auditLog);
+                await dbContext.SaveChangesAsync();
             }
-            var auditLog = new AuditLog
+            else
             {
-                Info = info,
-                Operation = operation,
-                Timestamp = DateTime.UtcNow,
-                User = name
-            };
-            dbContext.AuditLog.Add(auditLog);
-            await dbContext.SaveChangesAsync();
-
+                throw new Exception(parsedTokenResult);
+            }
         }
 
         private JwtSecurityToken DecodeJwtToken(string encodedToken)

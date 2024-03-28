@@ -13,6 +13,8 @@ using WCDS.WebFuncions.Core.Validator;
 using AutoMapper;
 using WCDS.WebFuncions.Core.Services;
 using System.Linq;
+using System.IdentityModel.Tokens.Jwt;
+using WCDS.WebFuncions.Core.Common;
 
 namespace WCDS.WebFuncions
 {
@@ -20,29 +22,34 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         string errorMessage = "Error : {0}, InnerException: {1}";
         OkObjectResult okResult = null;
         BadRequestObjectResult badRequestResult = null;
 
-        public CreateInvoice(IMapper mapper, IAuditLogService auditLogService)
+        public CreateInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         [FunctionName("CreateInvoice")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
         {
-            await _auditLogService.Audit("CreateInvoice");
-            _logger.LogInformation("Trigger function (CreateInvoice) received a request.");
+            _logger.LogInformation("Trigger function (CreateInvoice) received a request");
             try
             {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
                 if (invoiceObj != null)
                 {
-                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                    InvoiceValidator validationRules = new InvoiceValidator(iController);
+                    bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
+                    if(tokenParsed)
+                    {
+                        invoiceObj.CreatedBy = parsedTokenResult;
+                        IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                        InvoiceValidator validationRules = new InvoiceValidator(iController);
 
                     var validationResult = validationRules.Validate(invoiceObj);
                     if (!validationResult.IsValid)
@@ -52,10 +59,24 @@ namespace WCDS.WebFuncions
                         return badRequestResult;
                     }
 
-                    var result = await iController.CreateInvoice(invoiceObj);
-                    okResult = new OkObjectResult(result);
-                    okResult.ContentTypes.Add("application/json");
-                    return okResult;
+                        var result = await iController.CreateInvoice(invoiceObj);
+                        try
+                        {
+                            await _auditLogService.Audit("CreateInvoice");
+                        }
+                        catch (Exception auditException)
+                        {
+                            _logger.LogError(string.Format(errorMessage, auditException.Message, auditException.InnerException));
+                        }
+                        okResult = new OkObjectResult(result);
+                        okResult.ContentTypes.Add("application/json");
+                        return okResult;
+                    }
+                    else
+                    {
+                        return new UnauthorizedObjectResult(parsedTokenResult);
+                    }
+
                 }
                 else
                 {
@@ -73,5 +94,6 @@ namespace WCDS.WebFuncions
                 return result;
             }
         }
+
     }
 }
