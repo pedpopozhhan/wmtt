@@ -9,12 +9,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
-using System.Web.Http;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
@@ -25,19 +22,21 @@ namespace WCDS.WebFuncions
     public class GetCostDetails
     {
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        JsonResult jsonResult = null;
 
-        public GetCostDetails(IMapper mapper)
+        public GetCostDetails(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
 
         [FunctionName("GetCostDetails")]
-        public async Task<ActionResult<CostDetailsResponseDto[]>> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-            ILogger log)
+        public async Task<ActionResult<CostDetailsResponseDto[]>> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
         {
+            await _auditLogService.Audit("GetCostDetails");
             try
             {
                 log.LogInformation("Trigger function (GetCostDetails) received a request.");
@@ -62,21 +61,25 @@ namespace WCDS.WebFuncions
                     }
                 }
 
-                if(validationErrors.Count > 0)
+                if (validationErrors.Count > 0)
                 {
-                    return new BadRequestObjectResult(validationErrors);
+                    jsonResult = new JsonResult(validationErrors);
+                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    return jsonResult;
                 }
-               
-                var responseDto = new InvoiceController(log, _mapper).GetCostDetails(data);
-                return new OkObjectResult(responseDto);
 
+                var responseDto = new InvoiceController(log, _mapper).GetCostDetails(data);
+
+                jsonResult = new JsonResult(responseDto);
+                jsonResult.StatusCode = StatusCodes.Status200OK;
+                return jsonResult;
             }
             catch (Exception ex)
             {
                 log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
-                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                result.StatusCode = StatusCodes.Status500InternalServerError;
-                return result;
+                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
+                return jsonResult;
             }
         }
     }

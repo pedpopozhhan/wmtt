@@ -1,67 +1,88 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Validator;
-using AutoMapper;
 using WCDS.WebFuncions.Core.Services;
-using System.Linq;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using WCDS.WebFuncions.Core.Common;
 
 namespace WCDS.WebFuncions
 {
-    public class CreateInvoice
+    public class UpdateInvoiceStatus
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        JsonResult jsonResult = null;
         private readonly IHttpContextAccessor _httpContextAccessor;
         string errorMessage = "Error : {0}, InnerException: {1}";
-        JsonResult jsonResult = null;
 
-        public CreateInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
+        public UpdateInvoiceStatus(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             _httpContextAccessor = httpContextAccessor;
         }
 
-        [FunctionName("CreateInvoice")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
+        [FunctionName("UpdateInvoiceStatus")]
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
-            _logger.LogInformation("Trigger function (CreateInvoice) received a request");
+           _logger.LogInformation("Trigger function (UpdateInvoiceStatus) received a request.");
             try
-            {
+           {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
+                var invoiceObj = JsonConvert.DeserializeObject<UpdateInvoiceStatusRequestDto>(requestBody);
+
+               
                 if (invoiceObj != null)
                 {
+                    List<string> validationErrors = new List<string>();
+                    if (invoiceObj.InvoiceId == null || (invoiceObj.InvoiceId != null  && invoiceObj.InvoiceId == Guid.Empty))
+                    {
+                        validationErrors.Add("Invalid Request: InvoiceId can not be empty or null.");
+                    }
+                    if (string.IsNullOrEmpty(invoiceObj.PaymentStatus))
+                    {
+                        validationErrors.Add("Invalid Request: PaymentStatus can not be empty or null.");
+                    }
+                    else
+                    {
+                        if(invoiceObj.PaymentStatus != Enums.PaymentStatus.Posted.ToString() && invoiceObj.PaymentStatus != Enums.PaymentStatus.Cleared.ToString())
+                        {
+                            validationErrors.Add("Invalid Request: PaymentStatus can not be other than Posted or Cleared.");
+                        }
+                    }
+                    if (!invoiceObj.UpdatedDateTime.HasValue)
+                    {
+                        validationErrors.Add("Invalid Request: UpdateDateTime can not be empty or null.");
+                    }
+
+                    if (validationErrors.Count > 0)
+                    {
+                        jsonResult = new JsonResult(validationErrors);
+                        jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                        return jsonResult;
+                    }
+
                     bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
                     if (tokenParsed)
                     {
-                        invoiceObj.CreatedBy = parsedTokenResult;
+                        invoiceObj.UpdatedBy = parsedTokenResult;
                         IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                        InvoiceValidator validationRules = new InvoiceValidator(iController);
+                        bool result = await iController.UpdateInvoiceStatus(invoiceObj);
 
-                        var validationResult = validationRules.Validate(invoiceObj);
-                        if (!validationResult.IsValid)
-                        {
-                            jsonResult = new JsonResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
-                            jsonResult.StatusCode = StatusCodes.Status400BadRequest;
-                            return jsonResult;
-                        }
-
-                        var result = await iController.CreateInvoice(invoiceObj);
                         try
                         {
-                            await _auditLogService.Audit("CreateInvoice");
+                            await _auditLogService.Audit("UpdateInvoiceStatus");
                         }
                         catch (Exception auditException)
                         {

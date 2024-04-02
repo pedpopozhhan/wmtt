@@ -7,10 +7,8 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
@@ -20,15 +18,15 @@ namespace WCDS.WebFuncions
     /// </summary>
     public class GetTimeReportCosts
     {
-        private readonly ITimeReportingService TimeReportingService;
-        private readonly IMapper Mapper;
+        private readonly ITimeReportingService _timeReportingService;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        JsonResult jsonResult = null;
 
-        public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper)
+        public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
         {
-
-            TimeReportingService = timeReportingService;
-            Mapper = mapper;
+            _timeReportingService = timeReportingService;
+            _auditLogService = auditLogService;
         }
 
 
@@ -37,6 +35,7 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+            await _auditLogService.Audit("GetTimeReportCosts");
             try
             {
                 log.LogInformation("Trigger function (GetTimeReportCosts) received a request.");
@@ -46,7 +45,7 @@ namespace WCDS.WebFuncions
 
                 if (data != null)
                 {
-                    var costs = await TimeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
+                    var costs = await _timeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
                     if (!string.IsNullOrEmpty(costs.ErrorMessage))
                     {
                         throw new Exception(costs.ErrorMessage);
@@ -56,20 +55,25 @@ namespace WCDS.WebFuncions
                     {
                         Rows = costs.Data
                     };
-                    return new JsonResult(response);
+
+                    jsonResult = new JsonResult(response);
+                    jsonResult.StatusCode = StatusCodes.Status200OK;
+                    return jsonResult;
                 }
                 else
                 {
-                    return new BadRequestObjectResult("Invalid Request");
+                    jsonResult = new JsonResult("Invalid Request");
+                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    return jsonResult;
                 }
 
             }
             catch (Exception ex)
             {
                 log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
-                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                result.StatusCode = StatusCodes.Status500InternalServerError;
-                return result;
+                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
+                return jsonResult;
             }
         }
     }

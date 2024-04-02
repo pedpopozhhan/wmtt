@@ -4,60 +4,55 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
-using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
+
 namespace WCDS.WebFuncions
 {
-    public class GetInvoices
+    public class DoesInvoiceNumberExist
     {
-
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetInvoices(IMapper mapper, IAuditLogService auditLogService)
+        public DoesInvoiceNumberExist(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
         }
 
-        [FunctionName("GetInvoices")]
-        public async Task<ActionResult<InvoiceResponseDto>> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
-            ILogger log)
+        [FunctionName("DoesInvoiceNumberExist")]
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Get), Route = null)] HttpRequest req, ILogger _logger)
         {
-            await _auditLogService.Audit("GetInvoices");
+            await _auditLogService.Audit("DoesInvoiceNumberExist");
+            _logger.LogInformation("Trigger function (DoesInvoiceNumberExist) received a request.");
             try
             {
-                log.LogInformation("Trigger function (GetInvoices) received a request.");
 
-                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var data = JsonConvert.DeserializeObject<InvoiceRequestDto>(requestBody);
+                var invoiceNumber = req.Query["invoiceNumber"];
 
-                if (data != null)
+                if (!string.IsNullOrEmpty(invoiceNumber))
                 {
-                    var responseDto = new InvoiceController(log, _mapper).GetInvoices(data);
+                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                    var exists = iController.InvoiceExists(invoiceNumber);
 
-                    jsonResult = new JsonResult(responseDto);
+                    jsonResult = new JsonResult(exists);
                     jsonResult.StatusCode = StatusCodes.Status200OK;
                     return jsonResult;
                 }
                 else
                 {
-                    jsonResult = new JsonResult("Invalid Request");
+                    jsonResult = new JsonResult("invoiceNumber missing from query params");
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                     return jsonResult;
                 }
             }
             catch (Exception ex)
             {
-                log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
                 jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
                 jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
                 return jsonResult;

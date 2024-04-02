@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WCDS.WebFuncions.Core.Context;
 
@@ -11,9 +12,10 @@ using WCDS.WebFuncions.Core.Context;
 namespace WCDS.WebFuncions.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240308185137_AuditLog")]
+    partial class AuditLog
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,6 +53,15 @@ namespace WCDS.WebFuncions.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<string>("AccountType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("AssignedTo")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("CommunityCode")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ContractNumber")
                         .HasColumnType("nvarchar(max)");
 
@@ -72,11 +83,23 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<DateTime?>("InvoiceReceivedDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("MaterialGroup")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PaymentStatus")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("PeriodEndDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Price")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("PurchaseGroup")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
 
                     b.Property<string>("ServiceDescription")
                         .HasColumnType("nvarchar(max)");
@@ -87,16 +110,16 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("UniqueServiceSheetName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UnitOfMeasure")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("UpdatedByDateTime")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("VendorBusinessId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("VendorName")
+                    b.Property<string>("Vendor")
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("InvoiceId");
@@ -172,34 +195,6 @@ namespace WCDS.WebFuncions.Migrations
                     b.HasIndex("InvoiceId");
 
                     b.ToTable("InvoiceOtherCostDetails");
-                });
-
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceStatusLog", b =>
-                {
-                    b.Property<Guid>("StatusLogId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("CurrentStatus")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<Guid>("InvoiceId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("PreviousStatus")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("User")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("StatusLogId");
-
-                    b.HasIndex("InvoiceId");
-
-                    b.ToTable("InvoiceStatusLog");
                 });
 
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReportCostDetails", b =>
@@ -284,17 +279,6 @@ namespace WCDS.WebFuncions.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceStatusLog", b =>
-                {
-                    b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
-                        .WithMany("InvoiceStatusLogs")
-                        .HasForeignKey("InvoiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Invoice");
-                });
-
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReportCostDetails", b =>
                 {
                     b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
@@ -309,8 +293,6 @@ namespace WCDS.WebFuncions.Migrations
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.Invoice", b =>
                 {
                     b.Navigation("InvoiceOtherCostDetails");
-
-                    b.Navigation("InvoiceStatusLogs");
 
                     b.Navigation("InvoiceTimeReportCostDetails");
                 });
