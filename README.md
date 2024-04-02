@@ -10,8 +10,12 @@ local.settings.json should look like this:
         "AviationReportingServiceApiUrl": "<url to aviation reporting service api without trailing slash>",
         "WildfireFinanceServiceApiUrl":"<url to aviation finance service api without trailing slash>"
         "WildfireFinanceServiceApiKey":"<api key from zaure>",
-        "ContractAppUrl": "<Contracts App Base Url>"
-    },
+        "ContractAppUrl": "<Contracts App Base Url>",
+        "InvoiceDataSyncTopicName": "invoices-data-sync",
+        "InvoiceDataSyncTopicConnectionString": "<service bus connection string>",
+        "InvoiceStatusSyncTopicName": "invoices-status-sync",
+        "InvoiceStatusSyncTopicConnectionString": "<service bus connection string>"   
+        },
     "Host": {
         "CORS": "*",
         "CORSCredentials": false
@@ -31,6 +35,11 @@ $env:connectionstring="Server=V-VD-PD-0-1367\SQLEXPRESS;Database=Contracts;Trust
 
 You might have to run management studio as an admin and then create a user with the dbcreator perms.
 Run the migration command
+dotnet ef database update
+
+For adding new entities:
+dotnet ef migrations add AddYourEntity
+then
 dotnet ef database update
 
 ```

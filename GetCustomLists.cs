@@ -1,15 +1,14 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using WCDS.WebFuncions.Core.Services;
+using System;
 using System.Linq;
-using WCDS.WebFuncions.Core.Model.Services;
+using System.Threading.Tasks;
 using WCDS.WebFuncions.Core.Common;
+using WCDS.WebFuncions.Core.Model.Services;
+using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
 {
@@ -17,12 +16,15 @@ namespace WCDS.WebFuncions
     {
         private readonly IDomainService _domainService;
         private readonly IWildfireFinanceService _wildfireFinanceService;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
+        JsonResult jsonResult = null;
 
-        public GetCustomLists(IDomainService domainService, IWildfireFinanceService wildfireFinanceService)
+        public GetCustomLists(IDomainService domainService, IWildfireFinanceService wildfireFinanceService, IAuditLogService auditLogService)
         {
             _domainService = domainService;
             _wildfireFinanceService = wildfireFinanceService;
+            _auditLogService = auditLogService;
         }
 
         [FunctionName("GetCustomLists")]
@@ -30,6 +32,7 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
             ILogger log)
         {
+            await _auditLogService.Audit("GetCustomLists");
             try
             {
                 log.LogInformation("Trigger function (GetCustomLists) received a request.");
@@ -64,22 +67,23 @@ namespace WCDS.WebFuncions
                 {
                     RateTypes = rateTypes.Data.Where(p => Common.filteredRateTypes.Contains(p.Type)).Select(x => x.Type).ToArray(),
                     RateUnits = rateUnits.Data.Where(p => Common.filteredRateUnits.Contains(p.Type)).Select(x => x.Type).ToArray(),
-                    CostCenterList = costCenter.Select(x => x.Value).ToArray(),
-                    GLAccountList = glAccount.Select(x => x.Value).ToArray(),
-                    InternalOrderList = internalOrder.Select(x => x.Value).ToArray(),
-                    FundList = fund.Select(x => x.Value).ToArray()
+                    CostCenterList = costCenter.ToArray(),
+                    GLAccountList = glAccount.ToArray(),
+                    InternalOrderList = internalOrder.ToArray(),
+                    FundList = fund.ToArray()
                 };
 
-                return new JsonResult(response);
+                jsonResult = new JsonResult(response);
+                jsonResult.StatusCode = StatusCodes.Status200OK;
+                return jsonResult;
             }
             catch (Exception ex)
             {
                 log.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
-                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                result.StatusCode = StatusCodes.Status500InternalServerError;
-                return result;
+                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
+                return jsonResult;
             }
-
         }
     }
 }

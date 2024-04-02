@@ -10,24 +10,29 @@ using Newtonsoft.Json;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Validator;
-using FluentValidation;
+using WCDS.WebFuncions.Core.Services;
 using AutoMapper;
 using System.Linq;
 
 namespace WCDS.WebFuncions
 {
-    public  class UpdateInvoice
+    public class UpdateInvoice
     {
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
-        public UpdateInvoice(IMapper mapper)
+        JsonResult jsonResult = null;
+
+        public UpdateInvoice(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         [FunctionName("UpdateInvoice")]
-        public  async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
         {
+            await _auditLogService.Audit("UpdateInvoice");
             _logger.LogInformation("Trigger function (UpdateInvoice) received a request.");
             try
             {
@@ -40,24 +45,30 @@ namespace WCDS.WebFuncions
                     var validationResult = validationRules.Validate(invoiceObj);
                     if (!validationResult.IsValid)
                     {
-                        return new BadRequestObjectResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
+                        jsonResult = new JsonResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
+                        jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                        return jsonResult;
                     }
 
                     int result = iController.UpdateInvoice(invoiceObj);
-                    return new OkObjectResult(result.ToString());
+
+                    jsonResult = new JsonResult(result.ToString());
+                    jsonResult.StatusCode = StatusCodes.Status200OK;
+                    return jsonResult;
                 }
                 else
                 {
-                    return new BadRequestObjectResult("Invalid Request");
+                    jsonResult = new JsonResult("Invalid Request");
+                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    return jsonResult;
                 }
-
             }
             catch (Exception ex)
             {
                 _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
-                var result = new ObjectResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                result.StatusCode = StatusCodes.Status500InternalServerError;
-                return result;
+                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;                
+                return jsonResult;
             }
         }
     }
