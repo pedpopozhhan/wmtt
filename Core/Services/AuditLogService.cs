@@ -1,17 +1,10 @@
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.JsonPatch.Operations;
-using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity;
-using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Model.Services;
 
 namespace WCDS.WebFuncions.Core.Services
 {
@@ -45,7 +38,7 @@ namespace WCDS.WebFuncions.Core.Services
                     Operation = operation,
                     Timestamp = DateTime.UtcNow,
                     User = parsedTokenResult
-                };
+                };                
                 dbContext.AuditLog.Add(auditLog);
                 await dbContext.SaveChangesAsync();
             }
@@ -54,15 +47,6 @@ namespace WCDS.WebFuncions.Core.Services
                 throw new Exception(parsedTokenResult);
             }
         }
-
-        private JwtSecurityToken DecodeJwtToken(string encodedToken)
-        {
-            var handler = new JwtSecurityTokenHandler();
-            var token = handler.ReadJwtToken(encodedToken);
-            return token;
-        }
-
-
     }
 }
 
