@@ -33,11 +33,12 @@ namespace WCDS.WebFuncions
             {
 
                 var invoiceNumber = req.Query["invoiceNumber"];
+                var contractNumber = req.Query["contractNumber"];
 
-                if (!string.IsNullOrEmpty(invoiceNumber))
+                if (!string.IsNullOrEmpty(invoiceNumber) && !string.IsNullOrEmpty(contractNumber))
                 {
                     IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                    var exists = iController.InvoiceExists(invoiceNumber);
+                    var exists = iController.InvoiceExistsForContract(invoiceNumber, contractNumber);
 
                     jsonResult = new JsonResult(exists);
                     jsonResult.StatusCode = StatusCodes.Status200OK;
@@ -45,7 +46,7 @@ namespace WCDS.WebFuncions
                 }
                 else
                 {
-                    jsonResult = new JsonResult("invoiceNumber missing from query params");
+                    jsonResult = new JsonResult("invoiceNumber and/or contractNumber missing from query params");
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                     return jsonResult;
                 }
