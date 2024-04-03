@@ -20,7 +20,7 @@ namespace WCDS.WebFuncions.Core.Validator
             RuleFor(x => x.InvoiceNumber).Must(InvoiceNumberDoesNotExist).WithMessage("Invoice Number already exists.");
             RuleFor(x => x.InvoiceDate).NotNull().WithMessage("Please provide value for Invoice Date.");
             RuleFor(x => x.PeriodEndDate).NotNull().WithMessage("Please provide value for Period End Date.");
-            RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Invoice Amount should be greater than Zero.");
+            RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Cannot invoice for $0.00");
             RuleFor(x => x.InvoiceReceivedDate).NotNull().WithMessage("Please provide value for Invoice Received Date.");
             RuleFor(x => new { x.InvoiceTimeReportCostDetails, x.InvoiceOtherCostDetails }).Must(v => TimeReportOrOtherCostExists(v.InvoiceTimeReportCostDetails, v.InvoiceOtherCostDetails)).WithMessage("Invoice must have Time Report Costs or Other Costs");
         }

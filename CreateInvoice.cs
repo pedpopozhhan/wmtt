@@ -1,20 +1,19 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
+using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using WCDS.WebFuncions.Controller;
-using WCDS.WebFuncions.Core.Model;
-using WCDS.WebFuncions.Core.Validator;
-using AutoMapper;
-using WCDS.WebFuncions.Core.Services;
+using System;
+using System.IO;
 using System.Linq;
-using System.IdentityModel.Tokens.Jwt;
+using System.Threading.Tasks;
+using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Common;
+using WCDS.WebFuncions.Core.Model;
+using WCDS.WebFuncions.Core.Services;
+using WCDS.WebFuncions.Core.Validator;
 
 namespace WCDS.WebFuncions
 {
@@ -94,6 +93,5 @@ namespace WCDS.WebFuncions
                 return jsonResult;
             }
         }
-
     }
 }
