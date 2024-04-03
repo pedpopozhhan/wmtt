@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AutoMapper.Internal;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace WCDS.WebFuncions.Core.Common
 {
@@ -72,9 +65,9 @@ namespace WCDS.WebFuncions.Core.Common
             }
             else
             {
-                response = "No Token Header found in the request";
+                response = "System";
+                result = true;
             }
-            
             return result;
         }
 
