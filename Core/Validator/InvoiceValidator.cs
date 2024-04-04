@@ -17,21 +17,21 @@ namespace WCDS.WebFuncions.Core.Validator
         {
             _invoiceController = invoiceController;
             RuleFor(x => x.InvoiceId).Must(i => i.Equals(Guid.Empty)).WithMessage("Please provide valid value for Invoice ID.");
-            RuleFor(x => x.InvoiceNumber).Must(InvoiceNumberDoesNotExist).WithMessage("Invoice Number already exists.");
+            RuleFor(x => new { x.InvoiceNumber, x.ContractNumber }).Must(v => InvoiceNumberDoesNotExist(v.InvoiceNumber, v.ContractNumber)).WithMessage("Invoice Number already exists for Contract Number.");
             RuleFor(x => x.InvoiceDate).NotNull().WithMessage("Please provide value for Invoice Date.");
             RuleFor(x => x.PeriodEndDate).NotNull().WithMessage("Please provide value for Period End Date.");
-            RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Invoice Amount should be greater than Zero.");
+            RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Cannot invoice for $0.00");
             RuleFor(x => x.InvoiceReceivedDate).NotNull().WithMessage("Please provide value for Invoice Received Date.");
             RuleFor(x => new { x.InvoiceTimeReportCostDetails, x.InvoiceOtherCostDetails }).Must(v => TimeReportOrOtherCostExists(v.InvoiceTimeReportCostDetails, v.InvoiceOtherCostDetails)).WithMessage("Invoice must have Time Report Costs or Other Costs");
         }
 
-        private bool InvoiceNumberDoesNotExist(string invoiceNumber)
+        private bool InvoiceNumberDoesNotExist(string invoiceNumber, string contractNumber)
         {
-            return !_invoiceController.InvoiceExists(invoiceNumber);
+            return !_invoiceController.InvoiceExistsForContract(invoiceNumber, contractNumber);
         }
-        private bool TimeReportOrOtherCostExists(List<InvoiceTimeReportCostDetailDto> invoiceTimeReportCostDetails, List<InvoiceOtherCostDetailDto> invoiceOtherCostDetails) 
+        private bool TimeReportOrOtherCostExists(List<InvoiceTimeReportCostDetailDto> invoiceTimeReportCostDetails, List<InvoiceOtherCostDetailDto> invoiceOtherCostDetails)
         {
-          return (invoiceTimeReportCostDetails != null || invoiceOtherCostDetails != null);
+            return (invoiceTimeReportCostDetails != null || invoiceOtherCostDetails != null);
         }
     }
 }
