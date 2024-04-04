@@ -40,7 +40,7 @@ namespace WCDS.WebFuncions
                 {
                     jsonResult = new JsonResult(contracts.ErrorMessage)
                     {
-                        StatusCode = StatusCodes.Status400BadRequest
+                        StatusCode = StatusCodes.Status424FailedDependency
                     };
                     return jsonResult;
                 }

@@ -49,7 +49,7 @@ namespace WCDS.WebFuncions
                     if (!string.IsNullOrEmpty(costs.ErrorMessage))
                     {
                         jsonResult = new JsonResult(costs.ErrorMessage);
-                        jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                        jsonResult.StatusCode = StatusCodes.Status424FailedDependency;
                         return jsonResult;
 
                     }
