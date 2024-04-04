@@ -48,7 +48,10 @@ namespace WCDS.WebFuncions
                     var costs = await _timeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
                     if (!string.IsNullOrEmpty(costs.ErrorMessage))
                     {
-                        throw new Exception(costs.ErrorMessage);
+                        jsonResult = new JsonResult(costs.ErrorMessage);
+                        jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                        return jsonResult;
+
                     }
 
                     var response = new TimeReportCostsResponse
