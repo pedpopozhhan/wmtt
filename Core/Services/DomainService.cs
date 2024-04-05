@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Model.Services;
 
@@ -64,14 +65,17 @@ namespace WCDS.WebFuncions.Core.Services
             var jsonRequest = JsonConvert.SerializeObject(requestObject);
             var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
+
             using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
             requestMessage.Headers.TryAddWithoutValidation("Authorization", (string)token);
             requestMessage.Content = requestContent;
 
+            await LoggerHelper.LogRequestAsync(Log, requestMessage);
             var response = await HttpClient.SendAsync(requestMessage);
+            await LoggerHelper.LogResponseAsync(Log, response);
             response.EnsureSuccessStatusCode();
-
             var jsonResponse = await response.Content.ReadAsStringAsync();
+
             Response<T> responseData = JsonConvert.DeserializeObject<Response<T>>(jsonResponse);
 
             return responseData;

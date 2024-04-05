@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model.Services;
 
@@ -56,13 +57,13 @@ namespace WCDS.WebFuncions.Core.Services
             using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
             requestMessage.Headers.TryAddWithoutValidation("Authorization", (string)token);
             requestMessage.Content = requestContent;
-
+            await LoggerHelper.LogRequestAsync(Log, requestMessage);
             var response = await HttpClient.SendAsync(requestMessage);
+            await LoggerHelper.LogResponseAsync(Log, response);
             response.EnsureSuccessStatusCode();
 
             // Handle the http response
             var json = await response.Content.ReadAsStringAsync();
-
             var settings = new JsonSerializerSettings
             {
                 NullValueHandling = NullValueHandling.Ignore,
@@ -94,11 +95,6 @@ namespace WCDS.WebFuncions.Core.Services
             url += "/flight-report-dashboard/cost";
             Log.LogInformation("GetTimeReportCosts url: {url}", url);
 
-            // var request = new Request<FilterByCostRequest>
-            // {
-            //     FilterBy = new FilterByCostRequest(contractNumber, status)
-            // };
-            // var response = await HttpClient.PostAsJsonAsync(url, request);
             var requestObject = new Request<FilterByCostRequest> { FilterBy = new FilterByCostRequest(contractNumber, status) };
             var jsonRequest = JsonConvert.SerializeObject(requestObject);
             var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
@@ -106,8 +102,9 @@ namespace WCDS.WebFuncions.Core.Services
             using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
             requestMessage.Headers.TryAddWithoutValidation("Authorization", (string)token);
             requestMessage.Content = requestContent;
-
+            await LoggerHelper.LogRequestAsync(Log, requestMessage);
             var response = await HttpClient.SendAsync(requestMessage);
+            await LoggerHelper.LogResponseAsync(Log, response);
             response.EnsureSuccessStatusCode();
 
             // Handle the http response
@@ -127,6 +124,12 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task<Response<ContractSearchResultDto>> GetContracts()
         {
+            var token = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
+            if (string.IsNullOrEmpty(token))
+            {
+                Log.LogError("No Authorization header found");
+                throw new UnauthorizedAccessException();
+            }
             var url = Environment.GetEnvironmentVariable("AviationReportingServiceApiUrl");
             if (url == null)
             {
@@ -140,8 +143,16 @@ namespace WCDS.WebFuncions.Core.Services
             {
                 FilterBy = new FilterBy()
             };
-            var response = await HttpClient.PostAsJsonAsync(url, request);
 
+            var jsonRequest = JsonConvert.SerializeObject(request);
+            var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
+            requestMessage.Headers.TryAddWithoutValidation("Authorization", (string)token);
+            requestMessage.Content = requestContent;
+            await LoggerHelper.LogRequestAsync(Log, requestMessage);
+            var response = await HttpClient.SendAsync(requestMessage);
+            await LoggerHelper.LogResponseAsync(Log, response);
             response.EnsureSuccessStatusCode();
 
             // Handle the http response
