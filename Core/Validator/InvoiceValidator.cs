@@ -23,6 +23,8 @@ namespace WCDS.WebFuncions.Core.Validator
             RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Cannot invoice for $0.00");
             RuleFor(x => x.InvoiceReceivedDate).NotNull().WithMessage("Please provide value for Invoice Received Date.");
             RuleFor(x => new { x.InvoiceTimeReportCostDetails, x.InvoiceOtherCostDetails }).Must(v => TimeReportOrOtherCostExists(v.InvoiceTimeReportCostDetails, v.InvoiceOtherCostDetails)).WithMessage("Invoice must have Time Report Costs or Other Costs");
+            RuleFor(x => new { x.InvoiceOtherCostDetails }).Must(v => ValidateRateOfOtherCost(v.InvoiceOtherCostDetails)).WithMessage("Rate cannot be $0.00");
+            RuleFor(x => new { x.InvoiceOtherCostDetails }).Must(v => ValidateNoOfUnitsOfOtherCost(v.InvoiceOtherCostDetails)).WithMessage("No. of units cannot be 0");
         }
 
         private bool InvoiceNumberDoesNotExist(string invoiceNumber, string contractNumber)
@@ -33,5 +35,42 @@ namespace WCDS.WebFuncions.Core.Validator
         {
             return (invoiceTimeReportCostDetails != null || invoiceOtherCostDetails != null);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="invoiceOtherCostDetails"></param>
+        /// <returns></returns>
+        private bool ValidateRateOfOtherCost(List<InvoiceOtherCostDetailDto> invoiceOtherCostDetails)
+        {
+            bool bResult = true;
+            foreach (var item in invoiceOtherCostDetails)
+            {
+                if (item.RatePerUnit <= 0)
+                {
+                    bResult = false;
+                }
+            }
+            return bResult;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="invoiceOtherCostDetails"></param>
+        /// <returns></returns>
+        private bool ValidateNoOfUnitsOfOtherCost(List<InvoiceOtherCostDetailDto> invoiceOtherCostDetails)
+        {
+            bool bResult = true;
+            foreach (var item in invoiceOtherCostDetails)
+            {
+                if (item.NoOfUnits <= 0)
+                {
+                    bResult = false;
+                }
+            }
+            return bResult;
+        }
+
     }
 }
