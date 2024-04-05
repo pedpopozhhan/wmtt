@@ -38,6 +38,7 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
+
             await _auditLogService.Audit("GetTimeReportDetails");
             try
             {
@@ -56,7 +57,11 @@ namespace WCDS.WebFuncions
                 var details = await _timeReportingService.GetTimeReportByIds(data.TimeReportIds);
                 if (!string.IsNullOrEmpty(details.ErrorMessage))
                 {
-                    throw new Exception(details.ErrorMessage);
+                    jsonResult = new JsonResult(details.ErrorMessage)
+                    {
+                        StatusCode = StatusCodes.Status424FailedDependency
+                    };
+                    return jsonResult;
                 }
                 var mapped = details.Data?.Select(detail =>
                 {
