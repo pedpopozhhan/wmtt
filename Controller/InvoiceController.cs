@@ -53,7 +53,7 @@ namespace WCDS.WebFuncions.Controller
                         foreach (var item in invoiceEntity.InvoiceTimeReportCostDetails)
                         {
                             item.CreatedBy = invoice.CreatedBy;
-                            item.CreatedByDateTime = DateTime.Now;
+                            item.CreatedByDateTime = DateTime.UtcNow;
                         }
                     }
                     if (invoiceEntity.InvoiceOtherCostDetails != null && invoiceEntity.InvoiceOtherCostDetails.Count() > 0)
@@ -61,18 +61,18 @@ namespace WCDS.WebFuncions.Controller
                         foreach (var item in invoiceEntity.InvoiceOtherCostDetails)
                         {
                             item.CreatedBy = invoice.CreatedBy;
-                            item.CreatedByDateTime = DateTime.Now;
+                            item.CreatedByDateTime = DateTime.UtcNow;
                         }
                     }
                     invoiceEntity.InvoiceStatusLogs = new List<InvoiceStatusLog> { new InvoiceStatusLog()
                                         {
                                             InvoiceId = invoiceEntity.InvoiceId,
                                             User = invoice.CreatedBy,
-                                            Timestamp = DateTime.Now
+                                            Timestamp = DateTime.UtcNow
                                         }};
 
                     invoiceEntity.CreatedBy = invoice.CreatedBy;
-                    invoiceEntity.CreatedByDateTime = DateTime.Now;
+                    invoiceEntity.CreatedByDateTime = DateTime.UtcNow;
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
                     transaction.Commit();
@@ -87,7 +87,7 @@ namespace WCDS.WebFuncions.Controller
                     await new InvoiceDataSyncMessageHandler().SendCreateInvoiceMessage(new InvoiceDataSyncMessageDto()
                     {
                         Action = "create-invoice",
-                        TimeStamp = DateTime.Now,
+                        TimeStamp = DateTime.UtcNow,
                         Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
                     });
 
@@ -96,7 +96,7 @@ namespace WCDS.WebFuncions.Controller
                         await new InvoiceStatusSyncMessageHandler().SendInvoiceStatusSyncMessage(new InvoiceStatusSyncMessageDto()
                         {
                             Action = "update-invoice",
-                            TimeStamp = DateTime.Now,
+                            TimeStamp = DateTime.UtcNow,
                             InvoiceId = invoiceEntity.InvoiceId,
                             InvoiceNumber = invoiceEntity.InvoiceNumber,
                             PaymentStatus = invoiceEntity.PaymentStatus,
@@ -134,7 +134,7 @@ namespace WCDS.WebFuncions.Controller
                     }
                     invoiceRecord.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
                     invoiceRecord.UpdatedBy = invoice.UpdatedBy;
-                    invoiceRecord.UpdatedByDateTime = DateTime.Now;
+                    invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
                     dbContext.SaveChanges();
                     transaction.Commit();
 
@@ -148,7 +148,7 @@ namespace WCDS.WebFuncions.Controller
                     await new InvoiceDataSyncMessageHandler().SendUpdateInvoiceMessage(new InvoiceDataSyncMessageDto()
                     {
                         Action = "update-invoice",
-                        TimeStamp = DateTime.Now,
+                        TimeStamp = DateTime.UtcNow,
                         Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
                     });
 
@@ -189,7 +189,7 @@ namespace WCDS.WebFuncions.Controller
                                     }};
                         invoiceRecord.PaymentStatus = request.PaymentStatus;
                         invoiceRecord.UpdatedBy = request.UpdatedBy;
-                        invoiceRecord.UpdatedByDateTime = DateTime.Now;
+                        invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
                         dbContext.SaveChanges();
                         transaction.Commit();
 
@@ -203,7 +203,7 @@ namespace WCDS.WebFuncions.Controller
                         await new InvoiceDataSyncMessageHandler().SendUpdateInvoiceMessage(new InvoiceDataSyncMessageDto()
                         {
                             Action = "update-invoice",
-                            TimeStamp = DateTime.Now,
+                            TimeStamp = DateTime.UtcNow,
                             Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
                         });
 
