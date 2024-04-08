@@ -22,7 +22,11 @@ namespace WCDS.WebFuncions.Core.Common
             {
                 logMessage.AppendLine($"  Authorization: {requestMessage.Headers.Authorization}");
             }
-            string requestBody = await requestMessage.Content.ReadAsStringAsync();
+            string requestBody = "{}";
+            if (requestMessage.Content != null)
+            {
+                requestBody = await requestMessage.Content?.ReadAsStringAsync();
+            }
 
             logMessage.AppendLine("Request Body:");
             logMessage.AppendLine(requestBody);
@@ -34,7 +38,12 @@ namespace WCDS.WebFuncions.Core.Common
         {
             var logMessage = new StringBuilder();
             logMessage.AppendLine("Response Body:");
-            var json = await responseMessage.Content.ReadAsStringAsync();
+            string json = "{}";
+            if (responseMessage.Content != null)
+            {
+                json = await responseMessage.Content?.ReadAsStringAsync();
+            }
+
             logMessage.AppendLine(json);
             logger.LogDebug(logMessage.ToString());
         }
