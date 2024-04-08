@@ -18,7 +18,9 @@ namespace WCDS.WebFuncions.Core.Validator
             _invoiceController = invoiceController;
             RuleFor(x => x.InvoiceId).Must(i => i.Equals(Guid.Empty)).WithMessage("Please provide valid value for Invoice ID.");
             RuleFor(x => new { x.InvoiceNumber, x.ContractNumber }).Must(v => InvoiceNumberDoesNotExist(v.InvoiceNumber, v.ContractNumber)).WithMessage("Invoice Number already exists for Contract Number.");
-            RuleFor(x => x.InvoiceDate).NotNull().WithMessage("Please provide value for Invoice Date.");
+            RuleFor(x => x.InvoiceDate).NotNull().WithMessage("Please provide value for Invoice Date.");            
+            RuleFor(x => x.InvoiceDate).GreaterThan(new DateTime(2050, 02, 01)).WithMessage("Date cannot be 1950/02/01 or earlier.");
+            RuleFor(x => new { x.InvoiceDate, x.PeriodEndDate }).Must(v => v.InvoiceDate >= v.PeriodEndDate).WithMessage("Invoice date Cannot be earlier than period ending date.");
             RuleFor(x => x.PeriodEndDate).NotNull().WithMessage("Please provide value for Period End Date.");
             RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Cannot invoice for $0.00");
             RuleFor(x => x.InvoiceReceivedDate).NotNull().WithMessage("Please provide value for Invoice Received Date.");
