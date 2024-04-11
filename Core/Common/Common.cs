@@ -49,25 +49,32 @@ namespace WCDS.WebFuncions.Core.Common
                 }
                 else
                 {
-                    // pull username out of token
                     var token = DecodeJwtToken(parts[1]);
-                    var part1 = token.Payload?["name"];
-                    if (part1 is string && string.IsNullOrEmpty((string)part1))
+                    if ( token.Payload != null  && token.Payload.ContainsKey("name"))
                     {
-                        response = "No Name found in token";
+                        var part1 = token.Payload["name"];
+                        if (part1 is string && string.IsNullOrEmpty((string)part1))
+                        {
+                            response = "No Name found in token";
+                        }
+                        else
+                        {
+                            response = (string)part1;
+                            result = true;
+                        }
                     }
-                    else
+                    else 
                     {
-                        response = (string)part1;
+                        response = "B2B";
                         result = true;
                     }
                 }
             }
             else
             {
-                response = "System";
-                result = true;
+                response = "Authorization Header not found";
             }
+
             return result;
         }
 
