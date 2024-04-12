@@ -10,12 +10,12 @@ namespace WCDS.WebFuncions.Core.Model
 {
     public class InvoiceStatusSyncMessageDto
     {
-        public DateTime TimeStamp { get; set; }
-        public string Action { get; set; }
+        public DateTime timeStamp { get; set; }
+        public string action { get; set; }
         public Guid InvoiceId { get; set; }
         public string InvoiceNumber { get; set; }
         public string PaymentStatus { get; set; }
-        public List<CostDetails> Details { get; set; }
+        public List<CostDetails> details { get; set; }
 
         public class CostDetails
         {

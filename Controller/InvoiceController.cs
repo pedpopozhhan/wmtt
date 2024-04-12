@@ -86,21 +86,21 @@ namespace WCDS.WebFuncions.Controller
 
                     await new InvoiceDataSyncMessageHandler().SendCreateInvoiceMessage(new InvoiceDataSyncMessageDto()
                     {
-                        Action = "create-invoice",
-                        TimeStamp = DateTime.UtcNow,
-                        Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
+                        action = "create-invoice",
+                        timeStamp = DateTime.UtcNow,
+                        tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
                     });
 
                     if (invoiceEntity.InvoiceTimeReportCostDetails != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
                     {
                         await new InvoiceStatusSyncMessageHandler().SendInvoiceStatusSyncMessage(new InvoiceStatusSyncMessageDto()
                         {
-                            Action = "update-invoice",
-                            TimeStamp = DateTime.UtcNow,
+                            action = "update-invoice",
+                            timeStamp = DateTime.UtcNow,
                             InvoiceId = invoiceEntity.InvoiceId,
                             InvoiceNumber = invoiceEntity.InvoiceNumber,
                             PaymentStatus = invoiceEntity.PaymentStatus,
-                            Details = invoiceEntity.InvoiceTimeReportCostDetails.Select(i => new InvoiceStatusSyncMessageDto.CostDetails()
+                            details = invoiceEntity.InvoiceTimeReportCostDetails.Select(i => new InvoiceStatusSyncMessageDto.CostDetails()
                             {
                                 FlightReportCostDetailsId = i.FlightReportCostDetailsId,
                                 FlightReportId = i.FlightReportId
@@ -147,9 +147,9 @@ namespace WCDS.WebFuncions.Controller
 
                     await new InvoiceDataSyncMessageHandler().SendUpdateInvoiceMessage(new InvoiceDataSyncMessageDto()
                     {
-                        Action = "update-invoice",
-                        TimeStamp = DateTime.UtcNow,
-                        Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
+                        action = "update-invoice",
+                        timeStamp = DateTime.UtcNow,
+                        tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
                     });
 
                     result = invoiceRecord.UniqueServiceSheetName;
@@ -202,9 +202,9 @@ namespace WCDS.WebFuncions.Controller
 
                         await new InvoiceDataSyncMessageHandler().SendUpdateInvoiceMessage(new InvoiceDataSyncMessageDto()
                         {
-                            Action = "update-invoice",
-                            TimeStamp = DateTime.UtcNow,
-                            Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
+                            action = "update-invoice",
+                            timeStamp = DateTime.UtcNow,
+                            tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
                         });
 
                         result = true;

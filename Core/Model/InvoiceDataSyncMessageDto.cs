@@ -11,9 +11,9 @@ namespace WCDS.WebFuncions.Core.Model
 {
     public class InvoiceDataSyncMessageDto
     {
-        public DateTime TimeStamp { get; set; }
-        public string Action { get; set; }
-        public InvoiceDataSyncMessageDetailDto Tables { get; set; }
+        public DateTime timeStamp { get; set; }
+        public string action { get; set; }
+        public InvoiceDataSyncMessageDetailDto tables { get; set; }
     }
     public class InvoiceDataSyncMessageDetailDto
     { 
