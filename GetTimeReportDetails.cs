@@ -20,6 +20,7 @@ namespace WCDS.WebFuncions
     /// </summary>
     public class GetTimeReportDetails
     {
+        private readonly IDomainService _domainService;
         private readonly ITimeReportingService _timeReportingService;
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
@@ -27,6 +28,7 @@ namespace WCDS.WebFuncions
 
         public GetTimeReportDetails(IDomainService domainService, ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
         {
+            _domainService = domainService;
             _timeReportingService = timeReportingService;
             _mapper = mapper;
             _auditLogService = auditLogService;
@@ -44,6 +46,25 @@ namespace WCDS.WebFuncions
             {
                 log.LogInformation("Trigger function (GetTimeReportDetails) received a request.");
 
+
+                log.LogInformation("Reading rateunits from DomainService");
+                var rateUnits = await _domainService.GetRateUnits();
+                log.LogInformation("Reading ratetypes from DomainService");
+                var rateTypes = await _domainService.GetRateTypes();
+
+                if (!string.IsNullOrEmpty(rateTypes.ErrorMessage))
+                {
+                    jsonResult = new JsonResult(rateTypes.ErrorMessage);
+                    jsonResult.StatusCode = StatusCodes.Status424FailedDependency;
+                    return jsonResult;
+                }
+                if (!string.IsNullOrEmpty(rateUnits.ErrorMessage))
+                {
+                    jsonResult = new JsonResult(rateUnits.ErrorMessage);
+                    jsonResult.StatusCode = StatusCodes.Status424FailedDependency;
+                    return jsonResult;
+
+                }
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<TimeReportDetailsRequest>(requestBody);
 
@@ -66,7 +87,8 @@ namespace WCDS.WebFuncions
                 var mapped = details.Data?.Select(detail =>
                 {
                     var mapped = _mapper.Map<TimeReportCostDetailDto, TimeReportCostDetail>(detail);
-
+                    mapped.RateType = rateTypes.Data.SingleOrDefault(x => x.RateTypeId == detail.RateTypeId)?.Type;
+                    mapped.RateUnit = rateUnits.Data.SingleOrDefault(x => x.RateUnitId == detail.RateUnitId)?.Type;
                     return mapped;
                 });
                 var response = new TimeReportDetailsResponse
