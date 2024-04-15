@@ -72,7 +72,8 @@ namespace WCDS.WebFuncions.Core.Common
             }
             else
             {
-                response = "Authorization Header not found";
+                response = "System";
+                result = true;
             }
 
             return result;
