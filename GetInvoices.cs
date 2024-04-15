@@ -32,9 +32,10 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            await _auditLogService.Audit("GetInvoices");
+            
             try
             {
+                await _auditLogService.Audit("GetInvoices");
                 log.LogInformation("Trigger function (GetInvoices) received a request.");
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();

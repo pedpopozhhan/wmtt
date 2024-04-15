@@ -16,9 +16,9 @@ namespace WCDS.WebFuncions.Controller
     {
         public Task<Guid> CreateInvoice(InvoiceDto invoice);
         public int UpdateInvoice(InvoiceDto invoice);
-        public bool InvoiceExists(string invoiceNumber);
+        public bool InvoiceExistsForContract(string invoiceNumber, string contractNumber);
         public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest);
-        public  Task<string> UpdateProcessedInvoice(InvoiceDto invoice);
+        public Task<string> UpdateProcessedInvoice(InvoiceDto invoice);
         public Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request);
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
     }
@@ -154,7 +154,7 @@ namespace WCDS.WebFuncions.Controller
 
                     result = invoiceRecord.UniqueServiceSheetName;
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     _logger.LogError(string.Format("UpdateProcessedInvoice: An error has occured while Updating Invoice for Invoice Number:  {0}, ErrorMessage: {1}, InnerException: {2}", invoice.InvoiceNumber, ex.Message, ex.InnerException));
                     transaction.Rollback();
@@ -225,20 +225,20 @@ namespace WCDS.WebFuncions.Controller
             return 0;
         }
 
-        public bool InvoiceExists(string invoiceNumber)
+        public bool InvoiceExistsForContract(string invoiceNumber, string contractNumber)
         {
             bool bResult = false;
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    Invoice invoice = dbContext.Invoice.Where(x => x.InvoiceNumber == invoiceNumber).FirstOrDefault();
+                    Invoice invoice = dbContext.Invoice.Where(x => x.InvoiceNumber == invoiceNumber && x.ContractNumber == contractNumber).FirstOrDefault();
                     if (invoice != null)
                         bResult = true;
                 }
                 catch
                 {
-                    _logger.LogError("An error has occured while Saving Invoice: " + invoiceNumber);
+                    _logger.LogError("An error has occured while looking up invoice: " + invoiceNumber);
                     transaction.Rollback();
                     throw;
                 }
@@ -366,6 +366,6 @@ namespace WCDS.WebFuncions.Controller
                 }
             }
             return response;
-        }       
+        }
     }
 }

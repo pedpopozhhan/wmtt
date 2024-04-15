@@ -28,7 +28,7 @@ namespace WCDS.WebFuncions
         }
 
         [FunctionName("GetContracts")]
-        public async Task<ActionResult<ContractsResponse[]>> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,ILogger log)
+        public async Task<ActionResult<ContractsResponse[]>> Run([HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req, ILogger log)
         {
             await _auditLogService.Audit("GetContracts");
             try
@@ -38,7 +38,11 @@ namespace WCDS.WebFuncions
                 var contracts = await _timeReportingService.GetContracts();
                 if (!string.IsNullOrEmpty(contracts.ErrorMessage))
                 {
-                    throw new Exception(contracts.ErrorMessage);
+                    jsonResult = new JsonResult(contracts.ErrorMessage)
+                    {
+                        StatusCode = StatusCodes.Status424FailedDependency
+                    };
+                    return jsonResult;
                 }
 
                 var response = new ContractsResponse
