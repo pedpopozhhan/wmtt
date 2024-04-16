@@ -26,6 +26,7 @@ namespace WCDS.WebFuncions.Core.Validator
             RuleFor(x => new { x.InvoiceDate, x.PeriodEndDate }).Must(v => v.InvoiceDate >= v.PeriodEndDate).WithMessage("Invoice date Cannot be earlier than period ending date.");
             RuleFor(x => x.PeriodEndDate).NotNull().WithMessage("Please provide value for Period End Date.");
             RuleFor(x => x.InvoiceAmount).GreaterThan(0).WithMessage("Cannot invoice for $0.00");
+            RuleFor(x => x.InvoiceAmount).LessThan(999999999).WithMessage("Cannot invoice over $999,999,999");
             RuleFor(x => x.InvoiceReceivedDate).NotNull().WithMessage("Please provide value for Invoice Received Date.");
             RuleFor(x => new { x.InvoiceTimeReportCostDetails, x.InvoiceOtherCostDetails }).Must(v => TimeReportOrOtherCostExists(v.InvoiceTimeReportCostDetails, v.InvoiceOtherCostDetails)).WithMessage("Invoice must have Time Report Costs or Other Costs");
             RuleFor(x => new { x.InvoiceOtherCostDetails }).Must(v => ValidateRateOfOtherCost(v.InvoiceOtherCostDetails)).WithMessage("Rate cannot be $0.00");
