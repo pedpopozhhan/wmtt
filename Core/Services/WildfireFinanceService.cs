@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Protocols;
 using Newtonsoft.Json;
+using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Model.Services;
 
 namespace WCDS.WebFuncions.Core.Services
@@ -49,7 +50,9 @@ namespace WCDS.WebFuncions.Core.Services
             msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
             msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
 
+            await LoggerHelper.LogRequestAsync(_log, msg);
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
+            await LoggerHelper.LogResponseAsync(_log, response);
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadAsStringAsync();
 
@@ -79,7 +82,9 @@ namespace WCDS.WebFuncions.Core.Services
             msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
             msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
 
+            await LoggerHelper.LogRequestAsync(_log, msg);
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
+            await LoggerHelper.LogResponseAsync(_log, response);
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadAsStringAsync();
 
@@ -109,7 +114,9 @@ namespace WCDS.WebFuncions.Core.Services
             msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
             msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
 
+            await LoggerHelper.LogRequestAsync(_log, msg);
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
+            await LoggerHelper.LogResponseAsync(_log, response);
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadAsStringAsync();
 
@@ -139,8 +146,11 @@ namespace WCDS.WebFuncions.Core.Services
             msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
             msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
 
+            await LoggerHelper.LogRequestAsync(_log, msg);
             var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
             response.EnsureSuccessStatusCode();
+            await LoggerHelper.LogResponseAsync(_log, response);
+
             var json = await response.Content.ReadAsStringAsync();
 
             var settings = new JsonSerializerSettings
