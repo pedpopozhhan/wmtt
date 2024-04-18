@@ -42,7 +42,7 @@ namespace WCDS.WebFuncions
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<TimeReportCostsRequest>(requestBody);
-                if (data == null)
+                if (data == null || string.IsNullOrEmpty(data.ContractNumber) || string.IsNullOrEmpty(data.Status))
                 {
                     jsonResult = new JsonResult("Invalid Request");
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;
