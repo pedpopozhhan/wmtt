@@ -68,7 +68,7 @@ namespace WCDS.WebFuncions
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<TimeReportDetailsRequest>(requestBody);
 
-                if (data == null)
+                if (data == null || data.TimeReportIds == null)
                 {
                     jsonResult = new JsonResult("Invalid Request");
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;

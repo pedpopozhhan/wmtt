@@ -32,7 +32,7 @@ namespace WCDS.WebFuncions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            
+
             try
             {
                 await _auditLogService.Audit("GetInvoices");
@@ -41,20 +41,19 @@ namespace WCDS.WebFuncions
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<InvoiceRequestDto>(requestBody);
 
-                if (data != null)
-                {
-                    var responseDto = new InvoiceController(log, _mapper).GetInvoices(data);
-
-                    jsonResult = new JsonResult(responseDto);
-                    jsonResult.StatusCode = StatusCodes.Status200OK;
-                    return jsonResult;
-                }
-                else
+                if (data == null || string.IsNullOrEmpty(data.ContractNumber))
                 {
                     jsonResult = new JsonResult("Invalid Request");
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                     return jsonResult;
                 }
+
+                var responseDto = new InvoiceController(log, _mapper).GetInvoices(data);
+
+                jsonResult = new JsonResult(responseDto);
+                jsonResult.StatusCode = StatusCodes.Status200OK;
+                return jsonResult;
+
             }
             catch (Exception ex)
             {
