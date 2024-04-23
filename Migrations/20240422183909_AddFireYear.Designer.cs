@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WCDS.WebFuncions.Core.Context;
 
@@ -11,9 +12,10 @@ using WCDS.WebFuncions.Core.Context;
 namespace WCDS.WebFuncions.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
-    partial class ApplicationDBContextModelSnapshot : ModelSnapshot
+    [Migration("20240422183909_AddFireYear")]
+    partial class AddFireYear
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -45,95 +47,10 @@ namespace WCDS.WebFuncions.Migrations
                     b.ToTable("AuditLog");
                 });
 
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.ChargeExtract", b =>
-                {
-                    b.Property<Guid>("ChargeExtractId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("AuditCreationDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("AuditLastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("AuditLastUpdatedDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("ChargeExtractDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("ChargeExtractFileName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("RequestedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("VendorId")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("ChargeExtractId");
-
-                    b.ToTable("ChargeExtract");
-                });
-
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.ChargeExtractDetail", b =>
-                {
-                    b.Property<Guid>("ChargeExtractDetailId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("AuditCreationDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("AuditLastUpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("AuditLastUpdatedDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("ChargeExtractId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("InvoiceId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("ChargeExtractDetailId");
-
-                    b.HasIndex("ChargeExtractId");
-
-                    b.ToTable("ChargeExtractDetail");
-                });
-
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.ChargeExtractViewLog", b =>
-                {
-                    b.Property<Guid>("ChargeExtractViewLogId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("ChargeExtractId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ViewedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime>("ViewedDateTime")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("ChargeExtractViewLogId");
-
-                    b.HasIndex("ChargeExtractId");
-
-                    b.ToTable("ChargeExtractViewLog");
-                });
-
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.Invoice", b =>
                 {
                     b.Property<Guid>("InvoiceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("ChargeExtractId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ContractNumber")
@@ -185,8 +102,6 @@ namespace WCDS.WebFuncions.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("InvoiceId");
-
-                    b.HasIndex("ChargeExtractId");
 
                     b.ToTable("Invoice");
                 });
@@ -365,37 +280,6 @@ namespace WCDS.WebFuncions.Migrations
                     b.ToTable("InvoiceTimeReportCostDetails");
                 });
 
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.ChargeExtractDetail", b =>
-                {
-                    b.HasOne("WCDS.WebFuncions.Core.Entity.ChargeExtract", "ChargeExtract")
-                        .WithMany("ChargeExtractDetail")
-                        .HasForeignKey("ChargeExtractId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChargeExtract");
-                });
-
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.ChargeExtractViewLog", b =>
-                {
-                    b.HasOne("WCDS.WebFuncions.Core.Entity.ChargeExtract", "ChargeExtract")
-                        .WithMany("ChargeExtractViewLog")
-                        .HasForeignKey("ChargeExtractId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChargeExtract");
-                });
-
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.Invoice", b =>
-                {
-                    b.HasOne("WCDS.WebFuncions.Core.Entity.ChargeExtract", "ChargeExtract")
-                        .WithMany("Invoice")
-                        .HasForeignKey("ChargeExtractId");
-
-                    b.Navigation("ChargeExtract");
-                });
-
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceOtherCostDetails", b =>
                 {
                     b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", null)
@@ -423,15 +307,6 @@ namespace WCDS.WebFuncions.Migrations
                         .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Invoice");
-                });
-
-            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.ChargeExtract", b =>
-                {
-                    b.Navigation("ChargeExtractDetail");
-
-                    b.Navigation("ChargeExtractViewLog");
 
                     b.Navigation("Invoice");
                 });
