@@ -33,6 +33,9 @@ namespace WCDS.WebFuncions.Core.Common
             CreateMap<TimeReportCostDetailDto, TimeReportCostDetail>().ReverseMap();
             CreateMap<InvoiceTimeReportCostDetails, InvoiceTimeReportCostDetailDto>().ReverseMap();
             CreateMap<InvoiceOtherCostDetails, InvoiceOtherCostDetailDto>().ReverseMap();
+            CreateMap<ChargeExtract, ChargeExtractDto>().ReverseMap();
+            CreateMap<ChargeExtractDetail, ChargeExtractDetailDto>().ReverseMap();
+            CreateMap<ChargeExtractViewLog, ChargeExtractViewLogDto>().ReverseMap();
         }
     }
 }
