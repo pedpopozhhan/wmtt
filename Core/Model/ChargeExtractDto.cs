@@ -13,6 +13,7 @@ namespace WCDS.WebFuncions.Core.Model
         public DateTime AuditCreationDateTime { get; set; }
         public string AuditLastUpdatedBy { get; set; }
         public DateTime AuditLastUpdatedDateTime { get; set; }
+        public Guid? ParentChargeExtractId { get; set; }
         public List<ChargeExtractDetailDto> ChargeExtractDetailDto { get; set; }
         public List<ChargeExtractViewLogDto> ChargeExtractViewLogDto { get; set; }
     }
