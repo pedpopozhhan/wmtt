@@ -20,6 +20,7 @@ namespace WCDS.WebFuncions.Core.Entity
         public DateTime AuditLastUpdatedDateTime { get; set; }
         public List<ChargeExtractDetail> ChargeExtractDetail { get; set;}
         public List<ChargeExtractViewLog> ChargeExtractViewLog { get; set; }
-        public List<Invoice> Invoice { get; set; }    
+        public List<Invoice> Invoice { get; set; }
+        public Guid? ParentChargeExtractId { get; set; }
     }
 }

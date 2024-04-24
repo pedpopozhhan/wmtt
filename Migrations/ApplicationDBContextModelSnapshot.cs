@@ -66,6 +66,9 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("ChargeExtractFileName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("ParentChargeExtractId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("RequestedBy")
                         .HasColumnType("nvarchar(max)");
 
