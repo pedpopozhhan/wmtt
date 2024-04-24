@@ -41,7 +41,7 @@ namespace WCDS.WebFuncions
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<InvoiceRequestDto>(requestBody);
 
-                if (data == null || string.IsNullOrEmpty(data.ContractNumber))
+                if (data == null )
                 {
                     jsonResult = new JsonResult("Invalid Request");
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;
