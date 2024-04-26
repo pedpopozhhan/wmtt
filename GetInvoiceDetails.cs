@@ -27,7 +27,7 @@ namespace WCDS.WebFuncions
             _auditLogService = auditLogService;
         }
         [FunctionName("GetInvoiceDetails")]
-        public async Task<ActionResult<InvoiceDetailResponseDto>> Run( [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
+        public async Task<ActionResult<InvoiceDetailResponseDto>> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
         {
             await _auditLogService.Audit("GetInvoiceDetails");
             try
@@ -37,21 +37,20 @@ namespace WCDS.WebFuncions
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<InvoiceDetailRequestDto>(requestBody);
 
-                if (data != null)
-                {
-                    var responseDto = new InvoiceController(log, _mapper).GetInvoiceDetails(data);
-                    JsonResult result = new JsonResult(responseDto);
-
-                    jsonResult = new JsonResult(responseDto);
-                    jsonResult.StatusCode = StatusCodes.Status200OK;
-                    return jsonResult;
-                }
-                else
+                if (data == null || data.InvoiceId == Guid.Empty)
                 {
                     jsonResult = new JsonResult("Invalid Request");
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                     return jsonResult;
                 }
+
+                var responseDto = new InvoiceController(log, _mapper).GetInvoiceDetails(data);
+                JsonResult result = new JsonResult(responseDto);
+
+                jsonResult = new JsonResult(responseDto);
+                jsonResult.StatusCode = StatusCodes.Status200OK;
+                return jsonResult;
+
             }
             catch (Exception ex)
             {

@@ -28,5 +28,6 @@ namespace WCDS.WebFuncions.Core.Model
         public DateTime? CreatedByDateTime { get; set; }
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedByDateTime { get; set; }
+        //public Guid? ChargeExtractId { get; set; }
     }
 }

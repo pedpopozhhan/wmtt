@@ -23,6 +23,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public string Account { get; set; }
         public string CostCenter { get; set; }
         public string FireNumber { get; set; }
+        public string FireYear { get; set; }
         public string InternalOrder { get; set; }
         public string Fund { get; set; }
         public decimal RatePerUnit { get; set; }
