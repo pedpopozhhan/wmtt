@@ -31,7 +31,7 @@ namespace WCDS.WebFuncions.Core.Model
         public DateTime? UpdatedByDateTime { get; set; }
         public Guid? ChargeExtractId { get; set; }
         public ChargeExtractDto ChargeExtract { get; set; }
-        public DateTime? TransferDate
+        public DateTime? DocumentDate
         {
             get
             {

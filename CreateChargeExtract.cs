@@ -33,7 +33,7 @@ namespace WCDS.WebFuncions
         }
 
         [FunctionName("CreateChargeExtract")]
-        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
+        public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
             _logger.LogInformation("Trigger function (CreateChargeExtract) received a request");
             try
