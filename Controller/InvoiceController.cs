@@ -263,13 +263,13 @@ namespace WCDS.WebFuncions.Controller
                     if (invoiceRequest.ContractNumber.Trim().Length == 0)
                         items = dbContext.Invoice.ToList();
                     else
-                        items = dbContext.Invoice.Where(x => x.ContractNumber == invoiceRequest.ContractNumber).ToList();
+                        items = dbContext.Invoice.Include(p => p.ChargeExtract).Where(x => x.ContractNumber == invoiceRequest.ContractNumber).ToList();
 
                     var mapped = items.Select(item =>
                     {
                         return _mapper.Map<Invoice, InvoiceDto>(item);
                     });
-                    response.Invoices = mapped.ToArray();
+                     response.Invoices = mapped.ToArray();
                 }
                 catch
                 {

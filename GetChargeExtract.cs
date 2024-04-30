@@ -17,7 +17,7 @@ using WCDS.WebFuncions.Core.Model.ChargeExtract;
 
 namespace WCDS.WebFuncions
 {
-    public class CreateChargeExtract
+    public class GetChargeExtract
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
@@ -25,33 +25,34 @@ namespace WCDS.WebFuncions
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public CreateChargeExtract(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
+
+        public GetChargeExtract(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             _httpContextAccessor = httpContextAccessor;
         }
 
-        [FunctionName("CreateChargeExtract")]
+        [FunctionName("GetChargeExtract")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Put), Route = null)] HttpRequest req, ILogger _logger)
         {
-            _logger.LogInformation("Trigger function (CreateChargeExtract) received a request");
+            _logger.LogInformation("Trigger function (GetChargeExtract) received a request");
             try
             {
-                await _auditLogService.Audit("CreateChargeExtract");                
-                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                await _auditLogService.Audit("GetChargeExtract");
                 
-                var chargeExtractObj = JsonConvert.DeserializeObject<CreateChargeExtractRequestDto>(requestBody);                
-                if (chargeExtractObj != null)
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var requestObj = JsonConvert.DeserializeObject<ChargeExtractRequestDto>(requestBody);
+                if (requestObj != null)
                 {
                     bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
                     if (tokenParsed)
                     {
-                        chargeExtractObj.RequestedBy = parsedTokenResult;
+                        //requestObj.RequestedBy = parsedTokenResult;
                         IChargeExtractController iController = new ChargeExtractController(_logger, _mapper);
-                        CreateChargeExtractValidator validationRules = new CreateChargeExtractValidator(iController);
+                        GetChargeExtractValidator validationRules = new GetChargeExtractValidator(iController);
 
-                        var validationResult = validationRules.Validate(chargeExtractObj);
+                        var validationResult = validationRules.Validate(requestObj);
                         if (!validationResult.IsValid)
                         {
                             jsonResult = new JsonResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
@@ -59,18 +60,10 @@ namespace WCDS.WebFuncions
                             return jsonResult;
                         }
 
-                        var result = iController.CreateChargeExtract(chargeExtractObj);
+                        var result = iController.GetChargeExtract(requestObj.ChargeExtractId);                        
 
-                        if (result != null)
-                        {
-                            jsonResult = new JsonResult(result);
-                            jsonResult.StatusCode = StatusCodes.Status200OK;
-                        }
-                        else
-                        {
-                            jsonResult = new JsonResult("Failed to generate extract. Please review logs of Contract Web API.");
-                            jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
-                        }
+                        jsonResult = new JsonResult(result);
+                        jsonResult.StatusCode = StatusCodes.Status200OK;
                         return jsonResult;
                     }
                     else
@@ -95,7 +88,5 @@ namespace WCDS.WebFuncions
                 return jsonResult;
             }
         }
-
-
     }
 }

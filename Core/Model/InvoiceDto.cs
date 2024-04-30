@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Core.Entity;
+using WCDS.WebFuncions.Core.Model.ChargeExtract;
 
 namespace WCDS.WebFuncions.Core.Model
 {
@@ -30,7 +31,7 @@ namespace WCDS.WebFuncions.Core.Model
         public DateTime? UpdatedByDateTime { get; set; }
         public Guid? ChargeExtractId { get; set; }
         public ChargeExtractDto ChargeExtract { get; set; }
-        public DateTime? DocumentDate
+        public DateTime? TransferDate
         {
             get
             {
@@ -40,7 +41,7 @@ namespace WCDS.WebFuncions.Core.Model
                 }
                 else
                 {
-                    return ChargeExtract.ChargeExtractDateTime;
+                    return ChargeExtract?.ChargeExtractDateTime;
                 }
             }
         }
