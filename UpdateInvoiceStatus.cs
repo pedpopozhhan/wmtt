@@ -10,11 +10,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
+using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
-using System.Collections.Generic;
-using System.IdentityModel.Tokens.Jwt;
-using WCDS.WebFuncions.Core.Common;
 
 namespace WCDS.WebFuncions
 {
