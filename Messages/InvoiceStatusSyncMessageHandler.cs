@@ -46,7 +46,7 @@ namespace WCDS.WebFuncions
                     Body = new BinaryData(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(data)))
                 };
 
-                _log.LogDebug("SendInvoiceStatusSyncMessage - Message: {0}", message.MessageId + "::" + message.Body);
+                _log.LogDebug("SendInvoiceStatusSyncMessage - for Invoice {0} Message: {1}", invoiceNumber, message.MessageId + "::" + message.Body);
                 
                 const SslProtocols _Tls12 = (SslProtocols)0x00000C00;
                 const SecurityProtocolType Tls12 = (SecurityProtocolType)_Tls12;

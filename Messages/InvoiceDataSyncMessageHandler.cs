@@ -47,7 +47,7 @@ namespace WCDS.WebFuncions
                     Body = new BinaryData(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(invoice)))
                 };
 
-                _log.LogDebug("SendCreateInvoiceMessage - Message: {0}", message.MessageId + "::" + message.Body);
+                _log.LogDebug("SendCreateInvoiceMessage - for Invoice {0} Message: {1}", invoiceNumber, message.MessageId + "::" + message.Body);
 
                 const SslProtocols _Tls12 = (SslProtocols)0x00000C00;
                 const SecurityProtocolType Tls12 = (SecurityProtocolType)_Tls12;
@@ -84,8 +84,8 @@ namespace WCDS.WebFuncions
                     Body = new BinaryData(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(invoice)))
                 };
 
-                _log.LogDebug("SendUpdateInvoiceMessage - Message: {0}", message.MessageId + "::" + message.Body);
-                
+                _log.LogDebug("SendUpdateInvoiceMessage - for Invoice {0} Message: {1}", invoiceNumber, message.MessageId + "::" + message.Body);
+
                 const SslProtocols _Tls12 = (SslProtocols)0x00000C00;
                 const SecurityProtocolType Tls12 = (SecurityProtocolType)_Tls12;
                 ServicePointManager.SecurityProtocol = Tls12;
