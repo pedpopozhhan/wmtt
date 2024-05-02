@@ -8,7 +8,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public PaginationInfo()
         {
             Page = 1;
-            PerPage = 1000;
+            PerPage = 10000;
         }
     }
     public class PaginationResponseInfo : PaginationInfo
