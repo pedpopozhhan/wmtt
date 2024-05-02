@@ -78,19 +78,13 @@ namespace WCDS.WebFuncions.Controller
 
                     _logger.LogInformation("Ivoice sent to DB for Insert at: {0} for invoice : {1}. Number of detail records in this invoice are: {2}", 
                         DateTime.UtcNow, invoiceEntity.InvoiceNumber,numberOfCostDetails + numberOfOtherCostDetails);
-                    _logger.LogError("Ivoice sent to DB for Insert at: {0} for invoice : {1}. Number of detail records in this invoice are: {2}",
-                        DateTime.UtcNow, invoiceEntity.InvoiceNumber, numberOfCostDetails + numberOfOtherCostDetails);
-                    _logger.LogDebug("Ivoice sent to DB for Insert at: {0} for invoice : {1}. Number of detail records in this invoice are: {2}",
-                        DateTime.UtcNow, invoiceEntity.InvoiceNumber, numberOfCostDetails + numberOfOtherCostDetails);
-
+                    
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
                     transaction.Commit();
 
                     _logger.LogInformation("Ivoice Insert Completed at: {0} for invoice: {1}", DateTime.UtcNow, invoiceEntity.InvoiceNumber);
-                    _logger.LogError("Ivoice Insert Completed at: {0} for invoice: {1}", DateTime.UtcNow, invoiceEntity.InvoiceNumber);
-                    _logger.LogDebug("Ivoice Insert Completed at: {0} for invoice: {1}", DateTime.UtcNow, invoiceEntity.InvoiceNumber);
-
+                    
                     var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceEntity);
                     messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
                     {
