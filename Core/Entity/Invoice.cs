@@ -31,5 +31,8 @@ namespace WCDS.WebFuncions.Core.Entity
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedByDateTime { get; set; }
         public List<InvoiceStatusLog> InvoiceStatusLogs { get; set; }
+        public Guid? ChargeExtractId { get; set; }
+        public ChargeExtract ChargeExtract { get; set; }
+
     }
 }
