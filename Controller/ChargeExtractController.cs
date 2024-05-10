@@ -171,8 +171,13 @@ namespace WCDS.WebFuncions.Controller
         {
             var _groupedRows = _unGroupedRows.GroupBy(x => new { x.InvoiceNumber, x.CostCenter, x.InternalOrder, x.Fund })
                                                         .Select(y => new { id = y.Key, total = y.Sum(x => x.InvoiceAmount) });
+
+            var itemForDetail = invoices.FirstOrDefault();
+            var vendorName = itemForDetail.VendorName;
+            var contractNumber = itemForDetail.ContractNumber;
             decimal grandTotal = _groupedRows.Sum(x => x.total);
             bool result = true;
+
             _output = new StringBuilder();
             using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
@@ -282,10 +287,14 @@ namespace WCDS.WebFuncions.Controller
         {
             var _groupedRows = _unGroupedRows.GroupBy(x => new { x.InvoiceNumber, x.CostCenter, x.InternalOrder, x.Fund })
                                                         .Select(y => new { id = y.Key, total = y.Sum(x => x.InvoiceAmount) });
+
+            var itemForDetail = invoices.FirstOrDefault();
+            var vendorName = itemForDetail.VendorName;
+            var contractNumber = itemForDetail.ContractNumber;
             decimal grandTotal = _groupedRows.Sum(x => x.total);
             bool result = true;
-            _output = new StringBuilder();
 
+            _output = new StringBuilder();
             using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
                 try
@@ -299,7 +308,8 @@ namespace WCDS.WebFuncions.Controller
                     _output.Append("\r\n");
 
                     // Main Header Row Data
-                    _output.Append(GetHeaderDataRow(_requestDto.ChargeExtractDateTime, vendor));
+                    var formattedVendorInfo = vendorName + " (" + vendor + ")";
+                    _output.Append(GetHeaderDataRow(_requestDto.ChargeExtractDateTime, formattedVendorInfo));
                     _output.Append("\r\n");
                     _output.Append(GetBlankRow());
                     _output.Append("\r\n");
@@ -315,7 +325,7 @@ namespace WCDS.WebFuncions.Controller
                     // Get All break down rows
                     foreach (var item in _groupedRows)
                     {
-                        _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total * -1, item.id.CostCenter, item.id.InternalOrder, item.id.Fund, vendor));
+                        _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total * -1, item.id.CostCenter, item.id.InternalOrder, item.id.Fund, contractNumber));
                         _output.Append("\r\n");
                     }
 
@@ -438,9 +448,9 @@ namespace WCDS.WebFuncions.Controller
         private StringBuilder GetBlankRow()
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," +
-                      "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," +
-                      "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + ",");
+            sb.Append("" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" 
+                + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" 
+                + "," + "" + "," + "" + "," + "" + "," + "" + ",");
             return sb;
         }
         private StringBuilder GetFirstRow()
@@ -472,18 +482,43 @@ namespace WCDS.WebFuncions.Controller
         private StringBuilder GetDetailHeaderRow()
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("" + "," + "DETAIL(BD)" + "," + "Posting Key" + "," + "Account" + "," + "Special GL Indiactor" + "," + "Amount" + "," + "Tax Code" + ","
-                    + "Tax Jurisdiction" + "," + "Transaction Type" + "," + "Cost Centre" + "," + "Internal Order" + "," + "Profit Centre" + "," + "WBS" + ","
-                    + "Fund" + "," + "Fund Centre" + "," + "Commitment Item" + "," + "Earmarked Funds" + "," + "Earmarked Funds :Document Item" + "," + "Asset" + ","
-                    + "Asset Sub Number" + "," + "Quantity" + "," + "Personnel Number" + "," + "Assignment" + "," + "Text" + "," + "Reference Key 2" + "," + "Reference Key 3" + ","
-                    + "Refernce" + "," + "House Bank" + "," + "Partner Profit Center" + "," + "Functional Area" + ",");
+            sb.Append("" + "," // Column A
+                + "DETAIL(BD)" + "," // Column B
+                + "Posting Key" + "," // Column C
+                + "Account" + "," // Column D
+                + "Special GL Indiactor" + "," // Column E
+                + "Amount" + "," // Column F
+                + "Tax Code" + "," // Column G
+                + "Tax Jurisdiction" + "," // Column H
+                + "Transaction Type" + "," // Column I
+                + "Cost Centre" + "," // Column J
+                + "Internal Order" + "," // Column K
+                + "Profit Centre" + "," // Column L
+                + "WBS" + "," // Column M
+                + "Fund" + "," // Column N
+                + "Fund Centre" + "," // Column O
+                + "Commitment Item" + "," // Column P
+                + "Earmarked Funds" + "," // Column Q
+                + "Earmarked Funds :Document Item" + "," // Column R
+                + "Asset" + "," // Column S
+                + "Asset Sub Number" + "," // Column T
+                + "Quantity" + "," // Column U
+                + "Personnel Number" + "," // Column V
+                + "Assignment" + "," // Column W
+                + "Text" + "," // Column X
+                + "Reference Key 1"  + "," // Column Y
+                + "Reference Key 2" + "," // Column Z
+                + "Reference Key 3" + "," // Column AA
+                + "House Bank" + "," // Column AB
+                + "Partner Profit Center" + "," // Column AC
+                + "Functional Area" + ","); // Column AD
             return sb;
         }
         private StringBuilder GetDetailHeaderDataRow(decimal grandTotal)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("Credit- Invoice totals submitted to 1GX" + "," + "BD" + "," + "40" + "," + "6010100100" + "," + "" + "," + grandTotal.ToString() + "," + "" + ","
-                    + "" + "," + "" + "," + "600011" + "," + "" + "," + "1gx" + "," + "" + "," + "41" + "," + "1gx" + "," + "" + "," + "" + "," + "" + "," + "" + ","
+                    + "" + "," + "" + "," + "600011" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + ","
                     + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + ",");
             return sb;
         }
@@ -491,9 +526,36 @@ namespace WCDS.WebFuncions.Controller
         private StringBuilder GetDetailItemDataRow(string invoiceNumber, decimal amount, string cc, string io, string fund, string contractNumber)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("" + "," + "BD (" + invoiceNumber + ")" + "," + "50" + "," + "2040000120" + "," + "" + "," + amount.ToString() + "," + "" + ","
-                    + "" + "," + "" + "," + cc + "," + io + "," + "1gx" + "," + "" + "," + fund + "," + "1gx" + "," + "" + "," + "" + "," + "" + "," + "" + ","
-                    + "" + "," + "" + "," + "" + "," + "" + "," + invoiceNumber + "," + "" + "," + contractNumber + "," + "" + "," + "" + "," + "" + "," + "" + ",");
+            sb.Append("" + "," // Column A
+                + "BD (" + invoiceNumber + ")" + ","  // Column B
+                + "50" + "," // Column C
+                + "2040000120" + "," // Column D
+                + "" + "," // Column E
+                + amount.ToString() + "," // Column F
+                + "" + "," // Column G
+                + "" + "," // Column H
+                + "" + "," // Column I
+                + cc + "," // Column J
+                + io + "," // Column K
+                + "" + "," // Column L
+                + "" + "," // Column M
+                + fund + "," // Column N
+                + "" + "," // Column O
+                + "" + "," // Column P
+                + "" + "," // Column Q
+                + "" + "," // Column R
+                + "" + "," // Column S
+                + "" + "," // Column T
+                + "" + "," // Column U
+                + "" + "," // Column V
+                + "" + "," // Column W
+                + "" + "," // Column X
+                + invoiceNumber + "," // Column Y
+                + contractNumber + "," // Column Z
+                + "Professional Service" + "," // Column AA
+                + "" + "," // Column AB
+                + "" + "," // Column AC
+                + "" + ","); // Column AD
             return sb;
         }
 
