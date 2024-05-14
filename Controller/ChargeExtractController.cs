@@ -84,18 +84,16 @@ namespace WCDS.WebFuncions.Controller
                         if (p.InvoiceTimeReportCostDetails.Count > 0)
                             _timeReportCosts.AddRange(p.InvoiceTimeReportCostDetails);
 
-                        _unGroupedRows.AddRange(_timeReportCosts.Select(q => new ChargeExtractRowDto()
+                        _unGroupedRows.AddRange(_timeReportCosts.Where(param => param.InvoiceId == p.InvoiceId).Select(q => new ChargeExtractRowDto()
                         { InvoiceNumber = p.InvoiceNumber, InvoiceAmount = q.Cost, CostCenter = q.CostCenter, InternalOrder = q.InternalOrder, Fund = q.Fund }));
 
-                        _unGroupedRows.AddRange(_otherCosts.Select(r => new ChargeExtractRowDto()
+                        _unGroupedRows.AddRange(_otherCosts.Where(param => param.InvoiceId == p.InvoiceId).Select(r => new ChargeExtractRowDto()
                         { InvoiceNumber = p.InvoiceNumber, InvoiceAmount = r.Cost, CostCenter = r.CostCentre, InternalOrder = r.InternalOrder, Fund = r.Fund }));
                     });
 
                     var _groupedRows = _unGroupedRows.GroupBy(x => new { x.InvoiceNumber, x.CostCenter, x.InternalOrder, x.Fund })
                                                     .Select(y => new { id = y.Key, total = y.Sum(x => x.InvoiceAmount) });
-
                     decimal grandTotal = _groupedRows.Sum(x => x.total);
-
                     if (_groupedRows.Count() > _maxNumberOfCostItems)
                         _singleFileExtract = false;
 
@@ -212,16 +210,12 @@ namespace WCDS.WebFuncions.Controller
                         _output.Append("\r\n");
                     }
 
-                    string fileName = vendor + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss") + ".csv";
-                    //string file = @"C:\Users\Iftikhar.Qamar\Downloads\" + fileName + ".csv";
-                    //File.WriteAllText(file, _output.ToString());
-
                     // Create file in memory
                     byte[] byteArray = Encoding.ASCII.GetBytes(_output.ToString());
                     MemoryStream stream = new MemoryStream(byteArray);
+                    string fileName = vendor + "-" + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
 
                     // Write it to Azure
-
 
                     // Create transactions in database
                     ChargeExtractDto chargeExtractDto = new ChargeExtractDto();
@@ -323,19 +317,26 @@ namespace WCDS.WebFuncions.Controller
                     _output.Append("\r\n");
 
                     // Get All break down rows
+
+                    var prevInvoice = _groupedRows.FirstOrDefault().id.InvoiceNumber;
                     foreach (var item in _groupedRows)
                     {
+                        if (item.id.InvoiceNumber != prevInvoice)
+                        {
+                            _output.Append(GetBlankRow());
+                            _output.Append("\r\n");
+                            prevInvoice = item.id.InvoiceNumber;
+                        }
                         _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total * -1, item.id.CostCenter, item.id.InternalOrder, item.id.Fund, contractNumber));
                         _output.Append("\r\n");
                     }
-
-                    string fileName = vendor + "-" + DateTime.UtcNow.ToString("yyyy-MM-dd-HH-mm-ss") + ".csv";
 
                     // Create file in memory
                     byte[] byteArray = Encoding.ASCII.GetBytes(_output.ToString());
                     MemoryStream stream = new MemoryStream(byteArray);
 
                     // Write it to Azure
+                    string fileName = vendor + "-" + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
                     AzureStorageController azureStorageController = new AzureStorageController(_logger, _mapper);
                     bool success = azureStorageController.CheckFileExistsAsync(fileName).GetAwaiter().GetResult();
                     if (success)
@@ -448,8 +449,8 @@ namespace WCDS.WebFuncions.Controller
         private StringBuilder GetBlankRow()
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append("" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" 
-                + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" 
+            sb.Append("" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + ""
+                + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + "" + "," + ""
                 + "," + "" + "," + "" + "," + "" + "," + "" + ",");
             return sb;
         }
@@ -506,7 +507,7 @@ namespace WCDS.WebFuncions.Controller
                 + "Personnel Number" + "," // Column V
                 + "Assignment" + "," // Column W
                 + "Text" + "," // Column X
-                + "Reference Key 1"  + "," // Column Y
+                + "Reference Key 1" + "," // Column Y
                 + "Reference Key 2" + "," // Column Z
                 + "Reference Key 3" + "," // Column AA
                 + "House Bank" + "," // Column AB
