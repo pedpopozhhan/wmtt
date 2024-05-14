@@ -16,9 +16,8 @@ namespace WCDS.WebFuncions.Core.Model.ChargeExtract
         public Guid? ParentChargeExtractId { get; set; }
         public List<ChargeExtractDetailDto> ChargeExtractDetail { get; set; }
         public List<ChargeExtractViewLogDto> ChargeExtractViewLog { get; set; }
-        public ChargeExtractDto ExtendedExtract { get; set; }
+        public List<ChargeExtractDto> ExtendedExtract { get; set; }
         public string ExtractFile { get; set; }
-        public string ExtendedExtractFile { get; set; }
-
+        public List<ChargeExtractFileDto> ExtractFiles { get; set; }
     }
 }

@@ -81,7 +81,6 @@ namespace WCDS.WebFuncions.Controller
                     
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
-                    transaction.Commit();
 
                     _logger.LogInformation("Ivoice Insert Completed at: {0} for invoice: {1}", DateTime.UtcNow, invoiceEntity.InvoiceNumber);
                     
@@ -117,6 +116,7 @@ namespace WCDS.WebFuncions.Controller
                     }
 
                     result = invoiceEntity.InvoiceId;
+                    transaction.Commit();
                 }
                 catch (Exception ex)
                 {
@@ -144,7 +144,6 @@ namespace WCDS.WebFuncions.Controller
                     invoiceRecord.UpdatedBy = invoice.UpdatedBy;
                     invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
                     dbContext.SaveChanges();
-                    transaction.Commit();
 
                     var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceRecord);
                     messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
@@ -161,6 +160,7 @@ namespace WCDS.WebFuncions.Controller
                     }, invoiceRecord.InvoiceNumber);
 
                     result = invoiceRecord.UniqueServiceSheetName;
+                    transaction.Commit();
                 }
                 catch (Exception ex)
                 {
@@ -199,7 +199,7 @@ namespace WCDS.WebFuncions.Controller
                         invoiceRecord.UpdatedBy = request.UpdatedBy;
                         invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
                         dbContext.SaveChanges();
-                        transaction.Commit();
+                        
 
                         var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceRecord);
                         messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
@@ -216,6 +216,7 @@ namespace WCDS.WebFuncions.Controller
                         },invoiceRecord.InvoiceNumber);
 
                         result = true;
+                        transaction.Commit();
                     }
                 }
                 catch
