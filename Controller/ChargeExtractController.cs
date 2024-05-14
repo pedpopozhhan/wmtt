@@ -1,11 +1,9 @@
 ﻿using AutoMapper;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -13,7 +11,6 @@ using System.Text;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity;
 using WCDS.WebFuncions.Core.Model.ChargeExtract;
-using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions.Controller
 {
@@ -36,12 +33,12 @@ namespace WCDS.WebFuncions.Controller
         List<Invoice> _updatedInvoices;
         List<ChargeExtract> _newChargeExtracts;
         List<string> _filesPutInAzureStorage;
+        List<ChargeExtractFileDto> _extractFiles;
+        List<ChargeExtractDto> _extendedExtract;
 
         int _maxNumberOfCostItems = 995;
         StringBuilder _output;
         bool _abort = false;
-
-        private const string DEFAULT_USER = "System";
 
         public ChargeExtractController(ILogger log, IMapper mapper)
         {
@@ -54,11 +51,18 @@ namespace WCDS.WebFuncions.Controller
             _updatedInvoices = new List<Invoice>();
             _newChargeExtracts = new List<ChargeExtract>();
             _filesPutInAzureStorage = new List<string>();
+            _extractFiles = new List<ChargeExtractFileDto>();
+            _extendedExtract = new List<ChargeExtractDto>();
 
             _logger = log;
             _mapper = mapper;
         }
 
+        /// <summary>
+        /// Main method to CreateChargeExtract
+        /// </summary>
+        /// <param name="chargeExtractReq"></param>
+        /// <returns>ChargeExtractResponseDto?</returns>
         public ChargeExtractResponseDto? CreateChargeExtract(CreateChargeExtractRequestDto chargeExtractReq)
         {
             bool _singleFileExtract = true;
@@ -93,7 +97,7 @@ namespace WCDS.WebFuncions.Controller
 
                     var _groupedRows = _unGroupedRows.GroupBy(x => new { x.InvoiceNumber, x.CostCenter, x.InternalOrder, x.Fund })
                                                     .Select(y => new { id = y.Key, total = y.Sum(x => x.InvoiceAmount) });
-                    decimal grandTotal = _groupedRows.Sum(x => x.total);
+
                     if (_groupedRows.Count() > _maxNumberOfCostItems)
                         _singleFileExtract = false;
 
@@ -164,18 +168,76 @@ namespace WCDS.WebFuncions.Controller
         /// </summary>
         /// <param name="vendor"></param>
         /// <param name="invoices"></param>
-        /// <returns></returns>
+        /// <returns>bool</returns>
         private bool ProcessMultiFileExtract(string vendor, List<Invoice> invoices)
         {
-            var _groupedRows = _unGroupedRows.GroupBy(x => new { x.InvoiceNumber, x.CostCenter, x.InternalOrder, x.Fund })
-                                                        .Select(y => new { id = y.Key, total = y.Sum(x => x.InvoiceAmount) });
+            bool bResult = true;
+            var parentExtractInvoice = invoices.FirstOrDefault();
+            _logger.LogInformation(string.Format("CreateChargeExtract:ProcessMultiFileExtract - " +
+                        "Started processing multi file Charge Extract for Vendor: {0} ", vendor));
+            try
+            {
+                var parentChargeExtractDto = ProcessInvoiceForMultiFileExtract(vendor, parentExtractInvoice, null);
 
-            var itemForDetail = invoices.FirstOrDefault();
-            var vendorName = itemForDetail.VendorName;
-            var contractNumber = itemForDetail.ContractNumber;
+                if (parentChargeExtractDto != null)
+                {
+                    _extractFiles.Add(new ChargeExtractFileDto() { ExtractFile = parentChargeExtractDto.ExtractFile, ExtractFileName = parentChargeExtractDto.ChargeExtractFileName });
+                    foreach (var invoice in invoices.Where(p => p.InvoiceId != parentExtractInvoice.InvoiceId))
+                    {
+                        var chargeExtractDto = ProcessInvoiceForMultiFileExtract(vendor, invoice, parentChargeExtractDto.ChargeExtractId);
+                        if (chargeExtractDto != null)
+                        {
+                            _extendedExtract.Add(chargeExtractDto);
+                            _extractFiles.Add(new ChargeExtractFileDto()
+                            {
+                                ExtractFile = chargeExtractDto.ExtractFile,
+                                ExtractFileName = chargeExtractDto.ChargeExtractFileName
+                            });
+                        }
+                        else
+                        {
+                            _logger.LogError(string.Format("CreateChargeExtract:ProcessMultiFileExtract - Failed to create Charge Extract for Vendor: " +
+                                "{0} - Invoice {1} ", vendor, invoice.InvoiceNumber));
+                            bResult = false;
+                            break;
+                        }
+                    }
+                    parentChargeExtractDto.ExtractFiles = _extractFiles;
+                    parentChargeExtractDto.ExtendedExtract = _extendedExtract;
+                    _responseDto.ChargeExtract = parentChargeExtractDto;
+                }
+                else
+                {
+                    _logger.LogError(string.Format("CreateChargeExtract:ProcessMultiFileExtract - Failed to create Charge Extract for Vendor: {0} ", vendor));
+                    bResult = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(string.Format("CreateChargeExtract:ProcessMultiFileExtract - An error has occured while creating extract for Vendor: {0} " +
+                                                   "ErrorMessage: {1}, InnerException: {2}", vendor, ex.Message, ex.InnerException));
+            }
+
+            return bResult;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="vendor"></param>
+        /// <param name="invoice"></param>
+        /// <param name="parentChargeExtractId"></param>
+        /// <returns>ChargeExtractDto</returns>
+        private ChargeExtractDto ProcessInvoiceForMultiFileExtract(string vendor, Invoice invoice, Guid? parentChargeExtractId = null)
+        {
+            var _groupedRows = _unGroupedRows.Where(p => p.InvoiceNumber == invoice.InvoiceNumber)
+                                                .GroupBy(x => new { x.InvoiceNumber, x.CostCenter, x.InternalOrder, x.Fund })
+                                                .Select(y => new { id = y.Key, total = y.Sum(x => x.InvoiceAmount) });
+            var vendorName = invoice.VendorName;
+            var contractNumber = invoice.ContractNumber;
             decimal grandTotal = _groupedRows.Sum(x => x.total);
-            bool result = true;
 
+            ChargeExtractDto chargeExtractDto = null;
             _output = new StringBuilder();
             using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
@@ -213,12 +275,28 @@ namespace WCDS.WebFuncions.Controller
                     // Create file in memory
                     byte[] byteArray = Encoding.ASCII.GetBytes(_output.ToString());
                     MemoryStream stream = new MemoryStream(byteArray);
-                    string fileName = vendor + "-" + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
 
                     // Write it to Azure
+                    string fileName = vendor + "-" + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
+                    AzureStorageController azureStorageController = new AzureStorageController(_logger, _mapper);
+                    bool success = azureStorageController.CheckFileExistsAsync(fileName).GetAwaiter().GetResult();
+                    if (success)
+                    {
+                        _logger.LogInformation(string.Format("File already exists: {0}", fileName));
+                        return null;
+                    }
+                    else
+                    {
+                        success = azureStorageController.UploadFileAsync(fileName, byteArray.ToString()).GetAwaiter().GetResult();
+                        if (success)
+                        {
+                            _logger.LogInformation(string.Format("File Uploaded: {0}", fileName));
+                            _filesPutInAzureStorage.Add(fileName);
+                        }
+                    }
 
                     // Create transactions in database
-                    ChargeExtractDto chargeExtractDto = new ChargeExtractDto();
+                    chargeExtractDto = new ChargeExtractDto();
                     ChargeExtractDetailDto chargeExtractDetailDto;
                     List<ChargeExtractDetailDto> chargeExtractDetailDtos = new List<ChargeExtractDetailDto>();
 
@@ -228,47 +306,40 @@ namespace WCDS.WebFuncions.Controller
                     chargeExtractDto.ChargeExtractFileName = fileName;
                     chargeExtractDto.VendorId = vendor;
                     chargeExtractDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
-                    chargeExtractDto.ParentChargeExtractId = null;
+                    chargeExtractDto.ParentChargeExtractId = parentChargeExtractId;
 
-                    invoices.ForEach(p =>
-                    {
-                        chargeExtractDetailDto = new ChargeExtractDetailDto();
-                        chargeExtractDetailDto.InvoiceId = p.InvoiceId;
-                        chargeExtractDetailDto.AuditCreationDateTime = DateTime.UtcNow;
-                        chargeExtractDetailDto.AuditLastUpdatedBy = _requestDto.RequestedBy;
-                        chargeExtractDetailDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
-                        chargeExtractDetailDtos.Add(chargeExtractDetailDto);
-                    });
+                    chargeExtractDetailDto = new ChargeExtractDetailDto();
+                    chargeExtractDetailDto.InvoiceId = invoice.InvoiceId;
+                    chargeExtractDetailDto.AuditCreationDateTime = DateTime.UtcNow;
+                    chargeExtractDetailDto.AuditLastUpdatedBy = _requestDto.RequestedBy;
+                    chargeExtractDetailDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
+                    chargeExtractDetailDtos.Add(chargeExtractDetailDto);
 
                     chargeExtractDto.ChargeExtractDetail = chargeExtractDetailDtos;
                     ChargeExtract CEEntity = _mapper.Map<ChargeExtract>(chargeExtractDto);
                     _dbContext.ChargeExtract.Add(CEEntity);
                     _dbContext.SaveChanges();
 
-                    invoices.ForEach(p =>
-                    {
-                        p.ChargeExtractId = CEEntity.ChargeExtractId;
-                        _dbContext.Invoice.Update(p);
-                    });
+                    _newChargeExtracts.Add(CEEntity);
 
+                    invoice.ChargeExtractId = CEEntity.ChargeExtractId;
+                    _dbContext.Invoice.Update(invoice);
                     _dbContext.SaveChanges();
 
-                    _responseDto.ChargeExtract = _mapper.Map<ChargeExtractDto>(CEEntity);
-                    _responseDto.ChargeExtract.ExtractFile = JsonConvert.SerializeObject(Convert.ToBase64String(byteArray));
+                    chargeExtractDto = _mapper.Map<ChargeExtractDto>(CEEntity);
+                    chargeExtractDto.ExtractFile = JsonConvert.SerializeObject(Convert.ToBase64String(byteArray));
 
-                    // if all is good then create response object and commit chages
                     transaction.Commit();
-
                 }
                 catch (Exception ex)
                 {
-                    result = false;
-                    _logger.LogError(string.Format("CreateChargeExtract:ProcessMultiFileExtract An error has occured while creating extract for Vendor: {0}, ErrorMessage: {1}, InnerException: {2}", vendor, ex.Message, ex.InnerException));
+                    chargeExtractDto = null;
+                    _logger.LogError(string.Format("CreateChargeExtract:ProcessInvoiceForMultiFileExtract - An error has occured while creating extract for Vendor: {0} - Invoice {1}, " +
+                                                   "ErrorMessage: {2}, InnerException: {3}", vendor, invoice.InvoiceNumber, ex.Message, ex.InnerException));
                 }
             }
 
-
-            return result;
+            return chargeExtractDto;
         }
 
         /// <summary>
@@ -353,7 +424,6 @@ namespace WCDS.WebFuncions.Controller
                             _logger.LogInformation(string.Format("File Uploaded: {0}", fileName));
                             _filesPutInAzureStorage.Add(fileName);
                         }
-
                     }
 
                     // Create transactions in database
@@ -397,6 +467,12 @@ namespace WCDS.WebFuncions.Controller
 
                     _responseDto.ChargeExtract = _mapper.Map<ChargeExtractDto>(CEEntity);
                     _responseDto.ChargeExtract.ExtractFile = JsonConvert.SerializeObject(Convert.ToBase64String(byteArray));
+                    _extractFiles.Add(new ChargeExtractFileDto()
+                    {
+                        ExtractFile = _responseDto.ChargeExtract.ExtractFile,
+                        ExtractFileName = _responseDto.ChargeExtract.ChargeExtractFileName
+                    });
+                    _responseDto.ChargeExtract.ExtractFiles = _extractFiles;
 
                     // if all is good then create response object and commit chages
                     transaction.Commit();
