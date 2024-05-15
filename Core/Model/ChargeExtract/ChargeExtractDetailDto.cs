@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace WCDS.WebFuncions.Core.Model
+namespace WCDS.WebFuncions.Core.Model.ChargeExtract
 {
     public class ChargeExtractDetailDto
     {

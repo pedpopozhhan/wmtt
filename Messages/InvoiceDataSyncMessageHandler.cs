@@ -25,7 +25,13 @@ namespace WCDS.WebFuncions
 {
     public class InvoiceDataSyncMessageHandler
     {
-        public async Task SendCreateInvoiceMessage(InvoiceDataSyncMessageDto invoice)
+        private readonly ILogger _log;
+        public InvoiceDataSyncMessageHandler(ILogger log)
+        {
+            _log = log;
+        }
+
+        public async Task SendCreateInvoiceMessage(InvoiceDataSyncMessageDto invoice, string invoiceNumber)
         {
             ServiceBusClient client = null;
             ServiceBusSender sender = null;
@@ -33,6 +39,7 @@ namespace WCDS.WebFuncions
             {
                 client = new ServiceBusClient(Environment.GetEnvironmentVariable("InvoiceDataSyncTopicConnectionString"), new ServiceBusClientOptions() { TransportType = ServiceBusTransportType.AmqpWebSockets });
                 sender = client.CreateSender(Environment.GetEnvironmentVariable("InvoiceDataSyncTopicName"));
+                _log.LogInformation("SendCreateInvoiceMessage - started at:  {0} for invoice {1}", DateTime.UtcNow, invoiceNumber);
                 var message = new ServiceBusMessage
                 {
                     MessageId = Guid.NewGuid().ToString(),
@@ -40,6 +47,8 @@ namespace WCDS.WebFuncions
                     Body = new BinaryData(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(invoice)))
                 };
 
+                _log.LogDebug("SendCreateInvoiceMessage - for Invoice {0} Message: {1}", invoiceNumber, message.MessageId + "::" + message.Body);
+
                 const SslProtocols _Tls12 = (SslProtocols)0x00000C00;
                 const SecurityProtocolType Tls12 = (SecurityProtocolType)_Tls12;
                 ServicePointManager.SecurityProtocol = Tls12;
@@ -47,16 +56,19 @@ namespace WCDS.WebFuncions
             }
             catch (Exception ex)
             {
+                _log.LogError("SendCreateInvoiceMessage - Error Sending a message: " + ex.Message + ex.InnerException);
                 throw new Exception("SendCreateInvoiceMessage - Error Sending a message: " + ex.Message + ex.InnerException);
             }
             finally
             {
                 if(sender != null) await sender.DisposeAsync();
-                if(client != null) await client.DisposeAsync();
+                if(client != null) await client.DisposeAsync();                
             }
+
+            _log.LogInformation("SendCreateInvoiceMessage - finished at: {0} for invoice {1}", DateTime.UtcNow, invoiceNumber);
         }
 
-        public async Task SendUpdateInvoiceMessage(InvoiceDataSyncMessageDto invoice)
+        public async Task SendUpdateInvoiceMessage(InvoiceDataSyncMessageDto invoice, string invoiceNumber)
         {
             ServiceBusClient client = null;
             ServiceBusSender sender = null;
@@ -64,12 +76,15 @@ namespace WCDS.WebFuncions
             {
                 client = new ServiceBusClient(Environment.GetEnvironmentVariable("InvoiceDataSyncTopicConnectionString"), new ServiceBusClientOptions() { TransportType = ServiceBusTransportType.AmqpWebSockets });
                 sender = client.CreateSender(Environment.GetEnvironmentVariable("InvoiceDataSyncTopicName"));
+                _log.LogInformation("SendUpdateInvoiceMessage - started at:  {0} for invoice {1}", DateTime.UtcNow, invoiceNumber);
                 var message = new ServiceBusMessage
                 {
                     MessageId = Guid.NewGuid().ToString(),
                     Subject = "update",
                     Body = new BinaryData(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(invoice)))
                 };
+
+                _log.LogDebug("SendUpdateInvoiceMessage - for Invoice {0} Message: {1}", invoiceNumber, message.MessageId + "::" + message.Body);
 
                 const SslProtocols _Tls12 = (SslProtocols)0x00000C00;
                 const SecurityProtocolType Tls12 = (SecurityProtocolType)_Tls12;
@@ -78,6 +93,7 @@ namespace WCDS.WebFuncions
             }
             catch (Exception ex)
             {
+                _log.LogError("SendUpdateInvoiceMessage - Error Sending a message: " + ex.Message + ex.InnerException);                
                 throw new Exception("SendUpdateInvoiceMessage - Error Sending a message: " + ex.Message + ex.InnerException);
             }
             finally
@@ -85,6 +101,8 @@ namespace WCDS.WebFuncions
                 if (sender != null) await sender.DisposeAsync();
                 if (client != null) await client.DisposeAsync();
             }
+
+            _log.LogInformation("SendUpdateInvoiceMessage - finished at: {0} for invoice {1}", DateTime.UtcNow, invoiceNumber);            
         }
 
     }

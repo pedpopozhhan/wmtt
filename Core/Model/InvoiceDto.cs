@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Core.Entity;
+using WCDS.WebFuncions.Core.Model.ChargeExtract;
 
 namespace WCDS.WebFuncions.Core.Model
 {
-    public class InvoiceDto: BaseDto
+    public class InvoiceDto : BaseDto
     {
         public Guid? InvoiceId { get; set; }
         public string InvoiceNumber { get; set; }
@@ -28,6 +29,21 @@ namespace WCDS.WebFuncions.Core.Model
         public DateTime? CreatedByDateTime { get; set; }
         public string UpdatedBy { get; set; }
         public DateTime? UpdatedByDateTime { get; set; }
-        //public Guid? ChargeExtractId { get; set; }
+        public Guid? ChargeExtractId { get; set; }
+        public ChargeExtractDto ChargeExtract { get; set; }
+        public DateTime? DocumentDate
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(ChargeExtractId.ToString()))
+                {
+                    return null;
+                }
+                else
+                {
+                    return ChargeExtract?.ChargeExtractDateTime;
+                }
+            }
+        }
     }
 }

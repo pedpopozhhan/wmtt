@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace WCDS.WebFuncions.Core.Model
+namespace WCDS.WebFuncions.Core.Model.ChargeExtract
 {
     public class ChargeExtractDto
     {
@@ -14,7 +14,10 @@ namespace WCDS.WebFuncions.Core.Model
         public string AuditLastUpdatedBy { get; set; }
         public DateTime AuditLastUpdatedDateTime { get; set; }
         public Guid? ParentChargeExtractId { get; set; }
-        public List<ChargeExtractDetailDto> ChargeExtractDetailDto { get; set; }
-        public List<ChargeExtractViewLogDto> ChargeExtractViewLogDto { get; set; }
+        public List<ChargeExtractDetailDto> ChargeExtractDetail { get; set; }
+        public List<ChargeExtractViewLogDto> ChargeExtractViewLog { get; set; }
+        public List<ChargeExtractDto> ExtendedExtract { get; set; }
+        public string ExtractFile { get; set; }
+        public List<ChargeExtractFileDto> ExtractFiles { get; set; }
     }
 }
