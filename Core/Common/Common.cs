@@ -13,6 +13,10 @@ namespace WCDS.WebFuncions.Core.Common
             "Basing Non-Core",
             "Basing Penalty",
             "Charter Minimums",
+            "BD Pilot Exp 1YR",
+            "BD Pilot Exp 2YR",
+            "BD Pilot Exp 3YR",
+            "BD Pilot Exp 4YR+",
             "Crew Exp - Breakfast",
             "Crew Exp - Lunch",
             "Crew Exp - Dinner",
@@ -34,13 +38,13 @@ namespace WCDS.WebFuncions.Core.Common
             "Kilometre",
             "Litre",
             "Mile",
-            "Nautical Mile",}; 
+            "Nautical Mile",};
 
         public bool ParseToken(IHeaderDictionary header, string key, out string response)
         {
             bool result = false;
             StringValues headerValue;
-            if(header.TryGetValue(key, out headerValue))
+            if (header.TryGetValue(key, out headerValue))
             {
                 var parts = headerValue.ToString().Split(" ");
                 if (parts.Length != 2)
@@ -50,7 +54,7 @@ namespace WCDS.WebFuncions.Core.Common
                 else
                 {
                     var token = DecodeJwtToken(parts[1]);
-                    if ( token.Payload != null  && token.Payload.ContainsKey("name"))
+                    if (token.Payload != null && token.Payload.ContainsKey("name"))
                     {
                         var part1 = token.Payload["name"];
                         if (part1 is string && string.IsNullOrEmpty((string)part1))
@@ -63,7 +67,7 @@ namespace WCDS.WebFuncions.Core.Common
                             result = true;
                         }
                     }
-                    else 
+                    else
                     {
                         response = "B2B";
                         result = true;
