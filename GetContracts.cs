@@ -1,6 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
@@ -49,14 +50,18 @@ namespace WCDS.WebFuncions
                     return jsonResult;
                 }
 
-                // get all the time reports for each contract
-                //The number of transfers pending are all invoices of a contract for a vendor that does not contain  a ‘transfer date’.
-
+                // Pulling information from local cache and aviation service to populate data points related to
+                // time reports available for Extract and still pending approval
                 var invoiceController = new InvoiceController(log, mapper);
+                var signedOffReports = "signed off";
                 foreach (var contract in contracts.Data)
                 {
                     var invoices = invoiceController.GetInvoices(new InvoiceRequestDto { ContractNumber = contract.ContractNumber });
                     contract.DownloadsAvailable = invoices.Invoices.Count(invoice => !invoice.DocumentDate.HasValue);
+
+                    log.LogInformation("GetContracts - pulling time reports for contract {0} with status {1}", contract.ContractNumber, signedOffReports);
+                    var costs = await _timeReportingService.GetTimeReportCosts(contract.ContractNumber, signedOffReports);
+                    contract.PendingApprovals = costs != null && costs.Data != null ? costs.Data.Count() : 0;
                 }
 
                 var response = new ContractsResponse
