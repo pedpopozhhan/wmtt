@@ -276,7 +276,7 @@ namespace WCDS.WebFuncions.Controller
                     MemoryStream stream = new MemoryStream(byteArray);
 
                     // Write it to Azure
-                    string fileName = vendor + "-" + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
+                    string fileName = vendor + "." + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
                     AzureStorageController azureStorageController = new AzureStorageController(_logger, _mapper);
                     bool success = azureStorageController.CheckFileExistsAsync(fileName).GetAwaiter().GetResult();
                     if (success)
@@ -403,7 +403,7 @@ namespace WCDS.WebFuncions.Controller
                     MemoryStream stream = new MemoryStream(byteArray);
 
                     // Write it to Azure
-                    string fileName = vendor + "-" + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
+                    string fileName = vendor + "." + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
                     AzureStorageController azureStorageController = new AzureStorageController(_logger, _mapper);
                     bool success = azureStorageController.CheckFileExistsAsync(fileName).GetAwaiter().GetResult();
                     if (success)
@@ -659,12 +659,12 @@ namespace WCDS.WebFuncions.Controller
                 + "" + "," // Column F
                 + "" + "," // Column G
                 + "" + "," // Column H
-                + cc + "," // Column I
-                + io + "," // Column J
-                + "" + "," // Column K
+                + "" + "," // Column I
+                + cc + "," // Column J
+                + io + "," // Column K
                 + "" + "," // Column L
-                + fund + "," // Column M
-                + "" + "," // Column N
+                + "" + "," // Column M
+                + fund + "," // Column N
                 + "" + "," // Column O
                 + "" + "," // Column P
                 + "" + "," // Column Q
