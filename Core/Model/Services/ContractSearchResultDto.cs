@@ -11,5 +11,6 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public string ContractNumber { get; set; }
         public string ContractType { get; set; }
         public int DownloadsAvailable { get; set; }
+        public int PendingApprovals { get;set; }
     }
 }
