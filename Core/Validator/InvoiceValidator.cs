@@ -96,6 +96,11 @@ namespace WCDS.WebFuncions.Core.Validator
             return bResult;
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="invoiceOtherCostDetails"></param>
+        /// <returns></returns>
         private bool ValidateMaxNoOfUnitsOfOtherCost(List<InvoiceOtherCostDetailDto> invoiceOtherCostDetails)
         {
             bool bResult = true;
