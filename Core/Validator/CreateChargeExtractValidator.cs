@@ -20,6 +20,7 @@ namespace WCDS.WebFuncions.Core.Validator
             RuleFor(x => x.ChargeExtractDateTime).NotEmpty().WithMessage("Charge Extract datetime must not be null or empty.");
             RuleFor(x => x.Invoices.Count).GreaterThan(0).WithMessage("At least once invoice required for extract.");
             RuleFor(x =>new { x.Invoices, x.ContractNumber }).Must(v => InvoiceIsEligibleToBeExtracted(v.Invoices, v.ContractNumber)).WithMessage("One or more invoices have already been transferred.");
+            RuleFor(x => new { x.Invoices, x.ContractNumber }).Must(v => InvoiceHasSESNumber(v.Invoices, v.ContractNumber)).WithMessage("Only invoices with an SES # can be downloaded onto a CSV.");
         }
 
         /// <summary>
@@ -34,6 +35,23 @@ namespace WCDS.WebFuncions.Core.Validator
             foreach (var item in invoiceNumbers)
             {
                 if (_chargeExtractController.InvoiceAlreadyExtracted(item, contractNumber))
+                    bResult = false;
+            }
+            return bResult;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="invoiceNumbers"></param>
+        /// <param name="contractNumber"></param>
+        /// <returns></returns>
+        private bool InvoiceHasSESNumber(List<string> invoiceNumbers, string contractNumber)
+        {
+            bool bResult = true;
+            foreach (var item in invoiceNumbers)
+            {
+                if (!_chargeExtractController.InvoiceHasSESNumber(item, contractNumber))
                     bResult = false;
             }
             return bResult;

@@ -19,6 +19,7 @@ namespace WCDS.WebFuncions.Controller
         public ChargeExtractResponseDto? CreateChargeExtract(CreateChargeExtractRequestDto chargeExtractReq);
         public ChargeExtractResponseDto GetChargeExtract(string chargeExtractId);
         public bool InvoiceAlreadyExtracted(string invoiceId, string contractNumber);
+        public bool InvoiceHasSESNumber(string invoiceId, string contractNumber);
     }
     public class ChargeExtractController : IChargeExtractController
     {
@@ -501,6 +502,38 @@ namespace WCDS.WebFuncions.Controller
                     if (invoice != null)
                     {
                         if (invoice.ChargeExtractId != null)
+                        {
+                            bResult = true;
+                        }
+                    }
+                }
+                catch
+                {
+                    _logger.LogError("An error has occured while looking up invoice: " + invoiceId);
+                    transaction.Rollback();
+                    throw;
+                }
+            }
+            return bResult;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="invoiceId"></param>
+        /// <param name="contractNumber"></param>
+        /// <returns></returns>
+        public bool InvoiceHasSESNumber(string invoiceId, string contractNumber)
+        {
+            bool bResult = false;
+            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
+            {
+                try
+                {
+                    Invoice invoice = _dbContext.Invoice.Where(x => x.InvoiceId.ToString() == invoiceId && x.ContractNumber == contractNumber).FirstOrDefault();
+                    if (invoice != null)
+                    {
+                        if (invoice.UniqueServiceSheetName.Trim().Length > 0)
                         {
                             bResult = true;
                         }
