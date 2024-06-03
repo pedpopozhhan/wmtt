@@ -12,4 +12,9 @@ namespace WCDS.WebFuncions.Enums
         Posted,
         Cleared
     }
+
+    public enum InvoiceStatus
+    {
+        Draft
+    }
 }
