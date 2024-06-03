@@ -38,8 +38,8 @@ namespace WCDS.WebFuncions
 
             try
             {
-                await _auditLogService.Audit("GetInvoices");
-                log.LogInformation("Trigger function (GetInvoices) received a request.");
+                await _auditLogService.Audit("GetDrafts");
+                log.LogInformation("Trigger function (GetDrafts) received a request.");
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<InvoiceRequestDto>(requestBody);
