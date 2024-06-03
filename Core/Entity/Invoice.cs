@@ -18,6 +18,7 @@ namespace WCDS.WebFuncions.Core.Entity
         public DateTime? PeriodEndDate { get; set; }
         public DateTime? InvoiceReceivedDate { get; set; }
         public string PaymentStatus { get; set; }
+        public string InvoiceStatus { get; set; }
         public string VendorBusinessId { get; set; }
         public string VendorName { get; set; }
         public string ContractNumber { get; set; }
