@@ -52,7 +52,18 @@ namespace WCDS.WebFuncions
                 }
 
                 var response = new InvoiceController(log, _mapper).GetInvoices(data);
-                var drafts = response.Invoices.Where(x => x.InvoiceStatus == InvoiceStatus.Draft.ToString()).Select(x =>
+                // var drafts = response.Invoices.Where(x => x.InvoiceStatus == InvoiceStatus.Draft.ToString()).Select(x =>
+                // {
+                //     return new InvoiceDraft
+                //     {
+                //         InvoiceAmount = x.InvoiceAmount,
+                //         InvoiceDate = x.InvoiceDate,
+                //         InvoiceId = x.InvoiceId,
+                //         InvoiceNumber = x.InvoiceNumber
+                //     };
+                // });
+                // for now, just return all the invoices
+                var drafts = response.Invoices.Select(x =>
                 {
                     return new InvoiceDraft
                     {
