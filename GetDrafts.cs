@@ -31,7 +31,7 @@ namespace WCDS.WebFuncions
         }
 
         [FunctionName("GetDrafts")]
-        public async Task<ActionResult<InvoiceDraftResponse>> Run(
+        public async Task<ActionResult<InvoiceResponseDto>> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
@@ -51,31 +51,11 @@ namespace WCDS.WebFuncions
                     return jsonResult;
                 }
 
-                var response = new InvoiceController(log, _mapper).GetInvoices(data);
-                // var drafts = response.Invoices.Where(x => x.InvoiceStatus == InvoiceStatus.Draft.ToString()).Select(x =>
-                // {
-                //     return new InvoiceDraft
-                //     {
-                //         InvoiceAmount = x.InvoiceAmount,
-                //         InvoiceDate = x.InvoiceDate,
-                //         InvoiceId = x.InvoiceId,
-                //         InvoiceNumber = x.InvoiceNumber
-                //     };
-                // });
-                // for now, just return all the invoices
-                var drafts = response.Invoices.Select(x =>
-                {
-                    return new InvoiceDraft
-                    {
-                        InvoiceAmount = x.InvoiceAmount,
-                        InvoiceDate = x.InvoiceDate,
-                        InvoiceId = x.InvoiceId,
-                        InvoiceNumber = x.InvoiceNumber
-                    };
-                });
-                var draftsResponse = new InvoiceDraftResponse { InvoiceDrafts = drafts.ToArray() };
+                var response = new InvoiceController(log, _mapper).GetInvoicesWithDetails(data);
+                // var drafts = response.Invoices.Where(x => x.InvoiceStatus == InvoiceStatus.Draft.ToString());
+                // for now, just return all the invoices               
 
-                jsonResult = new JsonResult(draftsResponse);
+                jsonResult = new JsonResult(response);
                 jsonResult.StatusCode = StatusCodes.Status200OK;
                 return jsonResult;
 
