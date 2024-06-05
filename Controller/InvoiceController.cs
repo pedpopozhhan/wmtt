@@ -18,6 +18,7 @@ namespace WCDS.WebFuncions.Controller
         public int UpdateInvoice(InvoiceDto invoice);
         public bool InvoiceExistsForContract(string invoiceNumber, string contractNumber);
         public InvoiceResponseDto GetInvoices(InvoiceRequestDto invoiceRequest);
+        public InvoiceResponseDto GetInvoicesWithDetails(InvoiceRequestDto invoiceRequest);
         public Task<string> UpdateProcessedInvoice(InvoiceDto invoice);
         public Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request);
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
@@ -76,27 +77,27 @@ namespace WCDS.WebFuncions.Controller
                     invoiceEntity.CreatedBy = invoice.CreatedBy;
                     invoiceEntity.CreatedByDateTime = DateTime.UtcNow;
 
-                    _logger.LogInformation("Ivoice sent to DB for Insert at: {0} for invoice : {1}. Number of detail records in this invoice are: {2}", 
-                        DateTime.UtcNow, invoiceEntity.InvoiceNumber,numberOfCostDetails + numberOfOtherCostDetails);
-                    
+                    _logger.LogInformation("Ivoice sent to DB for Insert at: {0} for invoice : {1}. Number of detail records in this invoice are: {2}",
+                        DateTime.UtcNow, invoiceEntity.InvoiceNumber, numberOfCostDetails + numberOfOtherCostDetails);
+
                     dbContext.Invoice.Add(invoiceEntity);
                     dbContext.SaveChanges();
 
                     _logger.LogInformation("Ivoice Insert Completed at: {0} for invoice: {1}", DateTime.UtcNow, invoiceEntity.InvoiceNumber);
-                    
+
                     var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceEntity);
                     messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
                     {
                         InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(invoiceEntity.InvoiceTimeReportCostDetails),
                         InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(invoiceEntity.InvoiceOtherCostDetails)
-                    };                    
+                    };
                     await new InvoiceDataSyncMessageHandler(_logger).SendCreateInvoiceMessage(new InvoiceDataSyncMessageDto()
                     {
                         Action = "create-invoice",
                         TimeStamp = DateTime.UtcNow,
                         Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
                     }, invoiceEntity.InvoiceNumber);
-                    
+
 
                     if (invoiceEntity.InvoiceTimeReportCostDetails != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
                     {
@@ -199,7 +200,7 @@ namespace WCDS.WebFuncions.Controller
                         invoiceRecord.UpdatedBy = request.UpdatedBy;
                         invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
                         dbContext.SaveChanges();
-                        
+
 
                         var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceRecord);
                         messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
@@ -213,7 +214,7 @@ namespace WCDS.WebFuncions.Controller
                             Action = "update-invoice",
                             TimeStamp = DateTime.UtcNow,
                             Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
-                        },invoiceRecord.InvoiceNumber);
+                        }, invoiceRecord.InvoiceNumber);
 
                         result = true;
                         transaction.Commit();
@@ -278,7 +279,7 @@ namespace WCDS.WebFuncions.Controller
                     {
                         return _mapper.Map<Invoice, InvoiceDto>(item);
                     });
-                     response.Invoices = mapped.ToArray();
+                    response.Invoices = mapped.ToArray();
                 }
                 catch
                 {
@@ -317,6 +318,22 @@ namespace WCDS.WebFuncions.Controller
             return response;
         }
 
+        public InvoiceResponseDto GetInvoicesWithDetails(InvoiceRequestDto invoiceRequest)
+        {
+            InvoiceResponseDto response = new();
+            List<Invoice> items = dbContext.Invoice
+                .Include(i => i.InvoiceTimeReportCostDetails)
+                .Include(i => i.InvoiceOtherCostDetails)
+                .Where(x => x.ContractNumber == invoiceRequest.ContractNumber)
+                .ToList();
+            response.Invoices = items.Select(item =>
+                {
+                    return _mapper.Map<Invoice, InvoiceDto>(item);
+                }).ToArray();
+
+
+            return response;
+        }
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request)
         {
             CostDetailsResponseDto response = new CostDetailsResponseDto();
