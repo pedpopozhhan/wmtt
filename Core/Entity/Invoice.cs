@@ -23,6 +23,7 @@ namespace WCDS.WebFuncions.Core.Entity
         public string VendorName { get; set; }
         public string ContractNumber { get; set; }
         public string Type { get; set; }
+        public List<InvoiceTimeReports> InvoiceTimeReports { get; set; }
         public List<InvoiceTimeReportCostDetails> InvoiceTimeReportCostDetails { get; set; }
         public List<InvoiceOtherCostDetails> InvoiceOtherCostDetails { get; set; }
         public string UniqueServiceSheetName { get; set; }

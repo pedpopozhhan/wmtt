@@ -16,6 +16,7 @@ namespace WCDS.WebFuncions.Core.Context
         public virtual DbSet<ChargeExtract> ChargeExtract { get; set; }
         public virtual DbSet<ChargeExtractDetail> ChargeExtractDetail { get; set; }
         public virtual DbSet<ChargeExtractViewLog> ChargeExtractViewLog { get; set; }
+        public virtual DbSet<InvoiceTimeReports> InvoiceTimeReports { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -28,6 +29,7 @@ namespace WCDS.WebFuncions.Core.Context
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceTimeReportCostDetails).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
+            modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceTimeReports).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
             modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceStatusLogs).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
 
             modelBuilder.Entity<ChargeExtract>().HasMany(i => i.ChargeExtractDetail).WithOne(i => i.ChargeExtract).HasForeignKey(i => i.ChargeExtractId);
