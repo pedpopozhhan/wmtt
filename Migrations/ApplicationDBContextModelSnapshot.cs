@@ -371,6 +371,34 @@ namespace WCDS.WebFuncions.Migrations
                     b.ToTable("InvoiceTimeReportCostDetails");
                 });
 
+            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReports", b =>
+                {
+                    b.Property<Guid>("InvoiceTimeReportId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("AuditCreationDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("AuditLastUpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("AuditLastUpdatedDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("FlightReportId")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("InvoiceTimeReportId");
+
+                    b.HasIndex("InvoiceId");
+
+                    b.ToTable("InvoiceTimeReports");
+                });
+
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.ChargeExtractDetail", b =>
                 {
                     b.HasOne("WCDS.WebFuncions.Core.Entity.ChargeExtract", "ChargeExtract")
@@ -433,6 +461,17 @@ namespace WCDS.WebFuncions.Migrations
                     b.Navigation("Invoice");
                 });
 
+            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReports", b =>
+                {
+                    b.HasOne("WCDS.WebFuncions.Core.Entity.Invoice", "Invoice")
+                        .WithMany("InvoiceTimeReports")
+                        .HasForeignKey("InvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Invoice");
+                });
+
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.ChargeExtract", b =>
                 {
                     b.Navigation("ChargeExtractDetail");
@@ -449,6 +488,8 @@ namespace WCDS.WebFuncions.Migrations
                     b.Navigation("InvoiceStatusLogs");
 
                     b.Navigation("InvoiceTimeReportCostDetails");
+
+                    b.Navigation("InvoiceTimeReports");
                 });
 #pragma warning restore 612, 618
         }
