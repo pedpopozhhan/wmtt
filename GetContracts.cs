@@ -66,7 +66,7 @@ namespace WCDS.WebFuncions
 
                 var response = new ContractsResponse
                 {
-                    Rows = contracts.Data
+                    Rows = contracts.Data.ToArray()
                 };
 
                 jsonResult = new JsonResult(response);

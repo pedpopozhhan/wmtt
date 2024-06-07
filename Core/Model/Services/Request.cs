@@ -1,7 +1,8 @@
 namespace WCDS.WebFuncions.Core.Model.Services
 {
-    public class Request<T> where T : IFilterBy
+    public class Request<T> : IRequest<T> where T : IFilterBy
     {
+        public string ServiceName { get; set; }
         public string Search { get; set; }
         public string SortBy { get; set; }
         public string SortOrder { get; set; }
@@ -10,6 +11,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
 
         public Request()
         {
+            ServiceName = string.Empty;
             Search = string.Empty;
             SortBy = string.Empty;
             SortOrder = string.Empty;

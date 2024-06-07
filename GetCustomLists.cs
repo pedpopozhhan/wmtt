@@ -45,6 +45,20 @@ namespace WCDS.WebFuncions
                 var rateTypes = await _domainService.GetRateTypes();
                 log.LogInformation("ratetypes returned from DomainService are: " + rateTypes.Data.Count());
 
+                log.LogInformation("Reading ratetypes for aviation reporting expenses from DomainService");
+                var payableRateTypes = await _domainService.GetRateTypesByService("aviation reporting expenses");
+                log.LogInformation("ratetypes for aviation reporting expenses returned from DomainService are: " + payableRateTypes.Data.Count());
+
+                log.LogInformation("Reading ratetypes for aviation reporting flying hours from DomainService");
+                var aviationreportingflyinghoursRateType = await _domainService.GetRateTypesByService("aviation reporting flying hours");
+                log.LogInformation("ratetypes for aviation reporting flying hours returned from DomainService are: " + aviationreportingflyinghoursRateType.Data.Count());
+
+                foreach (var rateType in aviationreportingflyinghoursRateType.Data)
+                {
+                    if (payableRateTypes.Data.Where(p => p.Type == rateType.Type).FirstOrDefault() == null)
+                        payableRateTypes.Data.Add(rateType);
+                }
+
                 log.LogInformation("Reading costCenter from WildFireFinanceApi");
                 var costCenter = await _wildfireFinanceService.GetCostCenterForDDL();
                 log.LogInformation("costCenters returned from WildFireFinanceApi are: {0} ", costCenter == null ? 0 : costCenter.Count);
@@ -67,6 +81,7 @@ namespace WCDS.WebFuncions
                 {
                     RateTypes = rateTypes.Data.Where(p => Common.filteredRateTypes.Contains(p.Type)).Select(x => x.Type).ToArray(),
                     RateUnits = rateUnits.Data.Where(p => Common.filteredRateUnits.Contains(p.Type)).Select(x => x.Type).ToArray(),
+                    PayableRateTypes = payableRateTypes.Data.Select(x => x.Type).ToArray(),
                     CostCenterList = costCenter.ToArray(),
                     GLAccountList = glAccount.ToArray(),
                     InternalOrderList = internalOrder.ToArray(),

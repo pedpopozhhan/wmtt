@@ -64,9 +64,9 @@ namespace WCDS.WebFuncions.Core.Services
                 MissingMemberHandling = MissingMemberHandling.Ignore
             };
             Response<TimeReportCostDetailDto> responseData = JsonConvert.DeserializeObject<Response<TimeReportCostDetailDto>>(json, settings);
-            if (responseData.Data != null && responseData.Data.Length > 0)
+            if (responseData.Data != null && responseData.Data.Count > 0)
             {
-                responseData.Data = responseData.Data.Where(i => !_dbContext.InvoiceTimeReportCostDetails.Any(r => r.FlightReportCostDetailsId == i.FlightReportCostDetailsId)).ToArray();
+                responseData.Data = responseData.Data.Where(i => !_dbContext.InvoiceTimeReportCostDetails.Any(r => r.FlightReportCostDetailsId == i.FlightReportCostDetailsId)).ToList();
             }
 
             return responseData;
