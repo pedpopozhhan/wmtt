@@ -4,8 +4,10 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Services;
@@ -46,19 +48,15 @@ namespace WCDS.WebFuncions
                 log.LogInformation("ratetypes returned from DomainService are: " + rateTypes.Data.Count());
 
                 log.LogInformation("Reading ratetypes for aviation reporting expenses from DomainService");
-                var payableRateTypes = await _domainService.GetRateTypesByService("aviation reporting expenses");
-                log.LogInformation("ratetypes for aviation reporting expenses returned from DomainService are: " + payableRateTypes.Data.Count());
+                var aviationReportingExpensesRateTypes = await _domainService.GetRateTypesByService("aviation reporting expenses");
+                log.LogInformation("ratetypes for aviation reporting expenses returned from DomainService are: " + aviationReportingExpensesRateTypes.Data.Count());
 
                 log.LogInformation("Reading ratetypes for aviation reporting flying hours from DomainService");
                 var aviationreportingflyinghoursRateType = await _domainService.GetRateTypesByService("aviation reporting flying hours");
                 log.LogInformation("ratetypes for aviation reporting flying hours returned from DomainService are: " + aviationreportingflyinghoursRateType.Data.Count());
 
-                foreach (var rateType in aviationreportingflyinghoursRateType.Data)
-                {
-                    if (payableRateTypes.Data.Where(p => p.Type == rateType.Type).FirstOrDefault() == null)
-                        payableRateTypes.Data.Add(rateType);
-                }
-
+                List<RateType> payableRateTypes = aviationReportingExpensesRateTypes.Data.Union(aviationreportingflyinghoursRateType.Data, new RateTypeComparer()).ToList();
+                
                 log.LogInformation("Reading costCenter from WildFireFinanceApi");
                 var costCenter = await _wildfireFinanceService.GetCostCenterForDDL();
                 log.LogInformation("costCenters returned from WildFireFinanceApi are: {0} ", costCenter == null ? 0 : costCenter.Count);
@@ -81,7 +79,7 @@ namespace WCDS.WebFuncions
                 {
                     RateTypes = rateTypes.Data.Where(p => Common.filteredRateTypes.Contains(p.Type)).Select(x => x.Type).ToArray(),
                     RateUnits = rateUnits.Data.Where(p => Common.filteredRateUnits.Contains(p.Type)).Select(x => x.Type).ToArray(),
-                    PayableRateTypes = payableRateTypes.Data.Select(x => x.Type).ToArray(),
+                    PayableRateTypes = payableRateTypes.Select(x => x.Type).ToArray(),
                     CostCenterList = costCenter.ToArray(),
                     GLAccountList = glAccount.ToArray(),
                     InternalOrderList = internalOrder.ToArray(),
