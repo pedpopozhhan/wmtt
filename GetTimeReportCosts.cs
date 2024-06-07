@@ -56,12 +56,11 @@ namespace WCDS.WebFuncions
                         jsonResult = new JsonResult(costs.ErrorMessage);
                         jsonResult.StatusCode = StatusCodes.Status424FailedDependency;
                         return jsonResult;
-
                     }
 
                     var response = new TimeReportCostsResponse
                     {
-                        Rows = costs.Data
+                        Rows = costs.Data.ToArray()
                     };
 
                     jsonResult = new JsonResult(response);
