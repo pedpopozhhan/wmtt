@@ -55,7 +55,7 @@ namespace WCDS.WebFuncions
                 var aviationreportingflyinghoursRateType = await _domainService.GetRateTypesByService("aviation reporting flying hours");
                 log.LogInformation("ratetypes for aviation reporting flying hours returned from DomainService are: " + aviationreportingflyinghoursRateType.Data.Count());
 
-                List<RateType> payableRateTypes = aviationReportingExpensesRateTypes.Data.Union(aviationreportingflyinghoursRateType.Data, new RateTypeComparer()).ToList();
+                List<RateType> payableRateTypes =aviationReportingExpensesRateTypes.Data.Union(aviationreportingflyinghoursRateType.Data, new RateTypeComparer()).OrderBy(p => p.Type).ToList();
                 
                 log.LogInformation("Reading costCenter from WildFireFinanceApi");
                 var costCenter = await _wildfireFinanceService.GetCostCenterForDDL();
