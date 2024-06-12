@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace WCDS.WebFuncions.Core.Model.Services
 {
     public class Response<T>
@@ -6,7 +8,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public string ErrorCodeId { get; set; }
         public string ErrorMessage { get; set; }
         public PaginationResponseInfo PaginationInfo { get; set; }
-        public T[] Data { get; set; }
+        public List<T> Data { get; set; }
     }
 }
 

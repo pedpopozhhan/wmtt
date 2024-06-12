@@ -5,18 +5,18 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
-using WCDS.WebFuncions.Core.Model;
+using WCDS.WebFuncions.Core.Model.ChargeExtract;
 
 namespace WCDS.WebFuncions.Core.Validator
 {
-    public class ChargeExtractValidator : AbstractValidator<ChargeExtractDto>
+    public class GetChargeExtractValidator : AbstractValidator<ChargeExtractRequestDto>
     {
         IChargeExtractController _chargeExtractController;
 
-        public ChargeExtractValidator(IChargeExtractController chargeExtractController)
+        public GetChargeExtractValidator(IChargeExtractController chargeExtractController)
         {
             _chargeExtractController = chargeExtractController;
-            RuleFor(x => x.VendorId).NotEmpty().WithMessage("Vendor Id number must not be null or an empty string.");
+            
         }
     }
 }
