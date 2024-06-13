@@ -15,6 +15,7 @@ using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
+using WCDS.WebFuncions.Core.Validator;
 using WCDS.WebFuncions.Enums;
 namespace WCDS.WebFuncions
 {
@@ -58,6 +59,15 @@ namespace WCDS.WebFuncions
                 if (tokenParsed)
                 {
                     var invoiceController = new InvoiceController(log, _mapper);
+                    var validationRules = new InvoiceDraftValidator(invoiceController);
+
+                    var validationResult = validationRules.Validate(data);
+                    if (!validationResult.IsValid)
+                    {
+                        jsonResult = new JsonResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
+                        jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                        return jsonResult;
+                    }
                     Guid result = Guid.Empty;
                     if (!data.InvoiceId.HasValue || data.InvoiceId == Guid.Empty)
                     {

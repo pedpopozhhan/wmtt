@@ -94,35 +94,11 @@ namespace WCDS.WebFuncions.Controller
 
                     _logger.LogInformation("Ivoice Insert Completed at: {0} for invoice: {1}", DateTime.UtcNow, invoiceEntity.InvoiceNumber);
 
-                    var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceEntity);
-                    messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
-                    {
-                        InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(invoiceEntity.InvoiceTimeReportCostDetails),
-                        InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(invoiceEntity.InvoiceOtherCostDetails)
-                    };
-                    await new InvoiceDataSyncMessageHandler(_logger).SendCreateInvoiceMessage(new InvoiceDataSyncMessageDto()
-                    {
-                        Action = "create-invoice",
-                        TimeStamp = DateTime.UtcNow,
-                        Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
-                    }, invoiceEntity.InvoiceNumber);
+                    await SendCreateInvoiceMessage(invoiceEntity);
 
-
-                    if (invoiceEntity.InvoiceTimeReportCostDetails != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
+                    if (invoiceEntity.InvoiceTimeReportCostDetails != null && invoiceEntity.InvoiceTimeReportCostDetails.Count > 0)
                     {
-                        await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(new InvoiceStatusSyncMessageDto()
-                        {
-                            Action = "update-invoice",
-                            TimeStamp = DateTime.UtcNow,
-                            InvoiceId = invoiceEntity.InvoiceId,
-                            InvoiceNumber = invoiceEntity.InvoiceNumber,
-                            PaymentStatus = invoiceEntity.PaymentStatus,
-                            Details = invoiceEntity.InvoiceTimeReportCostDetails.Select(i => new InvoiceStatusSyncMessageDto.CostDetails()
-                            {
-                                FlightReportCostDetailsId = i.FlightReportCostDetailsId,
-                                FlightReportId = i.FlightReportId
-                            }).ToList()
-                        }, invoiceEntity.InvoiceNumber);
+                        await SendInvoiceStatusSyncMessage(invoiceEntity, "update-invoice");
                     }
 
                     result = invoiceEntity.InvoiceId;
@@ -137,6 +113,8 @@ namespace WCDS.WebFuncions.Controller
             }
             return result;
         }
+
+
 
         public async Task<string> UpdateProcessedInvoice(InvoiceDto invoice)
         {
@@ -155,20 +133,7 @@ namespace WCDS.WebFuncions.Controller
                     invoiceRecord.UpdatedBy = invoice.UpdatedBy;
                     invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
                     dbContext.SaveChanges();
-
-                    var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceRecord);
-                    messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
-                    {
-                        InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(invoiceRecord.InvoiceTimeReportCostDetails),
-                        InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(invoiceRecord.InvoiceOtherCostDetails)
-                    };
-
-                    await new InvoiceDataSyncMessageHandler(_logger).SendUpdateInvoiceMessage(new InvoiceDataSyncMessageDto()
-                    {
-                        Action = "update-invoice",
-                        TimeStamp = DateTime.UtcNow,
-                        Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
-                    }, invoiceRecord.InvoiceNumber);
+                    await SendUpdateInvoiceMessage(invoiceRecord);
 
                     result = invoiceRecord.UniqueServiceSheetName;
                     transaction.Commit();
@@ -182,6 +147,8 @@ namespace WCDS.WebFuncions.Controller
             }
             return result;
         }
+
+
 
         public async Task<Guid> CreateDraft(InvoiceRequestDto invoice, string user)
         {
@@ -231,7 +198,12 @@ namespace WCDS.WebFuncions.Controller
                     await transaction.CommitAsync();
 
                     // send messages
+                    await SendCreateInvoiceMessage(entity);
 
+                    if (entity.InvoiceTimeReportCostDetails != null && entity.InvoiceTimeReportCostDetails.Count > 0)
+                    {
+                        await SendInvoiceStatusSyncMessage(entity, "update-invoice");
+                    }
                     return entity.InvoiceId;
                 }
                 return Guid.Empty;
@@ -275,6 +247,14 @@ namespace WCDS.WebFuncions.Controller
                     entity.UpdatedByDateTime = dt;
                     entity.UpdatedBy = user;
 
+                    entity.InvoiceAmount = invoice.InvoiceAmount;
+                    entity.InvoiceDate = invoice.InvoiceDate;
+                    entity.InvoiceNumber = invoice.InvoiceNumber;
+                    entity.InvoiceReceivedDate = invoice.InvoiceReceivedDate;
+                    entity.PeriodEndDate = invoice.PeriodEndDate;
+                    entity.ServiceDescription = invoice.ServiceDescription;
+                    entity.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
+
                     var invoiceTimeReports = invoice.FlightReportIds.Select(x =>
                                         {
                                             return new InvoiceTimeReports
@@ -309,6 +289,12 @@ namespace WCDS.WebFuncions.Controller
                     await transaction.CommitAsync();
 
                     // send messages
+                    await SendCreateInvoiceMessage(entity);
+
+                    if (entity.InvoiceTimeReportCostDetails != null && entity.InvoiceTimeReportCostDetails.Count > 0)
+                    {
+                        await SendInvoiceStatusSyncMessage(entity, "update-invoice");
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -319,7 +305,6 @@ namespace WCDS.WebFuncions.Controller
             }
             return entity.InvoiceId;
         }
-
         public async Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request)
         {
             bool result = false;
@@ -335,7 +320,7 @@ namespace WCDS.WebFuncions.Controller
 
                     if (request.PaymentStatus != invoiceRecord.PaymentStatus)
                     {
-                        invoiceRecord.InvoiceStatusLogs = new List<InvoiceStatusLog> { new InvoiceStatusLog()
+                        invoiceRecord.InvoiceStatusLogs = new List<InvoiceStatusLog> { new()
                                     {
                                         InvoiceId = invoiceRecord.InvoiceId,
                                         CurrentStatus = request.PaymentStatus,
@@ -348,20 +333,7 @@ namespace WCDS.WebFuncions.Controller
                         invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
                         dbContext.SaveChanges();
 
-
-                        var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceRecord);
-                        messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
-                        {
-                            InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(invoiceRecord.InvoiceTimeReportCostDetails),
-                            InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(invoiceRecord.InvoiceOtherCostDetails)
-                        };
-
-                        await new InvoiceDataSyncMessageHandler(_logger).SendUpdateInvoiceMessage(new InvoiceDataSyncMessageDto()
-                        {
-                            Action = "update-invoice",
-                            TimeStamp = DateTime.UtcNow,
-                            Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
-                        }, invoiceRecord.InvoiceNumber);
+                        await SendUpdateInvoiceMessage(invoiceRecord);
 
                         result = true;
                         transaction.Commit();
@@ -553,5 +525,57 @@ namespace WCDS.WebFuncions.Controller
                 item.CreatedByDateTime = dt;
             }
         }
+
+        private async Task SendInvoiceStatusSyncMessage(Invoice invoiceEntity, string action)
+        {
+            await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(new InvoiceStatusSyncMessageDto()
+            {
+                Action = action,
+                TimeStamp = DateTime.UtcNow,
+                InvoiceId = invoiceEntity.InvoiceId,
+                InvoiceNumber = invoiceEntity.InvoiceNumber,
+                PaymentStatus = invoiceEntity.PaymentStatus,
+                Details = invoiceEntity.InvoiceTimeReportCostDetails.Select(i => new InvoiceStatusSyncMessageDto.CostDetails()
+                {
+                    FlightReportCostDetailsId = i.FlightReportCostDetailsId,
+                    FlightReportId = i.FlightReportId
+                }).ToList()
+            }, invoiceEntity.InvoiceNumber);
+        }
+
+        private async Task SendCreateInvoiceMessage(Invoice invoiceEntity)
+        {
+            var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceEntity);
+            messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
+            {
+                InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(invoiceEntity.InvoiceTimeReportCostDetails),
+                InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(invoiceEntity.InvoiceOtherCostDetails)
+            };
+            await new InvoiceDataSyncMessageHandler(_logger).SendCreateInvoiceMessage(new InvoiceDataSyncMessageDto()
+            {
+                Action = "create-invoice",
+                TimeStamp = DateTime.UtcNow,
+                Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
+            }, invoiceEntity.InvoiceNumber);
+        }
+
+        private async Task SendUpdateInvoiceMessage(Invoice invoiceRecord)
+        {
+            var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceRecord);
+            messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto()
+            {
+                InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(invoiceRecord.InvoiceTimeReportCostDetails),
+                InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(invoiceRecord.InvoiceOtherCostDetails)
+            };
+
+            await new InvoiceDataSyncMessageHandler(_logger).SendUpdateInvoiceMessage(new InvoiceDataSyncMessageDto()
+            {
+                Action = "update-invoice",
+                TimeStamp = DateTime.UtcNow,
+                Tables = new InvoiceDataSyncMessageDetailDto() { Invoice = messageDetailInvoice }
+            }, invoiceRecord.InvoiceNumber);
+        }
+
+
     }
 }
