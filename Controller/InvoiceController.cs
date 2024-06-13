@@ -361,7 +361,7 @@ namespace WCDS.WebFuncions.Controller
             {
                 try
                 {
-                    Invoice invoice = dbContext.Invoice.Where(x => x.InvoiceNumber == invoiceNumber && x.ContractNumber == contractNumber).FirstOrDefault();
+                    Invoice invoice = dbContext.Invoice.Where(x => string.Compare(x.InvoiceStatus, InvoiceStatus.Draft.ToString()) != 0 && x.InvoiceNumber == invoiceNumber && x.ContractNumber == contractNumber).FirstOrDefault();
                     if (invoice != null)
                         bResult = true;
                 }
