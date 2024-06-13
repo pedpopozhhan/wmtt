@@ -1,5 +1,6 @@
 
 using System.Linq;
+using AutoMapper;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -34,7 +35,9 @@ namespace WCDS.WebFuncions
             builder.Services.AddSingleton<ITimeReportingService, TimeReportingService>();
             builder.Services.AddSingleton<IWildfireFinanceService, WildfireFinanceService>();
             builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
-
+            var serviceProvider = builder.Services.BuildServiceProvider();
+            var mapper = serviceProvider.GetRequiredService<IMapper>();
+            mapper.ConfigurationProvider.AssertConfigurationIsValid();
         }
     }
 }

@@ -24,6 +24,7 @@ namespace WCDS.WebFuncions.Core.Model
         public string Type { get; set; }
         public List<InvoiceTimeReportCostDetailDto> InvoiceTimeReportCostDetails { get; set; }
         public List<InvoiceOtherCostDetailDto> InvoiceOtherCostDetails { get; set; }
+        public List<InvoiceTimeReportsDto> InvoiceTimeReports { get; set; }
         public string UniqueServiceSheetName { get; set; }
         public string ServiceDescription { get; set; }
         public string CreatedBy { get; set; }

@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using AutoMapper;
 using WCDS.WebFuncions.Core.Entity;
 using WCDS.WebFuncions.Core.Model;
@@ -10,8 +12,13 @@ namespace WCDS.WebFuncions.Core.Common
     {
         public MappingProfile()
         {
-            CreateMap<Invoice, InvoiceDto>().ReverseMap();
+            CreateMap<Invoice, InvoiceDto>()
+            .ForMember(dest => dest.AuditCreationDateTime, opt => opt.Ignore())
+            .ForMember(dest => dest.AuditLastUpdateDateTime, opt => opt.Ignore())
+            .ForMember(dest => dest.InvoiceTimeReportCostDetails, opt => opt.MapFrom(src => src.InvoiceTimeReportCostDetails))
+            .ReverseMap();
             CreateMap<Invoice, InvoiceDataSyncMessageDetailInvoiceDto>()
+            .ForMember(i => i.Tables, opt => opt.Ignore())
             .ForMember(i => i.InvoiceId, dest => dest.MapFrom(src => src.InvoiceId))
             .ForMember(i => i.InvoiceNumber, dest => dest.MapFrom(src => src.InvoiceNumber))
             .ForMember(i => i.VendorName, dest => dest.MapFrom(src => src.VendorName))
@@ -29,14 +36,26 @@ namespace WCDS.WebFuncions.Core.Common
             .ForMember(i => i.CreatedByDateTime, dest => dest.MapFrom(src => src.CreatedByDateTime))
             .ForMember(i => i.UpdatedBy, dest => dest.MapFrom(src => src.UpdatedBy))
             .ForMember(i => i.UpdatedByDateTime, dest => dest.MapFrom(src => src.UpdatedByDateTime)).ReverseMap();
-          
 
-            CreateMap<TimeReportCostDetailDto, TimeReportCostDetail>().ReverseMap();
+
+            CreateMap<TimeReportCostDetailDto, TimeReportCostDetail>()
+            .ForMember(x => x.RateType, opt => opt.Ignore())
+            .ForMember(x => x.RateUnit, opt => opt.Ignore()).ReverseMap();
             CreateMap<InvoiceTimeReportCostDetails, InvoiceTimeReportCostDetailDto>().ReverseMap();
             CreateMap<InvoiceOtherCostDetails, InvoiceOtherCostDetailDto>().ReverseMap();
-            CreateMap<ChargeExtract, ChargeExtractDto>().ReverseMap();
+            CreateMap<ChargeExtract, ChargeExtractDto>()
+            .ForMember(x => x.ExtendedExtract, opt => opt.Ignore())
+            .ForMember(x => x.ExtractFile, opt => opt.Ignore())
+            .ForMember(x => x.ExtractFiles, opt => opt.Ignore());
+            CreateMap<ChargeExtractDto, ChargeExtract>()
+            .ForMember(x => x.Invoice, opt => opt.Ignore());
+
             CreateMap<ChargeExtractDetail, ChargeExtractDetailDto>().ReverseMap();
             CreateMap<ChargeExtractViewLog, ChargeExtractViewLogDto>().ReverseMap();
+            CreateMap<Invoice, InvoiceRequestDto>().ForMember(x => x.FlightReportIds, opt => opt.Ignore()).ReverseMap();
+            CreateMap<InvoiceTimeReports, InvoiceTimeReportsDto>().ReverseMap();
+
+
         }
     }
 }

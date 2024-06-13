@@ -42,7 +42,7 @@ namespace WCDS.WebFuncions
                 log.LogInformation("Trigger function (GetDrafts) received a request.");
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var data = JsonConvert.DeserializeObject<InvoiceRequestDto>(requestBody);
+                var data = JsonConvert.DeserializeObject<GetInvoiceRequestDto>(requestBody);
 
                 if (data == null)
                 {

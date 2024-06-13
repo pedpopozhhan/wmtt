@@ -56,7 +56,7 @@ namespace WCDS.WebFuncions
                 var signedOffReports = "signed off";
                 foreach (var contract in contracts.Data)
                 {
-                    var invoices = invoiceController.GetInvoices(new InvoiceRequestDto { ContractNumber = contract.ContractNumber });
+                    var invoices = invoiceController.GetInvoices(new GetInvoiceRequestDto { ContractNumber = contract.ContractNumber });
                     contract.DownloadsAvailable = invoices.Invoices.Count(invoice => !invoice.DocumentDate.HasValue);
 
                     log.LogInformation("GetContracts - pulling time reports for contract {0} with status {1}", contract.ContractNumber, signedOffReports);
