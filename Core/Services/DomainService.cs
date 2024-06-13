@@ -16,6 +16,7 @@ namespace WCDS.WebFuncions.Core.Services
     {
         public Task<Response<RateUnit>> GetRateUnits();
         public Task<Response<RateType>> GetRateTypes();
+        public Task<Response<RateType>> GetRateTypesByService(string serviceName);
     }
 
     public class DomainService : IDomainService
@@ -29,13 +30,10 @@ namespace WCDS.WebFuncions.Core.Services
             HttpClient = httpClient;
             this.httpContextAccessor = httpContextAccessor;
             Log = log ?? throw new ArgumentNullException(nameof(log));
-
         }
 
         public async Task<Response<RateUnit>> GetRateUnits()
         {
-
-
             return await GetDomainObjects<RateUnit, FilterByRateUnit>(new FilterByRateUnit(), "/rate_units/get");
         }
 
@@ -43,7 +41,13 @@ namespace WCDS.WebFuncions.Core.Services
         {
             return await GetDomainObjects<RateType, FilterByRateType>(new FilterByRateType(), "/rate_types/get");
         }
-        private async Task<Response<T>> GetDomainObjects<T, U>(U filterBy, string relativePath) where U : IFilterBy
+
+        public async Task<Response<RateType>> GetRateTypesByService(string serviceName)
+        {
+            return await GetDomainObjects<RateType, FilterByRateType>(new FilterByRateType(), "/rate_types/get", serviceName);
+        }
+        
+        private async Task<Response<T>> GetDomainObjects<T, U>(U filterBy, string relativePath, string serviceName = null) where U : IFilterBy
         {
             var token = this.httpContextAccessor.HttpContext.Request.Headers["Authorization"];
             if (string.IsNullOrEmpty(token))
@@ -61,7 +65,7 @@ namespace WCDS.WebFuncions.Core.Services
             url = url + relativePath;
             Log.LogInformation("Domain service url: {url}", url);
 
-            var requestObject = new Request<U> { FilterBy = filterBy };
+            var requestObject = new Request<U> { FilterBy = filterBy, ServiceName = serviceName };
             var jsonRequest = JsonConvert.SerializeObject(requestObject);
             var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
