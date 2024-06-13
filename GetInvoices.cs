@@ -7,10 +7,12 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
+using WCDS.WebFuncions.Enums;
 namespace WCDS.WebFuncions
 {
     public class GetInvoices
@@ -40,7 +42,6 @@ namespace WCDS.WebFuncions
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<GetInvoiceRequestDto>(requestBody);
-
                 if (data == null)
                 {
                     jsonResult = new JsonResult("Invalid Request");
@@ -49,8 +50,9 @@ namespace WCDS.WebFuncions
                 }
 
                 var responseDto = new InvoiceController(log, _mapper).GetInvoices(data);
+                var invoices = responseDto.Invoices.Where(x => x.InvoiceStatus != InvoiceStatus.Draft.ToString());
 
-                jsonResult = new JsonResult(responseDto);
+                jsonResult = new JsonResult(invoices);
                 jsonResult.StatusCode = StatusCodes.Status200OK;
                 return jsonResult;
 

@@ -61,13 +61,12 @@ namespace WCDS.WebFuncions
                     Guid result = Guid.Empty;
                     if (!data.InvoiceId.HasValue || data.InvoiceId == Guid.Empty)
                     {
-                        result = invoiceController.CreateDraft(data, parsedTokenResult);
+                        result = await invoiceController.CreateDraft(data, parsedTokenResult);
                     }
                     else
                     {
                         result = await invoiceController.UpdateDraft(data, parsedTokenResult);
                     }
-                    // var result = await invoice.SaveDraft(data, parsedTokenResult);
 
                     jsonResult = new JsonResult(result);
                     jsonResult.StatusCode = StatusCodes.Status200OK;

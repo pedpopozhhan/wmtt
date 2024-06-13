@@ -27,6 +27,8 @@ namespace WCDS.WebFuncions.Controller
         public Task<string> UpdateProcessedInvoice(InvoiceDto invoice);
         public Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request);
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
+        public Task<Guid> UpdateDraft(InvoiceRequestDto invoice, string user);
+        public Task<Guid> CreateDraft(InvoiceRequestDto invoice, string user);
     }
 
     public class InvoiceController : IInvoiceController
@@ -55,6 +57,7 @@ namespace WCDS.WebFuncions.Controller
                 try
                 {
                     Invoice invoiceEntity = _mapper.Map<Invoice>(invoice);
+                    invoiceEntity.InvoiceStatus = InvoiceStatus.Processed.ToString();
                     if (invoiceEntity.InvoiceTimeReportCostDetails != null && invoiceEntity.InvoiceTimeReportCostDetails.Count() > 0)
                     {
                         foreach (var item in invoiceEntity.InvoiceTimeReportCostDetails)
@@ -180,12 +183,12 @@ namespace WCDS.WebFuncions.Controller
             return result;
         }
 
-        public Guid CreateDraft(InvoiceRequestDto invoice, string user)
+        public async Task<Guid> CreateDraft(InvoiceRequestDto invoice, string user)
         {
 
             var dt = DateTime.UtcNow;
 
-            using IDbContextTransaction transaction = dbContext.Database.BeginTransaction();
+            using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
             try
             {
                 if (!invoice.InvoiceId.HasValue || invoice.InvoiceId == Guid.Empty)
@@ -202,7 +205,7 @@ namespace WCDS.WebFuncions.Controller
                     SetCreatedFields(entity.InvoiceOtherCostDetails, user, dt);
 
 
-                    dbContext.SaveChanges();
+                    await dbContext.SaveChangesAsync();
 
                     entity.InvoiceStatusLogs = new List<InvoiceStatusLog> { new()
                     {
@@ -223,9 +226,9 @@ namespace WCDS.WebFuncions.Controller
                             AuditLastUpdatedBy = user
                         };
                     });
-                    dbContext.InvoiceTimeReports.AddRange(invoiceTimeReports);
-                    dbContext.SaveChanges();
-                    transaction.Commit();
+                    await dbContext.InvoiceTimeReports.AddRangeAsync(invoiceTimeReports);
+                    await dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
 
                     // send messages
 
@@ -236,7 +239,7 @@ namespace WCDS.WebFuncions.Controller
             catch (Exception ex)
             {
                 _logger.LogError(string.Format("CreateDraft: An error has occured while Creating draft for Invoice Number:  {0}, ErrorMessage: {1}, InnerException: {2}", invoice.InvoiceNumber, ex.Message, ex.InnerException));
-                transaction.Rollback();
+                await transaction.RollbackAsync();
                 throw;
             }
 
@@ -309,7 +312,7 @@ namespace WCDS.WebFuncions.Controller
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(string.Format("SaveDraft: An error has occured while Saving draft for Invoice Number:  {0}, ErrorMessage: {1}, InnerException: {2}", invoice.InvoiceNumber, ex.Message, ex.InnerException));
+                    _logger.LogError(string.Format("UpdateDraft: An error has occured while updating draft for Invoice Number:  {0}, ErrorMessage: {1}, InnerException: {2}", invoice.InvoiceNumber, ex.Message, ex.InnerException));
                     await transaction.RollbackAsync();
                     throw;
                 }
