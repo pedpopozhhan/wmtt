@@ -1,6 +1,4 @@
 ﻿using AutoMapper;
-using Azure.Storage.Blobs.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -8,7 +6,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity;
