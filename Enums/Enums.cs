@@ -15,6 +15,9 @@ namespace WCDS.WebFuncions.Enums
 
     public enum InvoiceStatus
     {
-        Draft
+        Draft,
+        Processed,
+        DraftDeleted,
+        ProcessedDeleted
     }
 }

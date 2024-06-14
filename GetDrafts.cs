@@ -42,7 +42,7 @@ namespace WCDS.WebFuncions
                 log.LogInformation("Trigger function (GetDrafts) received a request.");
 
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-                var data = JsonConvert.DeserializeObject<InvoiceRequestDto>(requestBody);
+                var data = JsonConvert.DeserializeObject<GetInvoiceRequestDto>(requestBody);
 
                 if (data == null)
                 {
@@ -52,8 +52,7 @@ namespace WCDS.WebFuncions
                 }
 
                 var response = new InvoiceController(log, _mapper).GetInvoicesWithDetails(data);
-                // var drafts = response.Invoices.Where(x => x.InvoiceStatus == InvoiceStatus.Draft.ToString());
-                // for now, just return all the invoices               
+                response.Invoices = response.Invoices.Where(x => x.InvoiceStatus == InvoiceStatus.Draft.ToString()).ToArray();
 
                 jsonResult = new JsonResult(response);
                 jsonResult.StatusCode = StatusCodes.Status200OK;
