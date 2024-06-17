@@ -91,23 +91,6 @@ namespace WCDS.WebFuncions
                     return jsonResult;
                 }
 
-                //if invoice has id, set to draft, update date and userid
-                //else create
-                // data.InvoiceStatus = InvoiceStatus.Draft.ToString();
-                // if (!data.InvoiceId.HasValue || data.InvoiceId == Guid.Empty)
-                // {
-
-                // }
-                // else
-                // {
-
-                // }
-                // var response = new InvoiceController(log, _mapper).GetInvoicesWithDetails(data);
-                // var drafts = response.Invoices.Where(x => x.InvoiceStatus == InvoiceStatus.Draft.ToString());
-                // for now, just return all the invoices               
-
-
-
             }
             catch (Exception ex)
             {
