@@ -11,6 +11,7 @@ using System.Text;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity;
 using WCDS.WebFuncions.Core.Model.ChargeExtract;
+using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions.Controller
 {
@@ -36,12 +37,13 @@ namespace WCDS.WebFuncions.Controller
         List<string> _filesPutInAzureStorage;
         List<ChargeExtractFileDto> _extractFiles;
         List<ChargeExtractDto> _extendedExtract;
+        private readonly IWildfireFinanceService _wildfireFinanceService;
 
         int _maxNumberOfCostItems = 995;
         StringBuilder _output;
         bool _abort = false;
 
-        public ChargeExtractController(ILogger log, IMapper mapper)
+        public ChargeExtractController(ILogger log, IMapper mapper, IWildfireFinanceService wildfireFinanceService)
         {
             _dbContext = new ApplicationDBContext();
             _responseDto = new ChargeExtractResponseDto();
@@ -54,6 +56,7 @@ namespace WCDS.WebFuncions.Controller
             _filesPutInAzureStorage = new List<string>();
             _extractFiles = new List<ChargeExtractFileDto>();
             _extendedExtract = new List<ChargeExtractDto>();
+            _wildfireFinanceService = wildfireFinanceService;
 
             _logger = log;
             _mapper = mapper;
@@ -238,6 +241,15 @@ namespace WCDS.WebFuncions.Controller
             var contractNumber = invoice.ContractNumber;
             decimal grandTotal = _groupedRows.Sum(x => x.total);
 
+            
+            var resp = _wildfireFinanceService.GetFinanceDocuments(new Core.Model.FinanceDocument.FinanceDocumentRequestDto
+            {
+                InvoiceNumber = invoice.InvoiceNumber,
+                InvoiceAmount = invoice.InvoiceAmount.Value,
+                VendorBusinessId = invoice.VendorBusinessId
+            }).Result?.Data?.FirstOrDefault();
+            string documentOrVoucherId = resp == null ? string.Empty : resp.AccountingDocument;
+
             ChargeExtractDto chargeExtractDto = null;
             _output = new StringBuilder();
             using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
@@ -260,7 +272,7 @@ namespace WCDS.WebFuncions.Controller
                     var formattedVendorInfo = vendorName + " " + vendor;
                     _output.Append(GetHeaderDataRow(_requestDto.ChargeExtractDateTime, formattedVendorInfo));
                     _output.Append("\r\n");
-                    
+
                     //Detail Row Header Data
                     _output.Append(GetDetailHeaderDataRow(grandTotal));
                     _output.Append("\r\n");
@@ -268,7 +280,7 @@ namespace WCDS.WebFuncions.Controller
                     // Get All break down rows
                     foreach (var item in _groupedRows)
                     {
-                        _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total , item.id.CostCenter, item.id.InternalOrder, item.id.Fund, vendor));
+                        _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total, item.id.CostCenter, item.id.InternalOrder, item.id.Fund, vendor, documentOrVoucherId));
                         _output.Append("\r\n");
                     }
 
@@ -386,16 +398,32 @@ namespace WCDS.WebFuncions.Controller
                     _output.Append("\r\n");
 
                     // Get All break down rows
-                    var prevInvoice = _groupedRows.FirstOrDefault().id.InvoiceNumber;
+                    var prevInvoiceNumber = _groupedRows.FirstOrDefault().id.InvoiceNumber;
+                    var previousInvoice = invoices.Where(p => p.InvoiceNumber == prevInvoiceNumber).FirstOrDefault();
+                    var resp = _wildfireFinanceService.GetFinanceDocuments(new Core.Model.FinanceDocument.FinanceDocumentRequestDto
+                    {
+                        InvoiceNumber = prevInvoiceNumber,
+                        InvoiceAmount = previousInvoice.InvoiceAmount.Value,
+                        VendorBusinessId = previousInvoice.VendorBusinessId
+                    }).Result?.Data?.FirstOrDefault();
+                    string documentOrVoucherId = resp == null ? string.Empty: resp.AccountingDocument ;
                     foreach (var item in _groupedRows)
                     {
-                        if (item.id.InvoiceNumber != prevInvoice)
+                        if (item.id.InvoiceNumber != prevInvoiceNumber)
                         {
                             //_output.Append(GetBlankRow());
                             //_output.Append("\r\n");
-                            prevInvoice = item.id.InvoiceNumber;
+                            prevInvoiceNumber = item.id.InvoiceNumber;
+                            previousInvoice = invoices.Where(p => p.InvoiceNumber == prevInvoiceNumber).FirstOrDefault();
+                            resp = _wildfireFinanceService.GetFinanceDocuments(new Core.Model.FinanceDocument.FinanceDocumentRequestDto
+                            {
+                                InvoiceNumber = prevInvoiceNumber,
+                                InvoiceAmount = previousInvoice.InvoiceAmount.Value,
+                                VendorBusinessId = previousInvoice.VendorBusinessId
+                            }).Result?.Data?.FirstOrDefault();
+                            documentOrVoucherId = resp == null ? string.Empty : resp.AccountingDocument;
                         }
-                        _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total, item.id.CostCenter, item.id.InternalOrder, item.id.Fund, contractNumber));
+                        _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total, item.id.CostCenter, item.id.InternalOrder, item.id.Fund, contractNumber, documentOrVoucherId));
                         _output.Append("\r\n");
                     }
 
@@ -681,7 +709,7 @@ namespace WCDS.WebFuncions.Controller
             return sb;
         }
 
-        private StringBuilder GetDetailItemDataRow(string invoiceNumber, decimal amount, string cc, string io, string fund, string contractNumber)
+        private StringBuilder GetDetailItemDataRow(string invoiceNumber, decimal amount, string cc, string io, string fund, string contractNumber, string documentOrVoucherId)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("BD" + ","  // Column A
@@ -709,7 +737,7 @@ namespace WCDS.WebFuncions.Controller
                 + "" + "," // Column W
                 + invoiceNumber + "," // Column X
                 + contractNumber + "," // Column Y
-                + invoiceNumber + "," // Column Z
+                + documentOrVoucherId + "," // Column Z
                 + "Professional Service" + "," // Column AA
                 + "" + "," // Column AB
                 + "" + "," // Column AC

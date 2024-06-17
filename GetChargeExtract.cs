@@ -22,15 +22,17 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IWildfireFinanceService _wildfireFinanceService;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
 
-        public GetChargeExtract(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
+        public GetChargeExtract(IMapper mapper, IAuditLogService auditLogService, IWildfireFinanceService wildfireFinanceService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             _httpContextAccessor = httpContextAccessor;
+            _wildfireFinanceService = wildfireFinanceService;
         }
 
         [FunctionName("GetChargeExtract")]
@@ -49,7 +51,7 @@ namespace WCDS.WebFuncions
                     if (tokenParsed)
                     {
                         //requestObj.RequestedBy = parsedTokenResult;
-                        IChargeExtractController iController = new ChargeExtractController(_logger, _mapper);
+                        IChargeExtractController iController = new ChargeExtractController(_logger, _mapper, _wildfireFinanceService);
                         GetChargeExtractValidator validationRules = new GetChargeExtractValidator(iController);
 
                         var validationResult = validationRules.Validate(requestObj);
