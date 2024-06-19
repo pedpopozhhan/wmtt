@@ -45,15 +45,10 @@ namespace WCDS.WebFuncions
                     if (invoiceObj.InvoiceId == null || (invoiceObj.InvoiceId != null && invoiceObj.InvoiceId == Guid.Empty))
                     {
                         jsonResult = new JsonResult("Invalid Request: InvoiceId can not be null or empty");
-                        jsonResult.StatusCode = StatusCodes.Status400BadRequest;                        
-                        return jsonResult;
-                    }
-                    if (string.IsNullOrEmpty(invoiceObj.UniqueServiceSheetName))
-                    {
-                        jsonResult = new JsonResult("Invalid Request: UniqueServiceSheetName can not be null or empty");
                         jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                         return jsonResult;
                     }
+
 
                     bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
                     if (tokenParsed)
@@ -80,7 +75,7 @@ namespace WCDS.WebFuncions
                         jsonResult = new JsonResult(parsedTokenResult);
                         jsonResult.StatusCode = StatusCodes.Status401Unauthorized;
                         return jsonResult;
-                    }                   
+                    }
                 }
                 else
                 {

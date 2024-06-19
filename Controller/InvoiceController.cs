@@ -48,7 +48,7 @@ namespace WCDS.WebFuncions.Controller
         {
             Guid result = Guid.Empty;
             int numberOfCostDetails = 0, numberOfOtherCostDetails = 0;
-            invoice.InvoiceStatus = InvoiceStatus.Processed.ToString();
+
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
             {
                 try
@@ -116,7 +116,6 @@ namespace WCDS.WebFuncions.Controller
         public async Task<string> UpdateProcessedInvoice(InvoiceDto invoice)
         {
             string result = string.Empty;
-            invoice.InvoiceStatus = InvoiceStatus.Processed.ToString();
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
             {
                 try
@@ -129,6 +128,7 @@ namespace WCDS.WebFuncions.Controller
                     invoiceRecord.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
                     invoiceRecord.UpdatedBy = invoice.UpdatedBy;
                     invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
+                    invoiceRecord.InvoiceStatus = InvoiceStatus.Processed.ToString();
                     dbContext.SaveChanges();
                     await SendUpdateInvoiceMessage(invoiceRecord);
 
