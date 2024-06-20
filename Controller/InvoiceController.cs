@@ -111,29 +111,38 @@ namespace WCDS.WebFuncions.Controller
             return result;
         }
 
-
-
         public async Task<string> UpdateProcessedInvoice(InvoiceDto invoice)
         {
-            string result = string.Empty;
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    var invoiceRecord = dbContext.Invoice.FirstOrDefault(ss => ss.InvoiceId == invoice.InvoiceId);
-                    if (invoiceRecord == null)
+                    var newInvoice = new Invoice
+                    {
+                        InvoiceId = invoice.InvoiceId.Value,
+                        UniqueServiceSheetName = invoice.UniqueServiceSheetName,
+                        UpdatedBy = invoice.UpdatedBy,
+                        UpdatedByDateTime = DateTime.UtcNow,
+                        InvoiceStatus = InvoiceStatus.Processed.ToString()
+                    };
+
+                    dbContext.Attach(newInvoice);
+
+                    // Mark specific properties as modified
+                    dbContext.Entry(newInvoice).Property(x => x.UniqueServiceSheetName).IsModified = true;
+                    dbContext.Entry(newInvoice).Property(x => x.UpdatedBy).IsModified = true;
+                    dbContext.Entry(newInvoice).Property(x => x.UpdatedByDateTime).IsModified = true;
+                    dbContext.Entry(newInvoice).Property(x => x.InvoiceStatus).IsModified = true;
+                    // Save changes to the database
+                    await dbContext.SaveChangesAsync();
+                    transaction.Commit();
+                    var entity = dbContext.Invoice.FirstOrDefault(ss => ss.InvoiceId == invoice.InvoiceId);
+                    if (entity == null)
                     {
                         throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
                     }
-                    invoiceRecord.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
-                    invoiceRecord.UpdatedBy = invoice.UpdatedBy;
-                    invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
-                    invoiceRecord.InvoiceStatus = InvoiceStatus.Processed.ToString();
-                    dbContext.SaveChanges();
-                    await SendUpdateInvoiceMessage(invoiceRecord);
-
-                    result = invoiceRecord.UniqueServiceSheetName;
-                    transaction.Commit();
+                    await SendUpdateInvoiceMessage(entity);
+                    return entity.UniqueServiceSheetName;
                 }
                 catch (Exception ex)
                 {
@@ -142,9 +151,7 @@ namespace WCDS.WebFuncions.Controller
                     throw;
                 }
             }
-            return result;
         }
-
 
 
         public async Task<Guid> CreateDraft(InvoiceRequestDto invoice, string user)
@@ -218,7 +225,7 @@ namespace WCDS.WebFuncions.Controller
         public async Task<Guid> UpdateDraft(InvoiceRequestDto invoice, string user)
         {
             var dt = DateTime.UtcNow;
-            Invoice entity;
+            Invoice entity = null;
             using (IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync())
             {
                 try
@@ -302,6 +309,95 @@ namespace WCDS.WebFuncions.Controller
             }
             return entity.InvoiceId;
         }
+
+        private async Task<Invoice> Update(InvoiceRequestDto invoice, string user, InvoiceStatus status)
+        {
+            var dt = DateTime.UtcNow;
+            Invoice entity = null;
+            using (IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync())
+            {
+                try
+                {
+
+                    // update
+                    entity = await dbContext.Invoice.Where(x => x.InvoiceId == invoice.InvoiceId)
+                    .Include(i => i.InvoiceTimeReportCostDetails)
+                    .Include(i => i.InvoiceOtherCostDetails)
+                    .Include(i => i.InvoiceStatusLogs)
+                    .Include(i => i.InvoiceTimeReports).FirstOrDefaultAsync();
+
+                    if (entity == null)
+                    {
+                        throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
+                    }
+
+                    dbContext.InvoiceTimeReports.RemoveRange(entity.InvoiceTimeReports);
+                    dbContext.InvoiceOtherCostDetails.RemoveRange(entity.InvoiceOtherCostDetails);
+                    dbContext.InvoiceTimeReportCostDetails.RemoveRange(entity.InvoiceTimeReportCostDetails);
+                    await dbContext.SaveChangesAsync();
+                    entity.InvoiceStatus = status.ToString();
+                    entity.UpdatedByDateTime = dt;
+                    entity.UpdatedBy = user;
+
+                    entity.InvoiceAmount = invoice.InvoiceAmount;
+                    entity.InvoiceDate = invoice.InvoiceDate;
+                    entity.InvoiceNumber = invoice.InvoiceNumber;
+                    entity.InvoiceReceivedDate = invoice.InvoiceReceivedDate;
+                    entity.PeriodEndDate = invoice.PeriodEndDate;
+                    entity.ServiceDescription = invoice.ServiceDescription;
+                    entity.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
+
+                    var invoiceTimeReports = invoice.FlightReportIds.Select(x =>
+                                        {
+                                            return new InvoiceTimeReports
+                                            {
+                                                FlightReportId = x,
+                                                InvoiceId = entity.InvoiceId,
+                                                AuditCreationDateTime = dt,
+                                                AuditLastUpdatedDateTime = dt,
+                                                AuditLastUpdatedBy = user
+                                            };
+                                        });
+                    entity.InvoiceTimeReports = invoiceTimeReports.ToList();
+                    entity.InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetails>>(invoice.InvoiceOtherCostDetails);
+
+                    entity.InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetails>>(invoice.InvoiceTimeReportCostDetails);
+
+                    foreach (var timeReport in entity.InvoiceTimeReports)
+                    {
+                        dbContext.Entry(timeReport).State = EntityState.Added;
+                    }
+
+                    foreach (var otherCostDetail in entity.InvoiceOtherCostDetails)
+                    {
+                        dbContext.Entry(otherCostDetail).State = EntityState.Added;
+                    }
+
+                    foreach (var timeReportCostDetail in entity.InvoiceTimeReportCostDetails)
+                    {
+                        dbContext.Entry(timeReportCostDetail).State = EntityState.Added;
+                    }
+                    await dbContext.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    // send messages
+                    // await SendCreateInvoiceMessage(entity);
+
+                    // if (entity.InvoiceTimeReportCostDetails != null && entity.InvoiceTimeReportCostDetails.Count > 0)
+                    // {
+                    //     await SendInvoiceStatusSyncMessage(entity, "update-invoice");
+                    // }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(string.Format("UpdateDraft: An error has occured while updating draft for Invoice Number:  {0}, ErrorMessage: {1}, InnerException: {2}", invoice.InvoiceNumber, ex.Message, ex.InnerException));
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+            return entity;
+        }
+
         public async Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request)
         {
             bool result = false;
