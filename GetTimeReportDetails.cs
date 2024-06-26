@@ -77,6 +77,7 @@ namespace WCDS.WebFuncions
 
                 var details = await _timeReportingService.GetTimeReportByIds(data.TimeReportIds);
 
+
                 if (!string.IsNullOrEmpty(details.ErrorMessage))
                 {
                     jsonResult = new JsonResult(details.ErrorMessage)
