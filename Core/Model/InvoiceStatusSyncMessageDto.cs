@@ -10,6 +10,8 @@ namespace WCDS.WebFuncions.Core.Model
         public Guid InvoiceId { get; set; }
         public string InvoiceNumber { get; set; }
         public string PaymentStatus { get; set; }
+        public string InvoiceStatus { get; set; }
+
         public List<CostDetails> Details { get; set; }
 
         public class CostDetails

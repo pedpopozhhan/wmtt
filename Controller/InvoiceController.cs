@@ -333,6 +333,7 @@ namespace WCDS.WebFuncions.Controller
                 await transaction.CommitAsync();
                 var entity = await dbContext.Invoice.FirstOrDefaultAsync(ss => ss.InvoiceId == invoiceId) ?? throw new System.Exception($"No Invoice found for InvoiceId - {invoiceId} in the Database.");
                 await SendUpdateInvoiceMessage(entity);
+                await SendInvoiceStatusSyncMessage(entity, "update-invoice");
                 return entity.InvoiceId;
             }
             catch (Exception ex)
@@ -573,6 +574,7 @@ namespace WCDS.WebFuncions.Controller
                 InvoiceId = invoiceEntity.InvoiceId,
                 InvoiceNumber = invoiceEntity.InvoiceNumber,
                 PaymentStatus = invoiceEntity.PaymentStatus,
+                InvoiceStatus = invoiceEntity.InvoiceStatus.ToString(),
                 Details = invoiceEntity.InvoiceTimeReportCostDetails.Select(i => new InvoiceStatusSyncMessageDto.CostDetails()
                 {
                     FlightReportCostDetailsId = i.FlightReportCostDetailsId,
