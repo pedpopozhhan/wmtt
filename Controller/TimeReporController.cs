@@ -56,16 +56,13 @@ namespace WCDS.WebFuncions.Controller
                 }
                 foreach (var itr in itrs)
                 {
-                    var invoice = await dbContext.Invoice.Where(x => x.InvoiceId == itr.InvoiceId).FirstOrDefaultAsync();
+                    var invoice = await dbContext.Invoice.Where(x => x.InvoiceId == itr.InvoiceId &&
+                    (x.InvoiceStatus == InvoiceStatus.Draft.ToString() || x.InvoiceStatus == InvoiceStatus.Processed.ToString()))
+                    .FirstOrDefaultAsync();
                     if (invoice != null)
                     {
-                        if (invoice.InvoiceStatus == InvoiceStatus.Draft.ToString())
-                        {
-                            //remove this flightreport from costs.data
-                            flightReportIdsToRemove.Add(flightReportId);
-
-                            continue;
-                        }
+                        //remove this flightreport from costs.data
+                        flightReportIdsToRemove.Add(flightReportId);
                     }
                 }
             }

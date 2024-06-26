@@ -54,9 +54,9 @@ namespace WCDS.WebFuncions.Core.Services
             using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
             requestMessage.Headers.TryAddWithoutValidation("Authorization", _token);
             requestMessage.Content = requestContent;
-            await LoggerHelper.LogRequestAsync(_log, requestMessage);
+            // await LoggerHelper.LogRequestAsync(_log, requestMessage);
             var response = await _httpClient.SendAsync(requestMessage);
-            await LoggerHelper.LogResponseAsync(_log, response);
+            // await LoggerHelper.LogResponseAsync(_log, response);
             response.EnsureSuccessStatusCode();
 
             // Handle the http response
