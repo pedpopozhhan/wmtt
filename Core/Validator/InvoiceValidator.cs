@@ -14,7 +14,7 @@ namespace WCDS.WebFuncions.Core.Validator
     {
         IInvoiceController _invoiceController;
         DateTime _earliestPossibleDateforInvoice = new DateTime(1950, 02, 01);
-        int _minRateAndNumberOfUnit = 0;
+        int _minNumberOfUnit = 0;
         int _maxRateAndNumberOfUnit = 99999;
         int _maxInvoiceAmount = 999999999;
         public InvoiceValidator(IInvoiceController invoiceController)
@@ -57,7 +57,7 @@ namespace WCDS.WebFuncions.Core.Validator
             bool bResult = true;
             foreach (var item in invoiceOtherCostDetails)
             {
-                if (item.RatePerUnit <= _minRateAndNumberOfUnit)
+                if (item.RatePerUnit == 0)
                 {
                     bResult = false;
                 }
@@ -88,7 +88,7 @@ namespace WCDS.WebFuncions.Core.Validator
             bool bResult = true;
             foreach (var item in invoiceOtherCostDetails)
             {
-                if (item.NoOfUnits <= _minRateAndNumberOfUnit)
+                if (item.NoOfUnits <= _minNumberOfUnit)
                 {
                     bResult = false;
                 }
