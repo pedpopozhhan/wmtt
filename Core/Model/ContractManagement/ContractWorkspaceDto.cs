@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WCDS.WebFuncions.Core.Model.ContractManagement
 {
-    public class ContractWorkspacesDto
+    public class ContractWorkspaceDto
     {
         public string ContractWorkspace { get; set; }
         public DateTime Effectivedate { get; set; }

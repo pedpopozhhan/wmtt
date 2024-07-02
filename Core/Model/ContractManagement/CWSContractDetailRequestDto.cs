@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace WCDS.WebFuncions.Core.Model.ContractManagement
 {
-    public class ContractWorkspaceResponseDto
+    public class CWSContractDetailRequestDto
     {
-        public int Count { get; set; }
-        public List<ContractWorkspaceDto> Data { get; set; }
+        public long ContractID { get; set; }
     }
 }

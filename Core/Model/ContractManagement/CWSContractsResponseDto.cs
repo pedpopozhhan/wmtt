@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace WCDS.WebFuncions.Core.Model.ContractManagement
 {
-    public class CWSContractResponseDto
+    public class CWSContractsResponseDto
     {
         public int Count { get; set; }
         public List<CWSContractDto> Data { get; set; }
