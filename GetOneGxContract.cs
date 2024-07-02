@@ -12,34 +12,45 @@ using System.Collections.Generic;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Model.ContractManagement;
+using WCDS.WebFuncions.Core.Model;
 
 namespace WCDS.WebFuncions
 {
-    public class GetOneGxContracts
+    public class GetOneGxContract
     {
         private readonly IWildfireFinanceService _wildfireFinanceService;
         private readonly IAuditLogService _auditLogService;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetOneGxContracts(IWildfireFinanceService wildfireFinanceService, IAuditLogService auditLogService)
-        {   
+        public GetOneGxContract(IWildfireFinanceService wildfireFinanceService, IAuditLogService auditLogService)
+        {
             _wildfireFinanceService = wildfireFinanceService;
             _auditLogService = auditLogService;
         }
 
-        [FunctionName("GetOneGxContracts")]
-        public async Task<ActionResult<CWSContractsResponseDto>> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = null)] HttpRequest req,
+        [FunctionName("GetOneGxContract")]
+        public async Task<ActionResult<CWSContractDetailResponseDto>> Run(
+            [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-            await _auditLogService.Audit("GetOneGxContracts");
+            await _auditLogService.Audit("GetOneGxContract");
             try
             {
-                log.LogInformation("Trigger function (GetOneGxContracts) received a request.");
-                log.LogInformation("Reading OneGx contracts from WildFireFinanceApi");
-                var response = await _wildfireFinanceService.GetCWSContracts();
-                log.LogInformation("contracts returned from WildFireFinanceApi are: {0} ", response == null ? 0 : response.Count);
+                log.LogInformation("Trigger function GetOneGxContract received a request.");
+                log.LogInformation("Reading OneGx contract from WildFireFinanceApi");
+
+                string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var data = JsonConvert.DeserializeObject<CWSContractDetailRequestDto>(requestBody);
+                if (data == null || data.ContractID <= 0)
+                {
+                    jsonResult = new JsonResult("Invalid Request");
+                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    return jsonResult;
+                }
+
+                var response = await _wildfireFinanceService.GetCWSContract(data);
+                log.LogInformation("contract returned from WildFireFinanceApi is: {0} ", response == null ? -1 : response.ContractNumber);
 
                 jsonResult = new JsonResult(response);
                 jsonResult.StatusCode = StatusCodes.Status200OK;

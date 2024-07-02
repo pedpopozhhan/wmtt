@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Azure.Core;
 using Microsoft.AspNetCore.Http;
@@ -21,10 +22,10 @@ namespace WCDS.WebFuncions.Core.Services
         public Task<List<CustomlistDto>> GetInternalOrderForDDL();
         public Task<List<CustomlistDto>> GetFundForDDL();
         public Task<FinanceDocumentResponseDto> GetFinanceDocuments(FinanceDocumentRequestDto request);
-        public Task<CWSContractResponseDto> GetCWSContracts();
-
-
+        public Task<CWSContractsResponseDto> GetCWSContracts();
+        public Task<CWSContractDetailResponseDto> GetCWSContract(CWSContractDetailRequestDto req);
     }
+
     public class WildfireFinanceService : IWildfireFinanceService
     {
         private readonly ILogger _log;
@@ -72,7 +73,48 @@ namespace WCDS.WebFuncions.Core.Services
             return responseData;
         }
 
-        public async Task<CWSContractResponseDto> GetCWSContracts()
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<CWSContractDetailResponseDto> GetCWSContract(CWSContractDetailRequestDto req)
+        {
+            var url = Environment.GetEnvironmentVariable(_urlKey);
+            if (url == null)
+            {
+                _log.LogError(_urlKey + " not found!");
+                throw new Exception(_urlKey + " not found");
+            }
+            url = url + "/GetContract";
+            _log.LogInformation("GetContract url: {url}", url);
+            
+            var jsonRequest = JsonConvert.SerializeObject(req);
+            var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+            var msg = new HttpRequestMessage(HttpMethod.Post, url);
+            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
+            msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
+            msg.Content = requestContent;
+
+            await LoggerHelper.LogRequestAsync(_log, msg);
+            var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
+            await LoggerHelper.LogResponseAsync(_log, response);
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync();
+
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore
+            };
+
+            CWSContractDetailResponseDto responseData = JsonConvert.DeserializeObject<CWSContractDetailResponseDto>(json, settings);
+            return responseData;
+        }
+
+        public async Task<CWSContractsResponseDto> GetCWSContracts()
         {
             var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
@@ -99,7 +141,7 @@ namespace WCDS.WebFuncions.Core.Services
                 MissingMemberHandling = MissingMemberHandling.Ignore
             };
 
-            CWSContractResponseDto responseData = JsonConvert.DeserializeObject<CWSContractResponseDto>(json, settings);
+            CWSContractsResponseDto responseData = JsonConvert.DeserializeObject<CWSContractsResponseDto>(json, settings);
             return responseData;
         }
 
