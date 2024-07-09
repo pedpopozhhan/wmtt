@@ -75,6 +75,20 @@ namespace WCDS.WebFuncions
                     return jsonResult;
                 }
 
+                if (data.TimeReportIds.Length == 0)
+                {
+                    var dataResponse = new TimeReportDetailsResponse
+                    {
+                        Rows = Array.Empty<TimeReportCostDetail>(),
+                    };
+
+                    jsonResult = new JsonResult(dataResponse)
+                    {
+                        StatusCode = StatusCodes.Status200OK
+                    };
+                    return jsonResult;
+
+                }
                 var details = await _timeReportingService.GetTimeReportByIds(data.TimeReportIds);
 
 
