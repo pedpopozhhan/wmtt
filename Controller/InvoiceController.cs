@@ -269,20 +269,20 @@ namespace WCDS.WebFuncions.Controller
                     var costDetailsToUpdate = new List<InvoiceTimeReportCostDetails>();
                     var costDetailsToRemove = new List<InvoiceTimeReportCostDetails>();
                     var costDetailsToAdd = new List<InvoiceTimeReportCostDetails>();
-                    IList<InvoiceTimeReportCostDetails> costDetailsUnChanged = ProcessTimeReportCostDetails(invoice, entity, costDetailsToAdd, costDetailsToUpdate, costDetailsToRemove);
+                    IList<InvoiceTimeReportCostDetails> costDetailsUnChanged = ProcessTimeReportCostDetails(invoice, entity, ref costDetailsToAdd, ref costDetailsToUpdate, ref costDetailsToRemove);
                     dbContext.InvoiceTimeReportCostDetails.RemoveRange(costDetailsToRemove);
 
                     var timeReportsToUpdate = new List<InvoiceTimeReports>();
                     var timeReportsToRemove = new List<InvoiceTimeReports>();
                     var timeReportsToAdd = new List<InvoiceTimeReports>();
-                    IEnumerable<InvoiceTimeReports> timeReportsUnChanged = ProcessTimeReports(invoice, entity, timeReportsToAdd, timeReportsToUpdate, timeReportsToRemove);
+                    IEnumerable<InvoiceTimeReports> timeReportsUnChanged = ProcessTimeReports(invoice, entity, ref timeReportsToAdd, ref timeReportsToUpdate, ref timeReportsToRemove);
                     dbContext.InvoiceTimeReports.RemoveRange(timeReportsToRemove);
                     // savechanges?
 
                     var otherCostDetailsToUpdate = new List<InvoiceOtherCostDetails>();
                     var otherCostDetailsToRemove = new List<InvoiceOtherCostDetails>();
                     var otherCostDetailsToAdd = new List<InvoiceOtherCostDetails>();
-                    IList<InvoiceOtherCostDetails> otherCostDetailsUnChanged = ProcessOtherCostDetails(invoice, entity, otherCostDetailsToAdd, otherCostDetailsToUpdate, otherCostDetailsToRemove);
+                    IList<InvoiceOtherCostDetails> otherCostDetailsUnChanged = ProcessOtherCostDetails(invoice, entity, ref otherCostDetailsToAdd, ref otherCostDetailsToUpdate, ref otherCostDetailsToRemove);
                     dbContext.InvoiceOtherCostDetails.RemoveRange(otherCostDetailsToRemove);
 
                     await dbContext.SaveChangesAsync();
@@ -372,7 +372,7 @@ namespace WCDS.WebFuncions.Controller
             return entity.InvoiceId;
         }
 
-        private IList<InvoiceTimeReportCostDetails> ProcessTimeReportCostDetails(InvoiceRequestDto invoice, Invoice entity, List<InvoiceTimeReportCostDetails> costDetailsToAdd, List<InvoiceTimeReportCostDetails> costDetailsToUpdate, List<InvoiceTimeReportCostDetails> costDetailsToRemove)
+        private IList<InvoiceTimeReportCostDetails> ProcessTimeReportCostDetails(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceTimeReportCostDetails> costDetailsToAdd, ref List<InvoiceTimeReportCostDetails> costDetailsToUpdate, ref List<InvoiceTimeReportCostDetails> costDetailsToRemove)
         {
             // get the list from the database
             var usedIds = new List<Guid>();
@@ -389,14 +389,14 @@ namespace WCDS.WebFuncions.Controller
                     costDetailsToRemove.Add(e);
                 }
             }
-            var toAdd = invoice.InvoiceTimeReportCostDetails.Where(x => !usedIds.Contains(x.FlightReportCostDetailsId)).ToList();
+            var toAdd = usedIds.Count == 0 ? invoice.InvoiceTimeReportCostDetails : invoice.InvoiceTimeReportCostDetails.Where(x => !usedIds.Contains(x.FlightReportCostDetailsId)).ToList();
             costDetailsToAdd = _mapper.Map<IList<InvoiceTimeReportCostDetails>>(toAdd).ToList();
             var costDetailsUnChanged = entity.InvoiceTimeReportCostDetails.Where(x => !usedIds.Contains(x.FlightReportCostDetailsId)).ToList();
 
             return costDetailsUnChanged;
         }
 
-        private IList<InvoiceOtherCostDetails> ProcessOtherCostDetails(InvoiceRequestDto invoice, Invoice entity, List<InvoiceOtherCostDetails> toAdd, List<InvoiceOtherCostDetails> toUpdate, List<InvoiceOtherCostDetails> toRemove)
+        private IList<InvoiceOtherCostDetails> ProcessOtherCostDetails(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceOtherCostDetails> toAdd, ref List<InvoiceOtherCostDetails> toUpdate, ref List<InvoiceOtherCostDetails> toRemove)
         {
             var usedIds = new List<Guid>();
             foreach (var e in entity.InvoiceOtherCostDetails)
@@ -412,13 +412,13 @@ namespace WCDS.WebFuncions.Controller
                     toRemove.Add(e);
                 }
             }
-            var dtoToAdd = invoice.InvoiceOtherCostDetails.Where(x => !usedIds.Contains(x.InvoiceOtherCostDetailId)).ToList();
+            var dtoToAdd = usedIds.Count == 0 ? invoice.InvoiceOtherCostDetails : invoice.InvoiceOtherCostDetails.Where(x => !usedIds.Contains(x.InvoiceOtherCostDetailId)).ToList();
             toAdd = _mapper.Map<IList<InvoiceOtherCostDetails>>(dtoToAdd).ToList();
             var unChanged = entity.InvoiceOtherCostDetails.Where(x => !usedIds.Contains(x.InvoiceOtherCostDetailId)).ToList();
 
             return unChanged;
         }
-        private static IEnumerable<InvoiceTimeReports> ProcessTimeReports(InvoiceRequestDto invoice, Invoice entity, List<InvoiceTimeReports> toAdd, List<InvoiceTimeReports> toUpdate, List<InvoiceTimeReports> toRemove)
+        private static IEnumerable<InvoiceTimeReports> ProcessTimeReports(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceTimeReports> toAdd, ref List<InvoiceTimeReports> toUpdate, ref List<InvoiceTimeReports> toRemove)
         {
             var usedIds = new List<int>();
             foreach (var e in entity.InvoiceTimeReports)
@@ -434,7 +434,7 @@ namespace WCDS.WebFuncions.Controller
                     toRemove.Add(e);
                 }
             }
-            var reportsToAdd = invoice.FlightReportIds.Where(x => !usedIds.Contains(x));
+            var reportsToAdd = usedIds.Count == 0 ? invoice.FlightReportIds : invoice.FlightReportIds.Where(x => !usedIds.Contains(x));
             toAdd = reportsToAdd.Select(x =>
                     {
                         return new InvoiceTimeReports
