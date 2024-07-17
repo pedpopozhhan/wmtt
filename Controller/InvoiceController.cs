@@ -108,12 +108,11 @@ namespace WCDS.WebFuncions.Controller
                     // update-invoice to data team
 
                     // all the child records are inserts
-                    // TODO waiting on clarification
-                    // var dataPayload = CreateDataSyncInsertPayload(entity, entity.InvoiceTimeReportCostDetails, entity.InvoiceOtherCostDetails, entity.InvoiceTimeReports);
-                    // await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "insert-invoice");
+                    var dataPayload = CreateDataSyncInsertPayload(entity, entity.InvoiceTimeReportCostDetails, entity.InvoiceOtherCostDetails, entity.InvoiceTimeReports);
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "insert-invoice");
 
                     var toInsert = entity.InvoiceTimeReportCostDetails;
-                    var payload = CreateStatusSyncPayload(entity, "update-invoice", new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>(), entity.InvoiceTimeReportCostDetails);
+                    var payload = CreateStatusSyncPayload(entity, "update-invoice", entity.InvoiceTimeReportCostDetails, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>());
                     await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(payload, entity.InvoiceNumber);
 
                     result = invoiceEntity.InvoiceId;
@@ -129,6 +128,7 @@ namespace WCDS.WebFuncions.Controller
             return result;
         }
 
+        // Update this to properly update the entire invoice
         public async Task<string> UpdateProcessedInvoice(InvoiceDto invoice)
         {
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
@@ -159,9 +159,8 @@ namespace WCDS.WebFuncions.Controller
                     {
                         throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
                     }
-                    // TODO waiting on clarification
-                    // var dataPayload = CreateDataSyncUpdatePayload(entity, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceOtherCostDetails>(), new List<InvoiceTimeReports>());
-                    // await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "update-invoice");
+                    var dataPayload = CreateDataSyncUpdatePayload(entity, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceOtherCostDetails>(), new List<InvoiceTimeReports>());
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "update-invoice");
 
                     return entity.UniqueServiceSheetName;
                 }
@@ -223,9 +222,8 @@ namespace WCDS.WebFuncions.Controller
                     await transaction.CommitAsync();
 
                     //// insert-invoice to data team
-                    // TODO waiting on clarification
-                    // var dataPayload = CreateDataSyncInsertPayload(entity, entity.InvoiceTimeReportCostDetails, entity.InvoiceOtherCostDetails, entity.InvoiceTimeReports);
-                    // await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "insert-invoice");
+                    var dataPayload = CreateDataSyncInsertPayload(entity, entity.InvoiceTimeReportCostDetails, entity.InvoiceOtherCostDetails, entity.InvoiceTimeReports);
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "insert-invoice");
 
                     var toInsert = entity.InvoiceTimeReportCostDetails;
                     var payload = CreateStatusSyncPayload(entity, "update-invoice", toInsert, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>());
@@ -266,10 +264,10 @@ namespace WCDS.WebFuncions.Controller
                         throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
                     }
 
-                    var costDetailsToUpdate = new List<InvoiceTimeReportCostDetails>();
                     var costDetailsToRemove = new List<InvoiceTimeReportCostDetails>();
                     var costDetailsToAdd = new List<InvoiceTimeReportCostDetails>();
-                    IList<InvoiceTimeReportCostDetails> costDetailsUnChanged = ProcessTimeReportCostDetails(invoice, entity, ref costDetailsToAdd, ref costDetailsToUpdate, ref costDetailsToRemove);
+                    // TODO clean up this method because we dont update anything
+                    IList<InvoiceTimeReportCostDetails> costDetailsUnChanged = ProcessTimeReportCostDetails(invoice, entity, ref costDetailsToAdd, ref costDetailsToRemove);
                     dbContext.InvoiceTimeReportCostDetails.RemoveRange(costDetailsToRemove);
 
                     var timeReportsToUpdate = new List<InvoiceTimeReports>();
@@ -298,17 +296,9 @@ namespace WCDS.WebFuncions.Controller
                     entity.ServiceDescription = invoice.ServiceDescription;
                     entity.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
 
-                    entity.InvoiceTimeReportCostDetails = costDetailsToUpdate.Concat(costDetailsToAdd).ToList();
-                    entity.InvoiceOtherCostDetails = otherCostDetailsToUpdate.Concat(otherCostDetailsToAdd).ToList();
+                    entity.InvoiceTimeReportCostDetails = costDetailsToAdd.ToList();
+                    entity.InvoiceOtherCostDetails = otherCostDetailsToAdd.ToList();
                     entity.InvoiceTimeReports = timeReportsToUpdate.Concat(timeReportsToAdd).ToList();
-
-                    // save the modified entities
-                    foreach (var timeReportCostDetail in costDetailsToUpdate)
-                    {
-                        timeReportCostDetail.UpdatedBy = user;
-                        timeReportCostDetail.UpdatedByDateTime = dt;
-                        dbContext.Entry(timeReportCostDetail).State = EntityState.Modified;
-                    }
 
                     foreach (var timeReportCostDetail in costDetailsToAdd)
                     {
@@ -317,13 +307,6 @@ namespace WCDS.WebFuncions.Controller
                         timeReportCostDetail.UpdatedBy = user;
                         timeReportCostDetail.UpdatedByDateTime = dt;
                         dbContext.Entry(timeReportCostDetail).State = EntityState.Added;
-                    }
-
-                    foreach (var otherCostDetail in otherCostDetailsToUpdate)
-                    {
-                        otherCostDetail.UpdatedBy = user;
-                        otherCostDetail.UpdatedByDateTime = dt;
-                        dbContext.Entry(otherCostDetail).State = EntityState.Modified;
                     }
 
                     foreach (var otherCostDetail in costDetailsToAdd)
@@ -357,9 +340,15 @@ namespace WCDS.WebFuncions.Controller
                     var statusPayload = CreateStatusSyncPayload(entity, "update-invoice", costDetailsToAdd, costDetailsToRemove, costDetailsUnChanged);
                     await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(statusPayload, entity.InvoiceNumber);
 
-                    // TODO waiting on clarification
-                    // var dataPayload = CreateDataSyncUpdatePayload(entity, entity.InvoiceTimeReportCostDetails, entity.InvoiceOtherCostDetails, entity.InvoiceTimeReports);
-                    // await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "update-invoice");
+                    // send 3 messages, one for insert, one for update , one for delete
+                    var updateDataPayload = CreateDataSyncUpdatePayload(entity, new List<InvoiceTimeReportCostDetails>(), otherCostDetailsToUpdate, new List<InvoiceTimeReports>());
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(updateDataPayload, entity.InvoiceNumber, "update-invoice");
+
+                    var insertDataPayload = CreateDataSyncInsertPayload(entity, costDetailsToAdd, otherCostDetailsToAdd, timeReportsToAdd);
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(insertDataPayload, entity.InvoiceNumber, "insert-invoice");
+
+                    var deleteDataPayload = CreateDataSyncDeletePayload(costDetailsToRemove, otherCostDetailsToRemove, timeReportsToRemove);
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(deleteDataPayload, entity.InvoiceNumber, "delete-invoice");
 
                 }
                 catch (Exception ex)
@@ -372,112 +361,60 @@ namespace WCDS.WebFuncions.Controller
             return entity.InvoiceId;
         }
 
-        private IList<InvoiceTimeReportCostDetails> ProcessTimeReportCostDetails(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceTimeReportCostDetails> costDetailsToAdd, ref List<InvoiceTimeReportCostDetails> costDetailsToUpdate, ref List<InvoiceTimeReportCostDetails> costDetailsToRemove)
-        {
-            // get the list from the database
-            var usedIds = new List<Guid>();
-            foreach (var e in entity.InvoiceTimeReportCostDetails)
-            {
-                if (invoice.InvoiceTimeReportCostDetails.Any(x => x.FlightReportCostDetailsId == e.FlightReportCostDetailsId))
-                {
-                    usedIds.Add(e.FlightReportCostDetailsId);
-                    costDetailsToUpdate.Add(e);
-                }
-                else
-                {
-                    usedIds.Add(e.FlightReportCostDetailsId);
-                    costDetailsToRemove.Add(e);
-                }
-            }
-            var toAdd = usedIds.Count == 0 ? invoice.InvoiceTimeReportCostDetails : invoice.InvoiceTimeReportCostDetails.Where(x => !usedIds.Contains(x.FlightReportCostDetailsId)).ToList();
-            costDetailsToAdd = _mapper.Map<IList<InvoiceTimeReportCostDetails>>(toAdd).ToList();
-            var costDetailsUnChanged = entity.InvoiceTimeReportCostDetails.Where(x => !usedIds.Contains(x.FlightReportCostDetailsId)).ToList();
-
-            return costDetailsUnChanged;
-        }
-
-        private IList<InvoiceOtherCostDetails> ProcessOtherCostDetails(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceOtherCostDetails> toAdd, ref List<InvoiceOtherCostDetails> toUpdate, ref List<InvoiceOtherCostDetails> toRemove)
-        {
-            var usedIds = new List<Guid>();
-            foreach (var e in entity.InvoiceOtherCostDetails)
-            {
-                if (invoice.InvoiceOtherCostDetails.Any(x => x.InvoiceOtherCostDetailId == e.InvoiceOtherCostDetailId))
-                {
-                    usedIds.Add(e.InvoiceOtherCostDetailId);
-                    toUpdate.Add(e);
-                }
-                else
-                {
-                    usedIds.Add(e.InvoiceOtherCostDetailId);
-                    toRemove.Add(e);
-                }
-            }
-            var dtoToAdd = usedIds.Count == 0 ? invoice.InvoiceOtherCostDetails : invoice.InvoiceOtherCostDetails.Where(x => !usedIds.Contains(x.InvoiceOtherCostDetailId)).ToList();
-            toAdd = _mapper.Map<IList<InvoiceOtherCostDetails>>(dtoToAdd).ToList();
-            var unChanged = entity.InvoiceOtherCostDetails.Where(x => !usedIds.Contains(x.InvoiceOtherCostDetailId)).ToList();
-
-            return unChanged;
-        }
-        private static IEnumerable<InvoiceTimeReports> ProcessTimeReports(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceTimeReports> toAdd, ref List<InvoiceTimeReports> toUpdate, ref List<InvoiceTimeReports> toRemove)
-        {
-            var usedIds = new List<int>();
-            foreach (var e in entity.InvoiceTimeReports)
-            {
-                if (invoice.FlightReportIds.Any(x => x == e.FlightReportId))
-                {
-                    usedIds.Add(e.FlightReportId);
-                    toUpdate.Add(e);
-                }
-                else
-                {
-                    usedIds.Add(e.FlightReportId);
-                    toRemove.Add(e);
-                }
-            }
-            var reportsToAdd = usedIds.Count == 0 ? invoice.FlightReportIds : invoice.FlightReportIds.Where(x => !usedIds.Contains(x));
-            toAdd = reportsToAdd.Select(x =>
-                    {
-                        return new InvoiceTimeReports
-                        {
-                            FlightReportId = x,
-                            InvoiceId = entity.InvoiceId,
-
-                        };
-                    }).ToList();
-
-            var unChanged = entity.InvoiceTimeReports.Where(x => !usedIds.Contains(x.FlightReportId));
-            return unChanged;
-        }
 
         public async Task<Guid> DeleteDraft(Guid invoiceId, string user)
         {
+            var dt = DateTime.UtcNow;
             using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
             try
             {
-                var newInvoice = new Invoice
+                var entity = await dbContext.Invoice.Where(x => x.InvoiceId == invoiceId)
+                    .Include(i => i.InvoiceTimeReportCostDetails)
+                    .Include(i => i.InvoiceOtherCostDetails)
+                    .Include(i => i.InvoiceStatusLogs)
+                    .Include(i => i.InvoiceTimeReports).FirstOrDefaultAsync();
+
+                entity.InvoiceStatus = InvoiceStatus.DraftDeleted.ToString();
+                entity.UpdatedBy = user;
+                entity.UpdatedByDateTime = DateTime.UtcNow;
+
+                // save the modified entities
+                foreach (var timeReportCostDetail in entity.InvoiceTimeReportCostDetails)
                 {
-                    InvoiceId = invoiceId,
-                    InvoiceStatus = InvoiceStatus.DraftDeleted.ToString(),
-                    UpdatedBy = user,
-                    UpdatedByDateTime = DateTime.UtcNow,
-                };
+                    timeReportCostDetail.UpdatedBy = user;
+                    timeReportCostDetail.UpdatedByDateTime = dt;
+                    dbContext.Entry(timeReportCostDetail).State = EntityState.Modified;
+                }
 
-                dbContext.Attach(newInvoice);
+                foreach (var detail in entity.InvoiceOtherCostDetails)
+                {
+                    detail.UpdatedBy = user;
+                    detail.UpdatedByDateTime = dt;
+                    dbContext.Entry(detail).State = EntityState.Modified;
+                }
 
-                dbContext.Entry(newInvoice).Property(x => x.InvoiceStatus).IsModified = true;
-                dbContext.Entry(newInvoice).Property(x => x.UpdatedBy).IsModified = true;
-                dbContext.Entry(newInvoice).Property(x => x.UpdatedByDateTime).IsModified = true;
+                foreach (var detail in entity.InvoiceTimeReports)
+                {
+                    detail.AuditLastUpdatedBy = user;
+                    detail.AuditLastUpdatedDateTime = dt;
+                    dbContext.Entry(detail).State = EntityState.Modified;
+                }
+
                 // Save changes to the database
                 await dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                var entity = await dbContext.Invoice.FirstOrDefaultAsync(ss => ss.InvoiceId == invoiceId) ?? throw new System.Exception($"No Invoice found for InvoiceId - {invoiceId} in the Database.");
-                // TODO waiting on clarification
-                // var dataPayload = CreateDataSyncDeletePayload(entity, entity.InvoiceTimeReportCostDetails, entity.InvoiceOtherCostDetails, entity.InvoiceTimeReports);
-                // await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "delete-invoice");
+                var updatedEntity = await dbContext.Invoice.Where(x => x.InvoiceId == invoiceId)
+                    .Include(i => i.InvoiceTimeReportCostDetails)
+                    .Include(i => i.InvoiceOtherCostDetails)
+                    .Include(i => i.InvoiceStatusLogs)
+                    .Include(i => i.InvoiceTimeReports).FirstOrDefaultAsync();
 
-                // delete-invoice to data team
-                var payload = CreateStatusSyncPayload(entity, "update-invoice", new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>());
+                var dataPayload = CreateDataSyncDeletePayload(updatedEntity.InvoiceTimeReportCostDetails, updatedEntity.InvoiceOtherCostDetails, updatedEntity.InvoiceTimeReports);
+                await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "delete-invoice");
+
+
+                var payload = CreateStatusSyncPayload(updatedEntity, "update-invoice", new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>());
                 await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(payload, entity.InvoiceNumber);
                 return entity.InvoiceId;
             }
@@ -492,37 +429,72 @@ namespace WCDS.WebFuncions.Controller
         public async Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request)
         {
             bool result = false;
+
             using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    var invoiceRecord = dbContext.Invoice.FirstOrDefault(ss => ss.InvoiceId == request.InvoiceId);
-                    if (invoiceRecord == null)
+                    var entity = await dbContext.Invoice.Where(x => x.InvoiceId == request.InvoiceId)
+                    .Include(i => i.InvoiceTimeReportCostDetails)
+                    .Include(i => i.InvoiceOtherCostDetails)
+                    .Include(i => i.InvoiceStatusLogs)
+                    .Include(i => i.InvoiceTimeReports).FirstOrDefaultAsync();
+                    if (entity == null)
                     {
                         throw new System.Exception($"No Invoice found for InvoiceId - {request.InvoiceId} in the Database.");
                     }
 
-                    if (request.PaymentStatus != invoiceRecord.PaymentStatus)
+                    if (request.PaymentStatus != entity.PaymentStatus)
                     {
-                        invoiceRecord.InvoiceStatusLogs = new List<InvoiceStatusLog> { new()
+                        entity.InvoiceStatusLogs = new List<InvoiceStatusLog> { new()
                                     {
-                                        InvoiceId = invoiceRecord.InvoiceId,
+                                        InvoiceId = entity.InvoiceId,
                                         CurrentStatus = request.PaymentStatus,
-                                        PreviousStatus = invoiceRecord.PaymentStatus,
+                                        PreviousStatus = entity.PaymentStatus,
                                         User = request.UpdatedBy,
                                         Timestamp = request.UpdatedDateTime.Value
                                     }};
-                        invoiceRecord.PaymentStatus = request.PaymentStatus;
-                        invoiceRecord.UpdatedBy = request.UpdatedBy;
-                        invoiceRecord.UpdatedByDateTime = DateTime.UtcNow;
-                        dbContext.SaveChanges();
+                        entity.PaymentStatus = request.PaymentStatus;
+                        entity.UpdatedBy = request.UpdatedBy;
+                        entity.UpdatedByDateTime = DateTime.UtcNow;
 
-                        // TODO waiting on clarification
-                        // await SendUpdateInvoiceMessage(invoiceRecord);
-                        // await new InvoiceDataSyncMessageHandler(_logger).SendUpdateInvoiceMessage();
+                        // save the modified entities
+                        foreach (var timeReportCostDetail in entity.InvoiceTimeReportCostDetails)
+                        {
+                            timeReportCostDetail.UpdatedBy = request.UpdatedBy;
+                            timeReportCostDetail.UpdatedByDateTime = request.UpdatedDateTime;
+                            dbContext.Entry(timeReportCostDetail).State = EntityState.Modified;
+                        }
 
+                        foreach (var detail in entity.InvoiceOtherCostDetails)
+                        {
+                            detail.UpdatedBy = request.UpdatedBy;
+                            detail.UpdatedByDateTime = request.UpdatedDateTime;
+                            dbContext.Entry(detail).State = EntityState.Modified;
+                        }
+
+                        foreach (var detail in entity.InvoiceTimeReports)
+                        {
+                            detail.AuditLastUpdatedBy = request.UpdatedBy;
+                            detail.AuditLastUpdatedDateTime = request.UpdatedDateTime.Value;
+                            dbContext.Entry(detail).State = EntityState.Modified;
+                        }
+
+                        await dbContext.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                        var updatedEntity = await dbContext.Invoice.Where(x => x.InvoiceId == request.InvoiceId)
+                                            .Include(i => i.InvoiceTimeReportCostDetails)
+                                            .Include(i => i.InvoiceOtherCostDetails)
+                                            .Include(i => i.InvoiceStatusLogs)
+                                            .Include(i => i.InvoiceTimeReports).FirstOrDefaultAsync();
+
+                        var dataPayload = CreateDataSyncUpdatePayload(updatedEntity, updatedEntity.InvoiceTimeReportCostDetails, updatedEntity.InvoiceOtherCostDetails, updatedEntity.InvoiceTimeReports);
+                        await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "update-invoice");
+
+                        var statusPayload = CreateStatusSyncPayload(entity, "update-invoice", new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>(), updatedEntity.InvoiceTimeReportCostDetails);
+                        await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(statusPayload, entity.InvoiceNumber);
                         result = true;
-                        transaction.Commit();
+
                     }
                 }
                 catch
@@ -760,24 +732,24 @@ namespace WCDS.WebFuncions.Controller
             return payload;
 
         }
-        private InvoiceDataSyncMessageDto CreateDataSyncDeletePayload(Invoice invoiceEntity,
+        private static InvoiceDataSyncDeleteInvoiceMessageDto CreateDataSyncDeletePayload(
         IList<InvoiceTimeReportCostDetails> costDetails, IList<InvoiceOtherCostDetails> other, IList<InvoiceTimeReports> timeReports)
         {
-            var messageDetailInvoice = new InvoiceDataSyncMessageDetailInvoiceDto
+            var messageDetailInvoice = new InvoiceDataSyncDeleteInvoiceMessageDetailInvoiceDto
             {
-                Tables = new InvoiceDataSyncMessageDetailCostDto
+                Tables = new InvoiceDataSyncDeleteInvoiceMessageDetailCostDto
                 {
-                    InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(other),
-                    InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(costDetails),
-                    InvoiceTimeReports = _mapper.Map<List<InvoiceTimeReportsDto>>(timeReports)
+                    InvoiceOtherCostDetails = other.Select(x => x.InvoiceOtherCostDetailId).ToList(),
+                    InvoiceTimeReportCostDetails = costDetails.Select(x => x.FlightReportCostDetailsId).ToList(),
+                    InvoiceTimeReports = timeReports.Select(x => x.InvoiceTimeReportId).ToList()
                 }
             };
             // only updated records
-            var payload = new InvoiceDataSyncMessageDto
+            var payload = new InvoiceDataSyncDeleteInvoiceMessageDto
             {
                 Action = "delete-invoice",
                 TimeStamp = DateTime.UtcNow,
-                Tables = new InvoiceDataSyncMessageDetailDto
+                Tables = new InvoiceDataSyncDeleteInvoiceMessageDetailDto
                 {
                     Invoice = messageDetailInvoice,
                 }
@@ -810,6 +782,124 @@ namespace WCDS.WebFuncions.Controller
             };
             return payload;
 
+        }
+        // private IList<InvoiceTimeReportCostDetails> ProcessTimeReportCostDetails(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceTimeReportCostDetails> costDetailsToAdd, ref List<InvoiceTimeReportCostDetails> costDetailsToUpdate, ref List<InvoiceTimeReportCostDetails> costDetailsToRemove)
+        // {
+        //     // get the list from the database
+        //     var usedIds = new List<Guid>();
+        //     foreach (var e in entity.InvoiceTimeReportCostDetails)
+        //     {
+        //         if (invoice.InvoiceTimeReportCostDetails.Any(x => x.FlightReportCostDetailsId == e.FlightReportCostDetailsId))
+        //         {
+        //             usedIds.Add(e.FlightReportCostDetailsId);
+        //             costDetailsToUpdate.Add(e);
+        //         }
+        //         else
+        //         {
+        //             usedIds.Add(e.FlightReportCostDetailsId);
+        //             costDetailsToRemove.Add(e);
+        //         }
+        //     }
+        //     var toAdd = usedIds.Count == 0 ? invoice.InvoiceTimeReportCostDetails : invoice.InvoiceTimeReportCostDetails.Where(x => !usedIds.Contains(x.FlightReportCostDetailsId)).ToList();
+        //     costDetailsToAdd = _mapper.Map<IList<InvoiceTimeReportCostDetails>>(toAdd).ToList();
+        //     var costDetailsUnChanged = entity.InvoiceTimeReportCostDetails.Where(x => !usedIds.Contains(x.FlightReportCostDetailsId)).ToList();
+
+        //     return costDetailsUnChanged;
+        // }
+        private IList<InvoiceTimeReportCostDetails> ProcessTimeReportCostDetails(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceTimeReportCostDetails> costDetailsToAdd, ref List<InvoiceTimeReportCostDetails> costDetailsToRemove)
+        {
+            // get the list from the database
+            var usedIds = new List<Guid>();
+            foreach (var e in entity.InvoiceTimeReportCostDetails)
+            {
+                if (!invoice.InvoiceTimeReportCostDetails.Any(x => x.FlightReportCostDetailsId == e.FlightReportCostDetailsId))
+                {
+                    usedIds.Add(e.FlightReportCostDetailsId);
+                    costDetailsToAdd.Add(e);
+                }
+                else
+                {
+                    usedIds.Add(e.FlightReportCostDetailsId);
+                    costDetailsToRemove.Add(e);
+                }
+            }
+            var costDetailsUnChanged = entity.InvoiceTimeReportCostDetails.Where(x => !usedIds.Contains(x.FlightReportCostDetailsId)).ToList();
+
+            return costDetailsUnChanged;
+        }
+        private IList<InvoiceOtherCostDetails> ProcessOtherCostDetails(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceOtherCostDetails> toAdd, ref List<InvoiceOtherCostDetails> toUpdate, ref List<InvoiceOtherCostDetails> toRemove)
+        {
+            var usedIds = new List<Guid>();
+            foreach (var e in entity.InvoiceOtherCostDetails)
+            {
+
+                if (invoice.InvoiceOtherCostDetails.Any(x => x.InvoiceOtherCostDetailId == e.InvoiceOtherCostDetailId))
+                {
+                    usedIds.Add(e.InvoiceOtherCostDetailId);
+                    toUpdate.Add(e);
+                }
+                else
+                {
+                    usedIds.Add(e.InvoiceOtherCostDetailId);
+                    toRemove.Add(e);
+                }
+            }
+            var dtoToAdd = usedIds.Count == 0 ? invoice.InvoiceOtherCostDetails : invoice.InvoiceOtherCostDetails.Where(x => !usedIds.Contains(x.InvoiceOtherCostDetailId)).ToList();
+            toAdd = _mapper.Map<IList<InvoiceOtherCostDetails>>(dtoToAdd).ToList();
+            var unChanged = entity.InvoiceOtherCostDetails.Where(x => !usedIds.Contains(x.InvoiceOtherCostDetailId)).ToList();
+
+            return unChanged;
+        }
+        // private IList<InvoiceOtherCostDetails> ProcessOtherCostDetails(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceOtherCostDetails> toAdd, ref List<InvoiceOtherCostDetails> toRemove)
+        // {
+        //     var usedIds = new List<Guid>();
+        //     foreach (var e in entity.InvoiceOtherCostDetails)
+        //     {
+
+        //         if (!invoice.InvoiceOtherCostDetails.Any(x => x.InvoiceOtherCostDetailId == e.InvoiceOtherCostDetailId))
+        //         {
+        //             usedIds.Add(e.InvoiceOtherCostDetailId);
+        //             toAdd.Add(e);
+        //         }
+        //         else
+        //         {
+        //             usedIds.Add(e.InvoiceOtherCostDetailId);
+        //             toRemove.Add(e);
+        //         }
+        //     }
+        //     var unChanged = entity.InvoiceOtherCostDetails.Where(x => !usedIds.Contains(x.InvoiceOtherCostDetailId)).ToList();
+
+        //     return unChanged;
+        // }
+        private static IEnumerable<InvoiceTimeReports> ProcessTimeReports(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceTimeReports> toAdd, ref List<InvoiceTimeReports> toUpdate, ref List<InvoiceTimeReports> toRemove)
+        {
+            var usedIds = new List<int>();
+            foreach (var e in entity.InvoiceTimeReports)
+            {
+                if (invoice.FlightReportIds.Any(x => x == e.FlightReportId))
+                {
+                    usedIds.Add(e.FlightReportId);
+                    toUpdate.Add(e);
+                }
+                else
+                {
+                    usedIds.Add(e.FlightReportId);
+                    toRemove.Add(e);
+                }
+            }
+            var reportsToAdd = usedIds.Count == 0 ? invoice.FlightReportIds : invoice.FlightReportIds.Where(x => !usedIds.Contains(x));
+            toAdd = reportsToAdd.Select(x =>
+                    {
+                        return new InvoiceTimeReports
+                        {
+                            FlightReportId = x,
+                            InvoiceId = entity.InvoiceId,
+
+                        };
+                    }).ToList();
+
+            var unChanged = entity.InvoiceTimeReports.Where(x => !usedIds.Contains(x.FlightReportId));
+            return unChanged;
         }
 
     }

@@ -104,7 +104,7 @@ namespace WCDS.WebFuncions
 
         //     _log.LogInformation("SendUpdateInvoiceMessage - finished at: {0} for invoice {1}", DateTime.UtcNow, invoiceNumber);
         // }
-        public async Task SendInvoiceDataSyncMessage(InvoiceDataSyncMessageDto invoice, string invoiceNumber, string subject)
+        public async Task SendInvoiceDataSyncMessage<T>(T invoice, string invoiceNumber, string subject)
         {
             if (subject != "insert-invoice" && subject != "update-invoice" && subject != "delete-invoice")
             {
