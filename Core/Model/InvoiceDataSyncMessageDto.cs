@@ -4,6 +4,7 @@ using WCDS.WebFuncions.Core.Entity;
 
 namespace WCDS.WebFuncions.Core.Model
 {
+
     public class InvoiceDataSyncMessageDto
     {
         public DateTime TimeStamp { get; set; }
