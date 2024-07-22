@@ -50,7 +50,7 @@ namespace WCDS.WebFuncions
                 }
 
                 var responseDto = new InvoiceController(log, _mapper).GetInvoices(data);
-                responseDto.Invoices = responseDto.Invoices.Where(x => x.InvoiceStatus != InvoiceStatus.Draft.ToString()).ToArray();
+                responseDto.Invoices = responseDto.Invoices.Where(x => x.InvoiceStatus == InvoiceStatus.Processed.ToString()).ToArray();
 
                 jsonResult = new JsonResult(responseDto);
                 jsonResult.StatusCode = StatusCodes.Status200OK;
