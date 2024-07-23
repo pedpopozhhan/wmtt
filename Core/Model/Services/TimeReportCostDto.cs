@@ -19,7 +19,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public string Ao02Number { get; set; }
         public string Status { get; set; }
         public decimal TotalCost { get; set; }
-        public bool IsFlagged { get; set; }
+        public bool IsInUse { get; set; }
     }
 }
 

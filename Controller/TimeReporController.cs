@@ -45,7 +45,7 @@ namespace WCDS.WebFuncions.Controller
             }
             // are any of the costs, flightReportIds in the invoiceTimeReport table? and is that invoice a draft
             var allFlightReportIds = costs.Data.Select(x => x.FlightReportId).Distinct();
-            var flightReportIdsToRemove = new List<int>();
+            var flightReportIdsSelected = new List<int>();
 
             foreach (var flightReportId in allFlightReportIds)
             {
@@ -62,11 +62,23 @@ namespace WCDS.WebFuncions.Controller
                     if (invoice != null)
                     {
                         //remove this flightreport from costs.data
-                        flightReportIdsToRemove.Add(flightReportId);
+                        flightReportIdsSelected.Add(flightReportId);
                     }
                 }
             }
-            costs.Data.RemoveAll(x => flightReportIdsToRemove.Contains(x.FlightReportId));
+            // if the flight report is selected, mark the costs as selected
+            foreach (var cost in costs.Data)
+            {
+                if (flightReportIdsSelected.Contains(cost.FlightReportId))
+                {
+                    cost.IsInUse = true;
+                }
+                else
+                {
+                    cost.IsInUse = false;
+                }
+            }
+            // costs.Data.RemoveAll(x => flightReportIdsSelected.Contains(x.FlightReportId));
             return costs;
         }
 
