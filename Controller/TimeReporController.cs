@@ -38,7 +38,6 @@ namespace WCDS.WebFuncions.Controller
         public async Task<Response<TimeReportCostDto>> GetApprovedTimeReports(TimeReportCostsRequest request)
         {
             var costs = await _timeReportingService.GetTimeReportCosts(request.ContractNumber, request.Status);
-
             if (!string.IsNullOrEmpty(costs.ErrorMessage))
             {
                 return costs;
@@ -78,9 +77,24 @@ namespace WCDS.WebFuncions.Controller
                     cost.IsInUse = false;
                 }
             }
-            // costs.Data.RemoveAll(x => flightReportIdsSelected.Contains(x.FlightReportId));
+            costs.Data.RemoveAll(x => flightReportIdsToRemove.Contains(x.FlightReportId));
+
+            // Updating the remaining cost if any of the cost details are already consumed
+            List<TimeReportCostDto> timeReports = costs.Data;
+            foreach (var item in timeReports)
+            {
+                var invoicesWithConsumedCost = dbContext.Invoice
+                .Where(p => p.InvoiceStatus == InvoiceStatus.Processed.ToString()|| p.InvoiceStatus == InvoiceStatus.Draft.ToString())
+                .Select(inv => new
+                {
+                    Invoice = inv,
+                    ConsumedCost = inv.InvoiceTimeReportCostDetails.Where(invTRCD => invTRCD.FlightReportId == item.FlightReportId).Sum(cd => cd.Cost)
+                }).ToList();
+                var totalConsumedCost = invoicesWithConsumedCost.Sum(o => o.ConsumedCost);
+                item.RemainingCost = item.TotalCost - totalConsumedCost;
+            }
+            costs.Data = timeReports;
             return costs;
         }
-
     }
 }
