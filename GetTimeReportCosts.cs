@@ -90,7 +90,6 @@ namespace WCDS.WebFuncions
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                     return jsonResult;
                 }
-
             }
             catch (Exception ex)
             {

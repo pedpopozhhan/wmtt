@@ -77,7 +77,7 @@ namespace WCDS.WebFuncions.Controller
                     cost.IsInUse = false;
                 }
             }
-            costs.Data.RemoveAll(x => flightReportIdsToRemove.Contains(x.FlightReportId));
+            //costs.Data.RemoveAll(x => flightReportIdsToRemove.Contains(x.FlightReportId));
 
             // Updating the remaining cost if any of the cost details are already consumed
             List<TimeReportCostDto> timeReports = costs.Data;
