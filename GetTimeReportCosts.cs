@@ -56,13 +56,10 @@ namespace WCDS.WebFuncions
                     if (data.Status.ToLower() == "approved")
                     {
                         var responseDto = await new TimeReportController(_timeReportingService, log, _mapper).GetApprovedTimeReports(data);
-
-
                         var response = new TimeReportCostsResponse
                         {
                             Rows = responseDto.Data.ToArray()
                         };
-
                         jsonResult = new JsonResult(response);
                         jsonResult.StatusCode = StatusCodes.Status200OK;
                         return jsonResult;
@@ -70,7 +67,6 @@ namespace WCDS.WebFuncions
                     else
                     {
                         var costs = await _timeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
-
                         if (!string.IsNullOrEmpty(costs.ErrorMessage))
                         {
                             jsonResult = new JsonResult(costs.ErrorMessage);
@@ -94,7 +90,6 @@ namespace WCDS.WebFuncions
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                     return jsonResult;
                 }
-
             }
             catch (Exception ex)
             {
