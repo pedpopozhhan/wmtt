@@ -1,11 +1,13 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.Logging;
+using Microsoft.WindowsAzure.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
+using WCDS.WebFuncions.Core.Entity;
 using WCDS.WebFuncions.Core.Model;
 
 namespace WCDS.WebFuncions.Core.Validator
@@ -23,7 +25,7 @@ namespace WCDS.WebFuncions.Core.Validator
             RuleFor(x => x.InvoiceNumber).NotEmpty().WithMessage("Invoice number must not be null or an empty string.");
             RuleFor(x => x.InvoiceNumber).Matches(@"^[0-9a-zA-Z]+$").WithMessage("Invoice number must only be letters and numbers.");
             RuleFor(x => x.InvoiceId).Must(i => i.HasValue).WithMessage("Please provide valid value for Invoice ID.");
-            RuleFor(x => new { x.InvoiceNumber, x.ContractNumber }).Must(v => InvoiceNumberDoesNotExist(v.InvoiceNumber, v.ContractNumber)).WithMessage("Invoice Number already exists for Contract Number.");
+            RuleFor(x => x).Must(v => InvoiceNumberDoesNotExist(x).WithMessage("Invoice Number already exists for Contract Number.");
             RuleFor(x => x.InvoiceDate).NotNull().WithMessage("Please provide value for Invoice Date.");
             RuleFor(x => x.InvoiceDate).GreaterThan(_earliestPossibleDateforInvoice).WithMessage("Date cannot be 1950/02/01 or earlier.");
             RuleFor(x => new { x.InvoiceDate, x.PeriodEndDate }).Must(v => v.InvoiceDate >= v.PeriodEndDate).WithMessage("Invoice date Cannot be earlier than period ending date.");
@@ -37,9 +39,18 @@ namespace WCDS.WebFuncions.Core.Validator
             RuleFor(x => new { x.InvoiceOtherCostDetails }).Must(v => v.InvoiceOtherCostDetails == null || ValidateMaxNoOfUnitsOfOtherCost(v.InvoiceOtherCostDetails)).WithMessage("No. of units cannot exceed 99,999");
         }
 
-        private bool InvoiceNumberDoesNotExist(string invoiceNumber, string contractNumber)
+        private bool InvoiceNumberDoesNotExist(InvoiceRequestDto request)
         {
-            return !_invoiceController.InvoiceExistsForContract(invoiceNumber, contractNumber);
+            // if creating a draft, this is valid...if not creating a draft, but sving a draft, it is not a valid
+            if (request.InvoiceId.HasValue && request.InvoiceId.Value != Guid.Empty)
+            {
+                var invoiceResponse = _invoiceController.GetInvoiceDetails(new InvoiceDetailRequestDto { InvoiceId = request.InvoiceId.Value });
+                if (string.Compare(invoiceResponse.Invoice.InvoiceNumber, request.InvoiceNumber) == 0)
+                {
+                    return true;
+                }
+            }
+            return !_invoiceController.InvoiceExistsForContract(request.InvoiceNumber, request.ContractNumber);
         }
 
 
