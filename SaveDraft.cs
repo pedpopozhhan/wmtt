@@ -13,7 +13,6 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Common;
-using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 using WCDS.WebFuncions.Core.Validator;
@@ -26,16 +25,14 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public SaveDraft(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
+        public SaveDraft(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             this._httpContextAccessor = httpContextAccessor;
-            _dbContext = dbContext;
         }
 
         [FunctionName("SaveDraft")]
@@ -61,7 +58,7 @@ namespace WCDS.WebFuncions
                 bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
                 if (tokenParsed)
                 {
-                    var invoiceController = new InvoiceController(log, _mapper, _dbContext);
+                    var invoiceController = new InvoiceController(log, _mapper);
                     var validationRules = new InvoiceDraftValidator(invoiceController);
 
                     var validationResult = validationRules.Validate(data);

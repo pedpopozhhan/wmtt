@@ -23,14 +23,14 @@ namespace WCDS.WebFuncions.Controller
 
     public class TimeReportController : ITimeReportController
     {
-        ApplicationDBContext _dbContext;
+        ApplicationDBContext dbContext;
         private readonly ITimeReportingService _timeReportingService;
         ILogger _logger;
         IMapper _mapper;
 
-        public TimeReportController(ITimeReportingService timeReportingService, ILogger log, IMapper mapper, ApplicationDBContext dbContext)
+        public TimeReportController(ITimeReportingService timeReportingService, ILogger log, IMapper mapper)
         {
-            _dbContext = dbContext;
+            dbContext = new ApplicationDBContext();
             _timeReportingService = timeReportingService;
             _logger = log;
             _mapper = mapper;
@@ -48,14 +48,14 @@ namespace WCDS.WebFuncions.Controller
 
             foreach (var flightReportId in allFlightReportIds)
             {
-                var itrs = await _dbContext.InvoiceTimeReports.Where(x => x.FlightReportId == flightReportId).ToListAsync();
+                var itrs = await dbContext.InvoiceTimeReports.Where(x => x.FlightReportId == flightReportId).ToListAsync();
                 if (itrs.Count == 0)
                 {
                     continue;
                 }
                 foreach (var itr in itrs)
                 {
-                    var invoice = await _dbContext.Invoice.Where(x => x.InvoiceId == itr.InvoiceId &&
+                    var invoice = await dbContext.Invoice.Where(x => x.InvoiceId == itr.InvoiceId &&
                     (x.InvoiceStatus == InvoiceStatus.Draft.ToString() || x.InvoiceStatus == InvoiceStatus.Processed.ToString()))
                     .FirstOrDefaultAsync();
                     if (invoice != null)
@@ -83,8 +83,8 @@ namespace WCDS.WebFuncions.Controller
             List<TimeReportCostDto> timeReports = costs.Data;
             foreach (var item in timeReports)
             {
-                var invoicesWithConsumedCost = _dbContext.Invoice
-                .Where(p => p.InvoiceStatus == InvoiceStatus.Processed.ToString() || p.InvoiceStatus == InvoiceStatus.Draft.ToString())
+                var invoicesWithConsumedCost = dbContext.Invoice
+                .Where(p => p.InvoiceStatus == InvoiceStatus.Processed.ToString()|| p.InvoiceStatus == InvoiceStatus.Draft.ToString())
                 .Select(inv => new
                 {
                     Invoice = inv,

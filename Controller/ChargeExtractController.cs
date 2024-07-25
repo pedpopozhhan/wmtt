@@ -43,9 +43,9 @@ namespace WCDS.WebFuncions.Controller
         StringBuilder _output;
         bool _abort = false;
 
-        public ChargeExtractController(ILogger log, IMapper mapper, IWildfireFinanceService wildfireFinanceService, ApplicationDBContext dbContext)
+        public ChargeExtractController(ILogger log, IMapper mapper, IWildfireFinanceService wildfireFinanceService)
         {
-            _dbContext = dbContext;
+            _dbContext = new ApplicationDBContext();
             _responseDto = new ChargeExtractResponseDto();
             _otherCosts = new List<InvoiceOtherCostDetails>();
             _timeReportCosts = new List<InvoiceTimeReportCostDetails>();
@@ -241,7 +241,7 @@ namespace WCDS.WebFuncions.Controller
             var contractNumber = invoice.ContractNumber;
             decimal grandTotal = _groupedRows.Sum(x => x.total);
 
-
+            
             var resp = _wildfireFinanceService.GetFinanceDocuments(new Core.Model.FinanceDocument.FinanceDocumentRequestDto
             {
                 InvoiceNumber = invoice.InvoiceNumber,
@@ -406,7 +406,7 @@ namespace WCDS.WebFuncions.Controller
                         InvoiceAmount = previousInvoice.InvoiceAmount.Value,
                         VendorBusinessId = previousInvoice.VendorBusinessId
                     }).Result?.Data?.FirstOrDefault();
-                    string documentOrVoucherId = resp == null ? string.Empty : resp.AccountingDocument;
+                    string documentOrVoucherId = resp == null ? string.Empty: resp.AccountingDocument ;
                     foreach (var item in _groupedRows)
                     {
                         if (item.id.InvoiceNumber != prevInvoiceNumber)

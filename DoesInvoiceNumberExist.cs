@@ -7,7 +7,6 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
-using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
@@ -16,15 +15,13 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
-        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public DoesInvoiceNumberExist(IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
+        public DoesInvoiceNumberExist(IMapper mapper, IAuditLogService auditLogService)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
-            _dbContext = dbContext;
         }
 
         [FunctionName("DoesInvoiceNumberExist")]
@@ -40,7 +37,7 @@ namespace WCDS.WebFuncions
 
                 if (!string.IsNullOrEmpty(invoiceNumber) && !string.IsNullOrEmpty(contractNumber))
                 {
-                    IInvoiceController iController = new InvoiceController(_logger, _mapper, _dbContext);
+                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
                     var exists = iController.InvoiceExistsForContract(invoiceNumber, contractNumber);
 
                     jsonResult = new JsonResult(exists);

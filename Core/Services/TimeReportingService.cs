@@ -27,12 +27,12 @@ namespace WCDS.WebFuncions.Core.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         ApplicationDBContext _dbContext;
         private readonly string _token;
-        public TimeReportingService(ILogger<TimeReportingService> log, HttpClient httpClient, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
+        public TimeReportingService(ILogger<TimeReportingService> log, HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
         {
             _httpClient = httpClient;
             this._httpContextAccessor = httpContextAccessor;
             _log = log ?? throw new ArgumentNullException(nameof(log));
-            _dbContext = dbContext;
+            _dbContext = new ApplicationDBContext();
             _token = GetToken();
         }
 
