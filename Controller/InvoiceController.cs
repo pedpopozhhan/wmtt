@@ -21,6 +21,7 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceExistsForContract(string invoiceNumber, string contractNumber);
         public InvoiceResponseDto GetInvoices(GetInvoiceRequestDto invoiceRequest);
         public InvoiceResponseDto GetInvoicesWithDetails(GetInvoiceRequestDto invoiceRequest);
+        public InvoiceDetailResponseDto GetInvoiceDetails(InvoiceDetailRequestDto invoiceDetailRequest);
         public Task<string> UpdateProcessedInvoice(InvoiceDto invoice);
         public Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request);
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
