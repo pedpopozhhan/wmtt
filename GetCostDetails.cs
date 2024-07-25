@@ -11,6 +11,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 
@@ -23,13 +24,15 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetCostDetails(IMapper mapper, IAuditLogService auditLogService)
+        public GetCostDetails(IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _dbContext = dbContext;
         }
 
 
@@ -68,7 +71,7 @@ namespace WCDS.WebFuncions
                     return jsonResult;
                 }
 
-                var responseDto = new InvoiceController(log, _mapper).GetCostDetails(data);
+                var responseDto = new InvoiceController(log, _mapper, _dbContext).GetCostDetails(data);
 
                 jsonResult = new JsonResult(responseDto);
                 jsonResult.StatusCode = StatusCodes.Status200OK;

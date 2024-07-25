@@ -11,6 +11,7 @@ using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 using WCDS.WebFuncions.Enums;
@@ -21,13 +22,15 @@ namespace WCDS.WebFuncions
 
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetDrafts(IMapper mapper, IAuditLogService auditLogService)
+        public GetDrafts(IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _dbContext = dbContext;
         }
 
         [FunctionName("GetDrafts")]
@@ -51,7 +54,7 @@ namespace WCDS.WebFuncions
                     return jsonResult;
                 }
 
-                var response = new InvoiceController(log, _mapper).GetInvoicesWithDetails(data);
+                var response = new InvoiceController(log, _mapper, _dbContext).GetInvoicesWithDetails(data);
                 response.Invoices = response.Invoices.Where(x => x.InvoiceStatus == InvoiceStatus.Draft.ToString()).ToArray();
 
                 jsonResult = new JsonResult(response);

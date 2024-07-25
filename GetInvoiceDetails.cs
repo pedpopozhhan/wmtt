@@ -9,6 +9,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 
@@ -18,13 +19,15 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetInvoiceDetails(IMapper mapper, IAuditLogService auditLogService)
+        public GetInvoiceDetails(IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _dbContext = dbContext;
         }
         [FunctionName("GetInvoiceDetails")]
         public async Task<ActionResult<InvoiceDetailResponseDto>> Run([HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req, ILogger log)
@@ -44,7 +47,7 @@ namespace WCDS.WebFuncions
                     return jsonResult;
                 }
 
-                var responseDto = new InvoiceController(log, _mapper).GetInvoiceDetails(data);
+                var responseDto = new InvoiceController(log, _mapper, _dbContext).GetInvoiceDetails(data);
                 JsonResult result = new JsonResult(responseDto);
 
                 jsonResult = new JsonResult(responseDto);

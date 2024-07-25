@@ -32,15 +32,15 @@ namespace WCDS.WebFuncions.Controller
 
     public class InvoiceController : IInvoiceController
     {
-        ApplicationDBContext dbContext;
+        ApplicationDBContext _dbContext;
         ILogger _logger;
         IMapper _mapper;
         private const string DEFAULT_USER = "System";
         private const string CONTRACTS_API_PATH_PROCESSEDINVOICE = "/ProcessedInvoice/{0}";
 
-        public InvoiceController(ILogger log, IMapper mapper)
+        public InvoiceController(ILogger log, IMapper mapper, ApplicationDBContext dbContext)
         {
-            dbContext = new ApplicationDBContext();
+            _dbContext = dbContext;
             _logger = log;
             _mapper = mapper;
         }
@@ -53,7 +53,7 @@ namespace WCDS.WebFuncions.Controller
             Guid result = Guid.Empty;
             int numberOfCostDetails = 0, numberOfOtherCostDetails = 0;
 
-            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
                 try
                 {
@@ -90,12 +90,12 @@ namespace WCDS.WebFuncions.Controller
                     _logger.LogInformation("Ivoice sent to DB for Insert at: {0} for invoice : {1}. Number of detail records in this invoice are: {2}",
                         DateTime.UtcNow, invoiceEntity.InvoiceNumber, numberOfCostDetails + numberOfOtherCostDetails);
 
-                    dbContext.Invoice.Add(invoiceEntity);
-                    await dbContext.SaveChangesAsync();
+                    _dbContext.Invoice.Add(invoiceEntity);
+                    await _dbContext.SaveChangesAsync();
 
                     _logger.LogInformation("Ivoice Insert Completed at: {0} for invoice: {1}", DateTime.UtcNow, invoiceEntity.InvoiceNumber);
 
-                    var entity = await dbContext.Invoice.Where(x => x.InvoiceId == invoice.InvoiceId)
+                    var entity = await _dbContext.Invoice.Where(x => x.InvoiceId == invoice.InvoiceId)
                     .Include(i => i.InvoiceTimeReportCostDetails)
                     .Include(i => i.InvoiceOtherCostDetails)
                     .Include(i => i.InvoiceStatusLogs)
@@ -132,7 +132,7 @@ namespace WCDS.WebFuncions.Controller
         // Update this to properly update the entire invoice
         public async Task<string> UpdateProcessedInvoice(InvoiceDto invoice)
         {
-            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
                 try
                 {
@@ -145,17 +145,17 @@ namespace WCDS.WebFuncions.Controller
                         InvoiceStatus = InvoiceStatus.Processed.ToString()
                     };
 
-                    dbContext.Attach(newInvoice);
+                    _dbContext.Attach(newInvoice);
 
                     // Mark specific properties as modified
-                    dbContext.Entry(newInvoice).Property(x => x.UniqueServiceSheetName).IsModified = true;
-                    dbContext.Entry(newInvoice).Property(x => x.UpdatedBy).IsModified = true;
-                    dbContext.Entry(newInvoice).Property(x => x.UpdatedByDateTime).IsModified = true;
-                    dbContext.Entry(newInvoice).Property(x => x.InvoiceStatus).IsModified = true;
+                    _dbContext.Entry(newInvoice).Property(x => x.UniqueServiceSheetName).IsModified = true;
+                    _dbContext.Entry(newInvoice).Property(x => x.UpdatedBy).IsModified = true;
+                    _dbContext.Entry(newInvoice).Property(x => x.UpdatedByDateTime).IsModified = true;
+                    _dbContext.Entry(newInvoice).Property(x => x.InvoiceStatus).IsModified = true;
                     // Save changes to the database
-                    await dbContext.SaveChangesAsync();
+                    await _dbContext.SaveChangesAsync();
                     transaction.Commit();
-                    var entity = dbContext.Invoice.FirstOrDefault(ss => ss.InvoiceId == invoice.InvoiceId);
+                    var entity = _dbContext.Invoice.FirstOrDefault(ss => ss.InvoiceId == invoice.InvoiceId);
                     if (entity == null)
                     {
                         throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
@@ -180,7 +180,7 @@ namespace WCDS.WebFuncions.Controller
 
             var dt = DateTime.UtcNow;
 
-            using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
+            using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
                 if (!invoice.InvoiceId.HasValue || invoice.InvoiceId == Guid.Empty)
@@ -192,12 +192,12 @@ namespace WCDS.WebFuncions.Controller
                     entity.CreatedBy = user;
                     entity.UpdatedByDateTime = dt;
                     entity.UpdatedBy = user;
-                    dbContext.Invoice.Add(entity);
+                    _dbContext.Invoice.Add(entity);
                     SetCreatedFields(entity.InvoiceTimeReportCostDetails, user, dt);
                     SetCreatedFields(entity.InvoiceOtherCostDetails, user, dt);
 
 
-                    await dbContext.SaveChangesAsync();
+                    await _dbContext.SaveChangesAsync();
 
                     entity.InvoiceStatusLogs = new List<InvoiceStatusLog> { new()
                     {
@@ -218,8 +218,8 @@ namespace WCDS.WebFuncions.Controller
                             AuditLastUpdatedBy = user
                         };
                     });
-                    await dbContext.InvoiceTimeReports.AddRangeAsync(invoiceTimeReports);
-                    await dbContext.SaveChangesAsync();
+                    await _dbContext.InvoiceTimeReports.AddRangeAsync(invoiceTimeReports);
+                    await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
 
                     //// insert-invoice to data team
@@ -248,13 +248,13 @@ namespace WCDS.WebFuncions.Controller
         {
             var dt = DateTime.UtcNow;
             Invoice entity = null;
-            using (IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync())
+            using (IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync())
             {
                 try
                 {
 
                     // update
-                    entity = await dbContext.Invoice.Where(x => x.InvoiceId == invoice.InvoiceId)
+                    entity = await _dbContext.Invoice.Where(x => x.InvoiceId == invoice.InvoiceId)
                     .Include(i => i.InvoiceTimeReportCostDetails)
                     .Include(i => i.InvoiceOtherCostDetails)
                     .Include(i => i.InvoiceStatusLogs)
@@ -269,24 +269,24 @@ namespace WCDS.WebFuncions.Controller
                     var costDetailsToAdd = new List<InvoiceTimeReportCostDetails>();
                     // TODO clean up this method because we dont update anything
                     IList<InvoiceTimeReportCostDetails> costDetailsUnChanged = ProcessTimeReportCostDetails(invoice, entity, ref costDetailsToAdd, ref costDetailsToRemove);
-                    dbContext.InvoiceTimeReportCostDetails.RemoveRange(costDetailsToRemove);
-                    dbContext.InvoiceTimeReportCostDetails.AddRange(costDetailsToAdd);
+                    _dbContext.InvoiceTimeReportCostDetails.RemoveRange(costDetailsToRemove);
+                    _dbContext.InvoiceTimeReportCostDetails.AddRange(costDetailsToAdd);
 
                     var timeReportsToUpdate = new List<InvoiceTimeReports>();
                     var timeReportsToRemove = new List<InvoiceTimeReports>();
                     var timeReportsToAdd = new List<InvoiceTimeReports>();
                     IEnumerable<InvoiceTimeReports> timeReportsUnChanged = ProcessTimeReports(invoice, entity, ref timeReportsToAdd, ref timeReportsToUpdate, ref timeReportsToRemove);
-                    dbContext.InvoiceTimeReports.RemoveRange(timeReportsToRemove);
-                    dbContext.InvoiceTimeReports.AddRange(timeReportsToAdd);
+                    _dbContext.InvoiceTimeReports.RemoveRange(timeReportsToRemove);
+                    _dbContext.InvoiceTimeReports.AddRange(timeReportsToAdd);
 
                     var otherCostDetailsToUpdate = new List<InvoiceOtherCostDetails>();
                     var otherCostDetailsToRemove = new List<InvoiceOtherCostDetails>();
                     var otherCostDetailsToAdd = new List<InvoiceOtherCostDetails>();
                     IList<InvoiceOtherCostDetails> otherCostDetailsUnChanged = ProcessOtherCostDetails(invoice, entity, ref otherCostDetailsToAdd, ref otherCostDetailsToUpdate, ref otherCostDetailsToRemove);
-                    dbContext.InvoiceOtherCostDetails.RemoveRange(otherCostDetailsToRemove);
-                    dbContext.InvoiceOtherCostDetails.AddRange(otherCostDetailsToAdd);
+                    _dbContext.InvoiceOtherCostDetails.RemoveRange(otherCostDetailsToRemove);
+                    _dbContext.InvoiceOtherCostDetails.AddRange(otherCostDetailsToAdd);
 
-                    await dbContext.SaveChangesAsync();
+                    await _dbContext.SaveChangesAsync();
                     entity.InvoiceStatus = InvoiceStatus.Draft.ToString();
                     entity.UpdatedByDateTime = dt;
                     entity.UpdatedBy = user;
@@ -339,7 +339,7 @@ namespace WCDS.WebFuncions.Controller
                         timeReport.AuditLastUpdatedDateTime = dt;
                     }
 
-                    await dbContext.SaveChangesAsync();
+                    await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
                     // update-invoice to data team
                     // send messages
@@ -371,10 +371,10 @@ namespace WCDS.WebFuncions.Controller
         public async Task<Guid> DeleteDraft(Guid invoiceId, string user)
         {
             var dt = DateTime.UtcNow;
-            using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync();
+            using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync();
             try
             {
-                var entity = await dbContext.Invoice.Where(x => x.InvoiceId == invoiceId)
+                var entity = await _dbContext.Invoice.Where(x => x.InvoiceId == invoiceId)
                     .Include(i => i.InvoiceTimeReportCostDetails)
                     .Include(i => i.InvoiceOtherCostDetails)
                     .Include(i => i.InvoiceStatusLogs)
@@ -389,28 +389,28 @@ namespace WCDS.WebFuncions.Controller
                 {
                     timeReportCostDetail.UpdatedBy = user;
                     timeReportCostDetail.UpdatedByDateTime = dt;
-                    dbContext.Entry(timeReportCostDetail).State = EntityState.Modified;
+                    _dbContext.Entry(timeReportCostDetail).State = EntityState.Modified;
                 }
 
                 foreach (var detail in entity.InvoiceOtherCostDetails)
                 {
                     detail.UpdatedBy = user;
                     detail.UpdatedByDateTime = dt;
-                    dbContext.Entry(detail).State = EntityState.Modified;
+                    _dbContext.Entry(detail).State = EntityState.Modified;
                 }
 
                 foreach (var detail in entity.InvoiceTimeReports)
                 {
                     detail.AuditLastUpdatedBy = user;
                     detail.AuditLastUpdatedDateTime = dt;
-                    dbContext.Entry(detail).State = EntityState.Modified;
+                    _dbContext.Entry(detail).State = EntityState.Modified;
                 }
 
                 // Save changes to the database
-                await dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                var updatedEntity = await dbContext.Invoice.Where(x => x.InvoiceId == invoiceId)
+                var updatedEntity = await _dbContext.Invoice.Where(x => x.InvoiceId == invoiceId)
                     .Include(i => i.InvoiceTimeReportCostDetails)
                     .Include(i => i.InvoiceOtherCostDetails)
                     .Include(i => i.InvoiceStatusLogs)
@@ -436,11 +436,11 @@ namespace WCDS.WebFuncions.Controller
         {
             bool result = false;
 
-            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    var entity = await dbContext.Invoice.Where(x => x.InvoiceId == request.InvoiceId)
+                    var entity = await _dbContext.Invoice.Where(x => x.InvoiceId == request.InvoiceId)
                     .Include(i => i.InvoiceTimeReportCostDetails)
                     .Include(i => i.InvoiceOtherCostDetails)
                     .Include(i => i.InvoiceStatusLogs)
@@ -469,26 +469,26 @@ namespace WCDS.WebFuncions.Controller
                         {
                             timeReportCostDetail.UpdatedBy = request.UpdatedBy;
                             timeReportCostDetail.UpdatedByDateTime = request.UpdatedDateTime;
-                            dbContext.Entry(timeReportCostDetail).State = EntityState.Modified;
+                            _dbContext.Entry(timeReportCostDetail).State = EntityState.Modified;
                         }
 
                         foreach (var detail in entity.InvoiceOtherCostDetails)
                         {
                             detail.UpdatedBy = request.UpdatedBy;
                             detail.UpdatedByDateTime = request.UpdatedDateTime;
-                            dbContext.Entry(detail).State = EntityState.Modified;
+                            _dbContext.Entry(detail).State = EntityState.Modified;
                         }
 
                         foreach (var detail in entity.InvoiceTimeReports)
                         {
                             detail.AuditLastUpdatedBy = request.UpdatedBy;
                             detail.AuditLastUpdatedDateTime = request.UpdatedDateTime.Value;
-                            dbContext.Entry(detail).State = EntityState.Modified;
+                            _dbContext.Entry(detail).State = EntityState.Modified;
                         }
 
-                        await dbContext.SaveChangesAsync();
+                        await _dbContext.SaveChangesAsync();
                         await transaction.CommitAsync();
-                        var updatedEntity = await dbContext.Invoice.Where(x => x.InvoiceId == request.InvoiceId)
+                        var updatedEntity = await _dbContext.Invoice.Where(x => x.InvoiceId == request.InvoiceId)
                                             .Include(i => i.InvoiceTimeReportCostDetails)
                                             .Include(i => i.InvoiceOtherCostDetails)
                                             .Include(i => i.InvoiceStatusLogs)
@@ -521,11 +521,11 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceExistsForContract(string invoiceNumber, string contractNumber)
         {
             bool bResult = false;
-            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    Invoice invoice = dbContext.Invoice.Where(x =>
+                    Invoice invoice = _dbContext.Invoice.Where(x =>
                         x.InvoiceNumber == invoiceNumber && x.ContractNumber == contractNumber).FirstOrDefault();
                     if (invoice != null && string.Compare(invoice.InvoiceStatus, InvoiceStatus.DraftDeleted.ToString()) != 0)
                         bResult = true;
@@ -550,14 +550,14 @@ namespace WCDS.WebFuncions.Controller
         {
             InvoiceResponseDto response = new InvoiceResponseDto();
             List<Invoice> items;
-            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
                 try
                 {
                     if (invoiceRequest.ContractNumber.Trim().Length == 0)
-                        items = dbContext.Invoice.ToList();
+                        items = _dbContext.Invoice.ToList();
                     else
-                        items = dbContext.Invoice.Include(p => p.ChargeExtract).Where(x => x.ContractNumber == invoiceRequest.ContractNumber).ToList();
+                        items = _dbContext.Invoice.Include(p => p.ChargeExtract).Where(x => x.ContractNumber == invoiceRequest.ContractNumber).ToList();
 
                     var mapped = items.Select(item =>
                     {
@@ -578,11 +578,11 @@ namespace WCDS.WebFuncions.Controller
         public InvoiceDetailResponseDto GetInvoiceDetails(InvoiceDetailRequestDto invoiceDetailRequest)
         {
             InvoiceDetailResponseDto response = new InvoiceDetailResponseDto();
-            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
                 try
                 {
-                    List<Invoice> items = dbContext.Invoice.Where(x => x.InvoiceId == invoiceDetailRequest.InvoiceId)
+                    List<Invoice> items = _dbContext.Invoice.Where(x => x.InvoiceId == invoiceDetailRequest.InvoiceId)
                         .Include(p => p.InvoiceOtherCostDetails)
                         .Include(q => q.InvoiceTimeReportCostDetails)
                         .ToList();
@@ -605,7 +605,7 @@ namespace WCDS.WebFuncions.Controller
         public InvoiceResponseDto GetInvoicesWithDetails(GetInvoiceRequestDto invoiceRequest)
         {
             InvoiceResponseDto response = new();
-            List<Invoice> items = dbContext.Invoice
+            List<Invoice> items = _dbContext.Invoice
                 .Include(i => i.InvoiceTimeReportCostDetails)
                 .Include(i => i.InvoiceOtherCostDetails)
                 .Include(i => i.InvoiceTimeReports)
@@ -623,7 +623,7 @@ namespace WCDS.WebFuncions.Controller
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request)
         {
             CostDetailsResponseDto response = new CostDetailsResponseDto();
-            using (IDbContextTransaction transaction = dbContext.Database.BeginTransaction())
+            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
             {
                 try
                 {
@@ -631,7 +631,7 @@ namespace WCDS.WebFuncions.Controller
                     {
                         request.FlightReportCostDetailIds.ForEach(item =>
                         {
-                            if (!dbContext.InvoiceTimeReportCostDetails.Any(c => c.FlightReportCostDetailsId == item && c.FlightReportId == request.FlightReportId))
+                            if (!_dbContext.InvoiceTimeReportCostDetails.Any(c => c.FlightReportCostDetailsId == item && c.FlightReportId == request.FlightReportId))
                             {
                                 response.CostDetails.Add(new CostDetailsResponseDto.CostDetailsResult()
                                 {
@@ -644,8 +644,8 @@ namespace WCDS.WebFuncions.Controller
                             }
                             else
                             {
-                                var result = (from trc in dbContext.InvoiceTimeReportCostDetails
-                                              join i in dbContext.Invoice.DefaultIfEmpty()
+                                var result = (from trc in _dbContext.InvoiceTimeReportCostDetails
+                                              join i in _dbContext.Invoice.DefaultIfEmpty()
                                               on trc.InvoiceId equals i.InvoiceId
                                               where trc.FlightReportCostDetailsId == item
                                               select new
