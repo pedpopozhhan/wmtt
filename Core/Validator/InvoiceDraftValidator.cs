@@ -39,7 +39,12 @@ namespace WCDS.WebFuncions.Core.Validator
 
         private bool InvoiceNumberDoesNotExist(string invoiceNumber, string contractNumber)
         {
-            return !_invoiceController.InvoiceExistsForContract(invoiceNumber, contractNumber);
+            if (string.IsNullOrEmpty(invoiceNumber))
+            {
+                // if creating a draft, this is valid...if not creating a draft, but sving a draft, it is not a valid validator
+                return !_invoiceController.InvoiceExistsForContract(invoiceNumber, contractNumber);
+            }
+            return true;
         }
 
 
