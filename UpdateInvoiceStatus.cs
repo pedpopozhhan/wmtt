@@ -11,6 +11,7 @@ using System.IO;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Common;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 
@@ -22,29 +23,31 @@ namespace WCDS.WebFuncions
         private readonly IAuditLogService _auditLogService;
         JsonResult jsonResult = null;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public UpdateInvoiceStatus(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
+        public UpdateInvoiceStatus(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             _httpContextAccessor = httpContextAccessor;
+            _dbContext = dbContext;
         }
 
         [FunctionName("UpdateInvoiceStatus")]
         public async Task<IActionResult> Run([HttpTrigger(AuthorizationLevel.Function, nameof(HttpMethods.Post), Route = null)] HttpRequest req, ILogger _logger)
         {
-           _logger.LogInformation("Trigger function (UpdateInvoiceStatus) received a request.");
+            _logger.LogInformation("Trigger function (UpdateInvoiceStatus) received a request.");
             try
-           {
+            {
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var invoiceObj = JsonConvert.DeserializeObject<UpdateInvoiceStatusRequestDto>(requestBody);
 
-               
+
                 if (invoiceObj != null)
                 {
                     List<string> validationErrors = new List<string>();
-                    if (invoiceObj.InvoiceId == null || (invoiceObj.InvoiceId != null  && invoiceObj.InvoiceId == Guid.Empty))
+                    if (invoiceObj.InvoiceId == null || (invoiceObj.InvoiceId != null && invoiceObj.InvoiceId == Guid.Empty))
                     {
                         validationErrors.Add("Invalid Request: InvoiceId can not be empty or null.");
                     }
@@ -54,7 +57,7 @@ namespace WCDS.WebFuncions
                     }
                     else
                     {
-                        if(invoiceObj.PaymentStatus != Enums.PaymentStatus.Posted.ToString() && invoiceObj.PaymentStatus != Enums.PaymentStatus.Cleared.ToString())
+                        if (invoiceObj.PaymentStatus != Enums.PaymentStatus.Posted.ToString() && invoiceObj.PaymentStatus != Enums.PaymentStatus.Cleared.ToString())
                         {
                             validationErrors.Add("Invalid Request: PaymentStatus can not be other than Posted or Cleared.");
                         }
@@ -75,7 +78,7 @@ namespace WCDS.WebFuncions
                     if (tokenParsed)
                     {
                         invoiceObj.UpdatedBy = parsedTokenResult;
-                        IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                        IInvoiceController iController = new InvoiceController(_logger, _mapper, _dbContext);
                         bool result = await iController.UpdateInvoiceStatus(invoiceObj);
 
                         try

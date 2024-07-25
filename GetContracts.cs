@@ -9,6 +9,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 
@@ -22,14 +23,16 @@ namespace WCDS.WebFuncions
         private readonly ITimeReportingService _timeReportingService;
         private readonly IMapper mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetContracts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
+        public GetContracts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
             _timeReportingService = timeReportingService;
             this.mapper = mapper;
             this._auditLogService = auditLogService;
+            _dbContext = dbContext;
         }
 
         [FunctionName("GetContracts")]
@@ -52,7 +55,7 @@ namespace WCDS.WebFuncions
 
                 // Pulling information from local cache and aviation service to populate data points related to
                 // time reports available for Extract and still pending approval
-                var invoiceController = new InvoiceController(log, mapper);
+                var invoiceController = new InvoiceController(log, mapper, _dbContext);
                 var signedOffReports = "signed off";
                 foreach (var contract in contracts.Data)
                 {

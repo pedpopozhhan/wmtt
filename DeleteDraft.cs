@@ -10,6 +10,7 @@ using System.IO;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Common;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 namespace WCDS.WebFuncions
@@ -20,14 +21,16 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public DeleteDraft(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
+        public DeleteDraft(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             _httpContextAccessor = httpContextAccessor;
+            _dbContext = dbContext;
         }
 
         [FunctionName("DeleteDraft")]
@@ -55,7 +58,7 @@ namespace WCDS.WebFuncions
                 bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
                 if (tokenParsed)
                 {
-                    var response = new InvoiceController(log, _mapper).DeleteDraft(invoiceId, parsedTokenResult);
+                    var response = new InvoiceController(log, _mapper, _dbContext).DeleteDraft(invoiceId, parsedTokenResult);
                     jsonResult = new JsonResult(Guid.Empty)
                     {
                         StatusCode = StatusCodes.Status200OK

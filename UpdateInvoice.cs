@@ -13,6 +13,7 @@ using WCDS.WebFuncions.Core.Validator;
 using WCDS.WebFuncions.Core.Services;
 using AutoMapper;
 using System.Linq;
+using WCDS.WebFuncions.Core.Context;
 
 namespace WCDS.WebFuncions
 {
@@ -20,13 +21,15 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public UpdateInvoice(IMapper mapper, IAuditLogService auditLogService)
+        public UpdateInvoice(IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _dbContext = dbContext;
         }
 
         [FunctionName("UpdateInvoice")]
@@ -40,7 +43,7 @@ namespace WCDS.WebFuncions
                 var invoiceObj = JsonConvert.DeserializeObject<InvoiceDto>(requestBody);
                 if (invoiceObj != null)
                 {
-                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                    IInvoiceController iController = new InvoiceController(_logger, _mapper, _dbContext);
                     InvoiceValidator validationRules = new InvoiceValidator(iController);
                     var validationResult = validationRules.Validate(invoiceObj);
                     if (!validationResult.IsValid)
@@ -67,7 +70,7 @@ namespace WCDS.WebFuncions
             {
                 _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
                 jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;                
+                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
                 return jsonResult;
             }
         }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace WCDS.WebFuncions.Core.Entity
 {
-    internal class ChargeExtractDetail
+    public class ChargeExtractDetail
     {
         [Key]
         public Guid ChargeExtractDetailId { get; set; }
@@ -15,7 +15,7 @@ namespace WCDS.WebFuncions.Core.Entity
         public Guid InvoiceId { get; set; }
         public DateTime AuditCreationDateTime { get; set; }
         public string AuditLastUpdatedBy { get; set; }
-        public DateTime AuditLastUpdatedDateTime { get;set; }
+        public DateTime AuditLastUpdatedDateTime { get; set; }
         public ChargeExtract ChargeExtract { get; set; }
     }
 }

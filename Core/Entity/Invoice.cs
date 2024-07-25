@@ -9,7 +9,7 @@ using WCDS.WebFuncions.Core.Model;
 namespace WCDS.WebFuncions.Core.Entity
 {
 
-    internal class Invoice : EntityBase
+    public class Invoice : EntityBase
     {
         [Key]
         public Guid InvoiceId { get; set; }

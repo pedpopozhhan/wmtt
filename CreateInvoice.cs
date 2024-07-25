@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Common;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 using WCDS.WebFuncions.Core.Validator;
@@ -22,14 +23,16 @@ namespace WCDS.WebFuncions
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public CreateInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
+        public CreateInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             _httpContextAccessor = httpContextAccessor;
+            _dbContext = dbContext;
         }
 
         [FunctionName("CreateInvoice")]
@@ -46,7 +49,7 @@ namespace WCDS.WebFuncions
                     if (tokenParsed)
                     {
                         invoiceObj.CreatedBy = parsedTokenResult;
-                        IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                        IInvoiceController iController = new InvoiceController(_logger, _mapper, _dbContext);
                         InvoiceValidator validationRules = new InvoiceValidator(iController);
 
                         var validationResult = validationRules.Validate(invoiceObj);
