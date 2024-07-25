@@ -4,7 +4,7 @@ using WCDS.WebFuncions.Core.Model.Services;
 
 namespace WCDS.WebFuncions.Controller
 {
-    internal class RateTypeComparer : IEqualityComparer<RateType>
+    public class RateTypeComparer : IEqualityComparer<RateType>
     {
         public bool Equals(RateType x, RateType y)
         {

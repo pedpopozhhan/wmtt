@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WCDS.WebFuncions.Core.Entity
 {
-    internal class AuditLog
+    public class AuditLog
     {
         [Key]
         public Guid Id { get; set; }
