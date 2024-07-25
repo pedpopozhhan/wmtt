@@ -13,7 +13,6 @@ using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 using System.IdentityModel.Tokens.Jwt;
 using WCDS.WebFuncions.Core.Common;
-using WCDS.WebFuncions.Core.Context;
 
 namespace WCDS.WebFuncions
 {
@@ -23,15 +22,14 @@ namespace WCDS.WebFuncions
         private readonly IAuditLogService _auditLogService;
         JsonResult jsonResult = null;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ApplicationDBContext _dbContext;
+
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public UpdateProcessedInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
+        public UpdateProcessedInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             _httpContextAccessor = httpContextAccessor;
-            _dbContext = dbContext;
         }
 
         [FunctionName("UpdateProcessedInvoice")]
@@ -56,7 +54,7 @@ namespace WCDS.WebFuncions
                     if (tokenParsed)
                     {
                         invoiceObj.UpdatedBy = parsedTokenResult;
-                        IInvoiceController iController = new InvoiceController(_logger, _mapper, _dbContext);
+                        IInvoiceController iController = new InvoiceController(_logger, _mapper);
                         string result = await iController.UpdateProcessedInvoice(invoiceObj);
 
                         try

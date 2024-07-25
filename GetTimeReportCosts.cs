@@ -9,7 +9,6 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
-using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 
@@ -23,16 +22,14 @@ namespace WCDS.WebFuncions
         private readonly ITimeReportingService _timeReportingService;
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
-        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
+        public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
         {
             _timeReportingService = timeReportingService;
             _mapper = mapper;
             _auditLogService = auditLogService;
-            _dbContext = dbContext;
         }
 
 
@@ -58,7 +55,7 @@ namespace WCDS.WebFuncions
                 { // Retrieves for the tabs tab
                     if (data.Status.ToLower() == "approved")
                     {
-                        var responseDto = await new TimeReportController(_timeReportingService, log, _mapper, _dbContext).GetApprovedTimeReports(data);
+                        var responseDto = await new TimeReportController(_timeReportingService, log, _mapper).GetApprovedTimeReports(data);
                         var response = new TimeReportCostsResponse
                         {
                             Rows = responseDto.Data.ToArray()

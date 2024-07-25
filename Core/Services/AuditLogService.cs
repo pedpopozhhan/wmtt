@@ -18,12 +18,12 @@ namespace WCDS.WebFuncions.Core.Services
         private readonly ILogger Log;
 
         private readonly IHttpContextAccessor httpContextAccessor;
-        private readonly ApplicationDBContext _dbContext;
-
-        public AuditLogService(ILogger<DomainService> log, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
+        private readonly ApplicationDBContext dbContext;
+      
+        public AuditLogService(ILogger<DomainService> log, IHttpContextAccessor httpContextAccessor)
         {
             this.httpContextAccessor = httpContextAccessor;
-            this._dbContext = dbContext;
+            this.dbContext = new ApplicationDBContext();
             Log = log ?? throw new ArgumentNullException(nameof(log));
         }
 
@@ -38,9 +38,9 @@ namespace WCDS.WebFuncions.Core.Services
                     Operation = operation,
                     Timestamp = DateTime.UtcNow,
                     User = parsedTokenResult
-                };
-                _dbContext.AuditLog.Add(auditLog);
-                await _dbContext.SaveChangesAsync();
+                };                
+                dbContext.AuditLog.Add(auditLog);
+                await dbContext.SaveChangesAsync();
             }
             else
             {

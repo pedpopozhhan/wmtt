@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WCDS.WebFuncions.Core.Entity
 {
-    public class InvoiceOtherCostDetails : EntityBase
+    internal class InvoiceOtherCostDetails : EntityBase
     {
         [Key]
         public Guid InvoiceOtherCostDetailId { get; set; }

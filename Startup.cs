@@ -1,18 +1,15 @@
 
-using System;
 using System.Linq;
 using AutoMapper;
 using Microsoft.Azure.Functions.Extensions.DependencyInjection;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Services;
 
 [assembly: FunctionsStartup(typeof(WCDS.WebFuncions.Startup))]
 namespace WCDS.WebFuncions
 {
-    public class Startup : FunctionsStartup
+    internal class Startup : FunctionsStartup
     {
         public override void Configure(IFunctionsHostBuilder builder)
         {
@@ -34,11 +31,10 @@ namespace WCDS.WebFuncions
             builder.Services.AddHttpClient();
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddAutoMapper(typeof(Startup));
-            builder.Services.AddScoped<IDomainService, DomainService>();
-            builder.Services.AddScoped<ITimeReportingService, TimeReportingService>();
-            builder.Services.AddScoped<IWildfireFinanceService, WildfireFinanceService>();
-            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
-            builder.Services.AddDbContext<ApplicationDBContext>(options => options.UseSqlServer(Environment.GetEnvironmentVariable("connectionstring")), ServiceLifetime.Scoped);
+            builder.Services.AddSingleton<IDomainService, DomainService>();
+            builder.Services.AddSingleton<ITimeReportingService, TimeReportingService>();
+            builder.Services.AddSingleton<IWildfireFinanceService, WildfireFinanceService>();
+            builder.Services.AddSingleton<IAuditLogService, AuditLogService>();
             var serviceProvider = builder.Services.BuildServiceProvider();
             var mapper = serviceProvider.GetRequiredService<IMapper>();
             mapper.ConfigurationProvider.AssertConfigurationIsValid();

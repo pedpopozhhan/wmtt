@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace WCDS.WebFuncions.Core.Entity
 {
-    public class InvoiceTimeReports
+    internal class InvoiceTimeReports
     {
         [Key]
         public Guid InvoiceTimeReportId { get; set; }

@@ -14,7 +14,6 @@ using WCDS.WebFuncions.Core.Validator;
 using WCDS.WebFuncions.Core.Common;
 using System.Linq;
 using WCDS.WebFuncions.Core.Model.ChargeExtract;
-using WCDS.WebFuncions.Core.Context;
 
 namespace WCDS.WebFuncions
 {
@@ -24,17 +23,15 @@ namespace WCDS.WebFuncions
         private readonly IAuditLogService _auditLogService;
         private readonly IWildfireFinanceService _wildfireFinanceService;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public CreateChargeExtract(IMapper mapper, IAuditLogService auditLogService, IWildfireFinanceService wildfireFinanceService, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
+        public CreateChargeExtract(IMapper mapper, IAuditLogService auditLogService, IWildfireFinanceService wildfireFinanceService, IHttpContextAccessor httpContextAccessor)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             _wildfireFinanceService = wildfireFinanceService;
             _httpContextAccessor = httpContextAccessor;
-            _dbContext = dbContext;
         }
 
         [FunctionName("CreateChargeExtract")]
@@ -43,17 +40,17 @@ namespace WCDS.WebFuncions
             _logger.LogInformation("Trigger function (CreateChargeExtract) received a request");
             try
             {
-                await _auditLogService.Audit("CreateChargeExtract");
+                await _auditLogService.Audit("CreateChargeExtract");                
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-
-                var chargeExtractObj = JsonConvert.DeserializeObject<CreateChargeExtractRequestDto>(requestBody);
+                
+                var chargeExtractObj = JsonConvert.DeserializeObject<CreateChargeExtractRequestDto>(requestBody);                
                 if (chargeExtractObj != null)
                 {
                     bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
                     if (tokenParsed)
                     {
                         chargeExtractObj.RequestedBy = parsedTokenResult;
-                        IChargeExtractController iController = new ChargeExtractController(_logger, _mapper, _wildfireFinanceService, _dbContext);
+                        IChargeExtractController iController = new ChargeExtractController(_logger, _mapper, _wildfireFinanceService);
                         CreateChargeExtractValidator validationRules = new CreateChargeExtractValidator(iController);
 
                         var validationResult = validationRules.Validate(chargeExtractObj);

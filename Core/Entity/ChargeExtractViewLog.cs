@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace WCDS.WebFuncions.Core.Entity
 {
-    public class ChargeExtractViewLog
+    internal class ChargeExtractViewLog
     {
         [Key]
         public Guid ChargeExtractViewLogId { get; set; }
