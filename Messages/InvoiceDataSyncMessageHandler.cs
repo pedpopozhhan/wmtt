@@ -106,7 +106,7 @@ namespace WCDS.WebFuncions
         // }
         public async Task SendInvoiceDataSyncMessage<T>(T invoice, string invoiceNumber, string subject)
         {
-            if (subject != "insert-invoice" && subject != "update-invoice" && subject != "delete-invoice")
+            if (subject != "insert" && subject != "update" && subject != "delete")
             {
                 throw new Exception($"{subject} must be insert-invoice, delete-invoice or update-invoice");
             }
