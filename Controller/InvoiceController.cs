@@ -110,7 +110,7 @@ namespace WCDS.WebFuncions.Controller
 
                     // all the child records are inserts
                     var dataPayload = CreateDataSyncInsertPayload(entity, entity.InvoiceTimeReportCostDetails, entity.InvoiceOtherCostDetails, entity.InvoiceTimeReports);
-                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "insert-invoice");
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "insert");
 
                     var toInsert = entity.InvoiceTimeReportCostDetails;
                     var payload = CreateStatusSyncPayload(entity, "update-invoice", entity.InvoiceTimeReportCostDetails, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>());
@@ -161,7 +161,7 @@ namespace WCDS.WebFuncions.Controller
                         throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
                     }
                     var dataPayload = CreateDataSyncUpdatePayload(entity, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceOtherCostDetails>(), new List<InvoiceTimeReports>());
-                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "update-invoice");
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "update");
 
                     return entity.UniqueServiceSheetName;
                 }
@@ -224,7 +224,7 @@ namespace WCDS.WebFuncions.Controller
 
                     //// insert-invoice to data team
                     var dataPayload = CreateDataSyncInsertPayload(entity, entity.InvoiceTimeReportCostDetails, entity.InvoiceOtherCostDetails, entity.InvoiceTimeReports);
-                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "insert-invoice");
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "insert");
 
                     var toInsert = entity.InvoiceTimeReportCostDetails;
                     var payload = CreateStatusSyncPayload(entity, "update-invoice", toInsert, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>());
@@ -348,13 +348,13 @@ namespace WCDS.WebFuncions.Controller
 
                     // send 3 messages, one for insert, one for update , one for delete
                     var updateDataPayload = CreateDataSyncUpdatePayload(entity, new List<InvoiceTimeReportCostDetails>(), otherCostDetailsToUpdate, new List<InvoiceTimeReports>());
-                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(updateDataPayload, entity.InvoiceNumber, "update-invoice");
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(updateDataPayload, entity.InvoiceNumber, "update");
 
                     var insertDataPayload = CreateDataSyncInsertPayload(entity, costDetailsToAdd, otherCostDetailsToAdd, timeReportsToAdd);
-                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(insertDataPayload, entity.InvoiceNumber, "insert-invoice");
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(insertDataPayload, entity.InvoiceNumber, "insert");
 
                     var deleteDataPayload = CreateDataSyncDeletePayload(costDetailsToRemove, otherCostDetailsToRemove, timeReportsToRemove);
-                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(deleteDataPayload, entity.InvoiceNumber, "delete-invoice");
+                    await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(deleteDataPayload, entity.InvoiceNumber, "delete");
 
                 }
                 catch (Exception ex)
@@ -417,7 +417,7 @@ namespace WCDS.WebFuncions.Controller
                     .Include(i => i.InvoiceTimeReports).FirstOrDefaultAsync();
 
                 var dataPayload = CreateDataSyncDeletePayload(updatedEntity.InvoiceTimeReportCostDetails, updatedEntity.InvoiceOtherCostDetails, updatedEntity.InvoiceTimeReports);
-                await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "delete-invoice");
+                await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "delete");
 
 
                 var payload = CreateStatusSyncPayload(updatedEntity, "update-invoice", new List<InvoiceTimeReportCostDetails>(), updatedEntity.InvoiceTimeReportCostDetails, new List<InvoiceTimeReportCostDetails>());
@@ -495,7 +495,7 @@ namespace WCDS.WebFuncions.Controller
                                             .Include(i => i.InvoiceTimeReports).FirstOrDefaultAsync();
 
                         var dataPayload = CreateDataSyncUpdatePayload(updatedEntity, updatedEntity.InvoiceTimeReportCostDetails, updatedEntity.InvoiceOtherCostDetails, updatedEntity.InvoiceTimeReports);
-                        await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "update-invoice");
+                        await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "update");
 
                         var statusPayload = CreateStatusSyncPayload(entity, "update-invoice", new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>(), updatedEntity.InvoiceTimeReportCostDetails);
                         await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(statusPayload, entity.InvoiceNumber);
