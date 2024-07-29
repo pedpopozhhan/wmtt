@@ -20,7 +20,7 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public string Status { get; set; }
         public decimal TotalCost { get; set; }
         public decimal RemainingCost { get; set; }
-        public bool IsInUse { get; set; }
+        
     }
 }
 
