@@ -41,16 +41,7 @@ namespace WCDS.WebFuncions.Core.Validator
 
         private bool InvoiceNumberDoesNotExist(InvoiceRequestDto request)
         {
-            // if creating a draft, this is valid...if not creating a draft, but sving a draft, it is not a valid
-            if (request.InvoiceId.HasValue && request.InvoiceId.Value != Guid.Empty)
-            {
-                var invoiceResponse = _invoiceController.GetInvoiceDetails(new InvoiceDetailRequestDto { InvoiceId = request.InvoiceId.Value });
-                if (string.Compare(invoiceResponse.Invoice.InvoiceNumber, request.InvoiceNumber) == 0)
-                {
-                    return true;
-                }
-            }
-            return !_invoiceController.InvoiceExistsForContract(request.InvoiceNumber, request.ContractNumber);
+            return !_invoiceController.InvoiceExistsForContract(request.InvoiceId, request.InvoiceNumber, request.ContractNumber);
         }
 
 
