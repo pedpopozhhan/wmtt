@@ -42,43 +42,7 @@ namespace WCDS.WebFuncions.Controller
             {
                 return costs;
             }
-            // are any of the costs, flightReportIds in the invoiceTimeReport table? and is that invoice a draft
-            var allFlightReportIds = costs.Data.Select(x => x.FlightReportId).Distinct();
-            var flightReportIdsSelected = new List<int>();
-
-            foreach (var flightReportId in allFlightReportIds)
-            {
-                var itrs = await _dbContext.InvoiceTimeReports.Where(x => x.FlightReportId == flightReportId).ToListAsync();
-                if (itrs.Count == 0)
-                {
-                    continue;
-                }
-                foreach (var itr in itrs)
-                {
-                    var invoice = await _dbContext.Invoice.Where(x => x.InvoiceId == itr.InvoiceId &&
-                    (x.InvoiceStatus == InvoiceStatus.Draft.ToString() || x.InvoiceStatus == InvoiceStatus.Processed.ToString()))
-                    .FirstOrDefaultAsync();
-                    if (invoice != null)
-                    {
-                        //remove this flightreport from costs.data
-                        flightReportIdsSelected.Add(flightReportId);
-                    }
-                }
-            }
-            // if the flight report is selected, mark the costs as selected
-            foreach (var cost in costs.Data)
-            {
-                if (flightReportIdsSelected.Contains(cost.FlightReportId))
-                {
-                    cost.IsInUse = true;
-                }
-                else
-                {
-                    cost.IsInUse = false;
-                }
-            }
-            //costs.Data.RemoveAll(x => flightReportIdsToRemove.Contains(x.FlightReportId));
-
+            
             // Updating the remaining cost if any of the cost details are already consumed
             List<TimeReportCostDto> timeReports = costs.Data;
             foreach (var item in timeReports)
