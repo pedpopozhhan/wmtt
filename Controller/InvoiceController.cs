@@ -18,7 +18,7 @@ namespace WCDS.WebFuncions.Controller
     {
         public Task<Guid> CreateInvoice(InvoiceDto invoice);
         public int UpdateInvoice(InvoiceDto invoice);
-        public bool InvoiceExistsForContract(string invoiceNumber, string contractNumber);
+        public bool InvoiceExistsForContract(Guid? _invoiceId, string invoiceNumber, string contractNumber);
         public InvoiceResponseDto GetInvoices(GetInvoiceRequestDto invoiceRequest);
         public InvoiceResponseDto GetInvoicesWithDetails(GetInvoiceRequestDto invoiceRequest);
         public InvoiceDetailResponseDto GetInvoiceDetails(InvoiceDetailRequestDto invoiceDetailRequest);
@@ -516,14 +516,32 @@ namespace WCDS.WebFuncions.Controller
             return 0;
         }
 
-        public bool InvoiceExistsForContract(string invoiceNumber, string contractNumber)
+        public bool InvoiceExistsForContract(Guid? _invoiceId, string invoiceNumber, string contractNumber)
         {
+            var invoiceId = _invoiceId ?? Guid.Empty;
+            /* // if creating a draft, this is valid...if not creating a draft, but sving a draft, it is not a valid
+            var invoiceId = invoiceId ?? Guid.Empty
+            if (request.InvoiceId.HasValue && request.InvoiceId.Value != Guid.Empty)
+            {
+                var invoiceResponse = _invoiceController.GetInvoiceDetails(new InvoiceDetailRequestDto { InvoiceId = request.InvoiceId.Value });
+                if (string.Compare(invoiceResponse.Invoice.InvoiceNumber, request.InvoiceNumber) == 0)
+                {
+                    return true;
+                }
+            }*/
+            /*if (string.Compare(invoiceResponse.Invoice.InvoiceNumber, request.InvoiceNumber) == 0)
+                {
+                    return true;
+                }*/
             bool bResult = false;
+            // this will still fail....for updates, should not call this
+
             try
             {
                 Invoice invoice = _dbContext.Invoice.Where(x =>
-                    x.InvoiceNumber == invoiceNumber && x.ContractNumber == contractNumber).FirstOrDefault();
-                if (invoice != null && string.Compare(invoice.InvoiceStatus, InvoiceStatus.DraftDeleted.ToString()) != 0)
+                    x.InvoiceNumber == invoiceNumber && x.ContractNumber == contractNumber && invoiceId != x.InvoiceId).FirstOrDefault();
+                if (invoice != null
+                    && string.Compare(invoice.InvoiceStatus, InvoiceStatus.DraftDeleted.ToString()) != 0)
                     bResult = true;
             }
             catch

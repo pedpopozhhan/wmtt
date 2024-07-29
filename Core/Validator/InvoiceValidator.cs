@@ -23,7 +23,7 @@ namespace WCDS.WebFuncions.Core.Validator
             RuleFor(x => x.InvoiceNumber).NotEmpty().WithMessage("Invoice number must not be null or an empty string.");
             RuleFor(x => x.InvoiceNumber).Matches(@"^[0-9a-zA-Z]+$").WithMessage("Invoice number must only be letters and numbers.");
             RuleFor(x => x.InvoiceId).Must(i => i.Equals(Guid.Empty)).WithMessage("Please provide valid value for Invoice ID.");
-            RuleFor(x => new { x.InvoiceNumber, x.ContractNumber }).Must(v => InvoiceNumberDoesNotExist(v.InvoiceNumber, v.ContractNumber)).WithMessage("Invoice Number already exists for Contract Number.");
+            RuleFor(x => new { x.InvoiceId, x.InvoiceNumber, x.ContractNumber }).Must(v => InvoiceNumberDoesNotExist(v.InvoiceId, v.InvoiceNumber, v.ContractNumber)).WithMessage("Invoice Number already exists for Contract Number.");
             RuleFor(x => x.InvoiceDate).NotNull().WithMessage("Please provide value for Invoice Date.");
             RuleFor(x => x.InvoiceDate).GreaterThan(_earliestPossibleDateforInvoice).WithMessage("Date cannot be 1950/02/01 or earlier.");
             RuleFor(x => new { x.InvoiceDate, x.PeriodEndDate }).Must(v => v.InvoiceDate >= v.PeriodEndDate).WithMessage("Invoice date Cannot be earlier than period ending date.");
@@ -34,13 +34,14 @@ namespace WCDS.WebFuncions.Core.Validator
             RuleFor(x => new { x.InvoiceTimeReportCostDetails, x.InvoiceOtherCostDetails }).Must(v => TimeReportOrOtherCostExists(v.InvoiceTimeReportCostDetails, v.InvoiceOtherCostDetails)).WithMessage("Invoice must have Time Report Costs or Other Costs");
             RuleFor(x => new { x.InvoiceOtherCostDetails }).Must(v => ValidateRateOfOtherCost(v.InvoiceOtherCostDetails)).WithMessage("Rate cannot be $0.00");
             RuleFor(x => new { x.InvoiceOtherCostDetails }).Must(v => ValidateMaxRateOfOtherCost(v.InvoiceOtherCostDetails)).WithMessage("Rate cannot exceed $99,999");
-            RuleFor(x => new { x.InvoiceOtherCostDetails }).Must(v => ValidateNoOfUnitsOfOtherCost(v.InvoiceOtherCostDetails)).WithMessage("No. of units cannot be 0");            
+            RuleFor(x => new { x.InvoiceOtherCostDetails }).Must(v => ValidateNoOfUnitsOfOtherCost(v.InvoiceOtherCostDetails)).WithMessage("No. of units cannot be 0");
             RuleFor(x => new { x.InvoiceOtherCostDetails }).Must(v => ValidateMaxNoOfUnitsOfOtherCost(v.InvoiceOtherCostDetails)).WithMessage("No. of units cannot exceed 99,999");
         }
 
-        private bool InvoiceNumberDoesNotExist(string invoiceNumber, string contractNumber)
+        private bool InvoiceNumberDoesNotExist(Guid? invoiceId, string invoiceNumber, string contractNumber)
         {
-            return !_invoiceController.InvoiceExistsForContract(invoiceNumber, contractNumber);
+
+            return !_invoiceController.InvoiceExistsForContract(invoiceId, invoiceNumber, contractNumber);
         }
         private bool TimeReportOrOtherCostExists(List<InvoiceTimeReportCostDetailDto> invoiceTimeReportCostDetails, List<InvoiceOtherCostDetailDto> invoiceOtherCostDetails)
         {

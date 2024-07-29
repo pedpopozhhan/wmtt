@@ -5,6 +5,7 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Context;
@@ -35,13 +36,21 @@ namespace WCDS.WebFuncions
             try
             {
 
+                if (!Guid.TryParse(req.Query["invoiceId"], out Guid invoiceId))
+                {
+                    jsonResult = new JsonResult("invoiceId must be a Guid")
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                    return jsonResult;
+                }
                 var invoiceNumber = req.Query["invoiceNumber"];
                 var contractNumber = req.Query["contractNumber"];
 
                 if (!string.IsNullOrEmpty(invoiceNumber) && !string.IsNullOrEmpty(contractNumber))
                 {
                     IInvoiceController iController = new InvoiceController(_logger, _mapper, _dbContext);
-                    var exists = iController.InvoiceExistsForContract(invoiceNumber, contractNumber);
+                    var exists = iController.InvoiceExistsForContract(invoiceId, invoiceNumber, contractNumber);
 
                     jsonResult = new JsonResult(exists);
                     jsonResult.StatusCode = StatusCodes.Status200OK;
