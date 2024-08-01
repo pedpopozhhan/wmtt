@@ -5,6 +5,9 @@
     <RootNamespace>WCDS.WebFuncions</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Controller\InvoiceController.cs~RFe823538.TMP" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="AutoMapper" Version="12.0.1" />
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="12.0.1" />
     <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.17.4" />

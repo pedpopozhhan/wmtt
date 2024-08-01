@@ -251,7 +251,6 @@ namespace WCDS.WebFuncions.Controller
 
             try
             {
-
                 // update
                 entity = _dbContext.Invoice.Where(x => x.InvoiceId == invoice.InvoiceId)
                 .Include(i => i.InvoiceTimeReportCostDetails)
@@ -264,19 +263,19 @@ namespace WCDS.WebFuncions.Controller
                     throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
                 }
 
-                var costDetailsToRemove = new List<InvoiceTimeReportCostDetails>();
-                var costDetailsToAdd = new List<InvoiceTimeReportCostDetails>();
-                // TODO clean up this method because we dont update anything
-                IList<InvoiceTimeReportCostDetails> costDetailsUnChanged = ProcessTimeReportCostDetails(invoice, entity, ref costDetailsToAdd, ref costDetailsToRemove);
-                _dbContext.InvoiceTimeReportCostDetails.RemoveRange(costDetailsToRemove);
-                _dbContext.InvoiceTimeReportCostDetails.AddRange(costDetailsToAdd);
-
                 var timeReportsToUpdate = new List<InvoiceTimeReports>();
                 var timeReportsToRemove = new List<InvoiceTimeReports>();
                 var timeReportsToAdd = new List<InvoiceTimeReports>();
                 IEnumerable<InvoiceTimeReports> timeReportsUnChanged = ProcessTimeReports(invoice, entity, ref timeReportsToAdd, ref timeReportsToUpdate, ref timeReportsToRemove);
                 _dbContext.InvoiceTimeReports.RemoveRange(timeReportsToRemove);
                 _dbContext.InvoiceTimeReports.AddRange(timeReportsToAdd);
+
+                var costDetailsToRemove = new List<InvoiceTimeReportCostDetails>();
+                var costDetailsToAdd = new List<InvoiceTimeReportCostDetails>();
+                // TODO clean up this method because we dont update anything
+                IList<InvoiceTimeReportCostDetails> costDetailsUnChanged = ProcessTimeReportCostDetails(invoice, entity, ref costDetailsToAdd, ref costDetailsToRemove);
+                _dbContext.InvoiceTimeReportCostDetails.RemoveRange(costDetailsToRemove);
+                _dbContext.InvoiceTimeReportCostDetails.AddRange(costDetailsToAdd);
 
                 var otherCostDetailsToUpdate = new List<InvoiceOtherCostDetails>();
                 var otherCostDetailsToRemove = new List<InvoiceOtherCostDetails>();
@@ -299,10 +298,7 @@ namespace WCDS.WebFuncions.Controller
                 entity.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
 
                 entity.InvoiceTimeReportCostDetails = costDetailsUnChanged.Concat(costDetailsToAdd).ToList();
-
-
                 entity.InvoiceOtherCostDetails = otherCostDetailsToUpdate.Concat(otherCostDetailsToAdd).Concat(otherCostDetailsUnChanged).ToList();
-                entity.InvoiceTimeReports = timeReportsToUpdate.Concat(timeReportsToAdd).ToList();
 
                 foreach (var timeReportCostDetail in costDetailsToAdd)
                 {
@@ -806,6 +802,7 @@ namespace WCDS.WebFuncions.Controller
                 x.InvoiceId = invoice.InvoiceId.Value;
                 return x;
             }).ToList();
+
             var costDetailsUnChanged = new List<InvoiceTimeReportCostDetails>();
             if (entity.InvoiceTimeReportCostDetails.Count == 0)
             {
@@ -832,8 +829,6 @@ namespace WCDS.WebFuncions.Controller
                 }
                 // if there are ids in the existing that are not in the new, they are being removed
                 costDetailsToRemove = entity.InvoiceTimeReportCostDetails.Where(x => !ids.Contains(x.FlightReportCostDetailsId)).ToList();
-
-
             }
 
             return costDetailsUnChanged;
@@ -887,7 +882,6 @@ namespace WCDS.WebFuncions.Controller
                         {
                             toUpdate.Add(i);
                         }
-
                     }
                     else
                     {
@@ -896,8 +890,6 @@ namespace WCDS.WebFuncions.Controller
                 }
                 // if there are ids in the existing that are not in the new, they are being removed
                 toRemove = entity.InvoiceOtherCostDetails.Where(x => !ids.Contains(x.InvoiceOtherCostDetailId)).ToList();
-
-
             }
 
             return unChanged;
@@ -905,8 +897,6 @@ namespace WCDS.WebFuncions.Controller
 
         private IEnumerable<InvoiceTimeReports> ProcessTimeReports(InvoiceRequestDto invoice, Invoice entity, ref List<InvoiceTimeReports> toAdd, ref List<InvoiceTimeReports> toUpdate, ref List<InvoiceTimeReports> toRemove)
         {
-
-
             var unChanged = new List<InvoiceTimeReports>();
             if (entity.InvoiceTimeReports.Count == 0)
             {
@@ -927,32 +917,36 @@ namespace WCDS.WebFuncions.Controller
                 // get all the existing ids
                 // if the new id is in the existing list, it is unchanged                
                 // if the new id is not in the list, it is added
-
                 foreach (var i in invoice.FlightReportIds)
                 {
                     var newEntity = new InvoiceTimeReports
                     {
                         FlightReportId = i,
                         InvoiceId = entity.InvoiceId,
-
                     };
                     if (entity.InvoiceTimeReports.Any(x => x.FlightReportId == i))
                     {
-                        unChanged.Add(newEntity);
+                        foreach(var item in invoice.InvoiceTimeReportCostDetails.Where(p => p.FlightReportId == i))
+                        {
+                            if (entity.InvoiceTimeReportCostDetails
+                                           .Where(p => p.FlightReportCostDetailsId == item.FlightReportCostDetailsId).Count() == 0 && toUpdate.Where(p => p.FlightReportId == i).Count() == 0)
+                            {
+                                toUpdate.Add(newEntity);
+                            }   
+                        }
                     }
                     else
                     {
                         toAdd.Add(newEntity);
                     }
+
+                    if (toUpdate.Where(p => p.FlightReportId == i).Count() == 0 && toAdd.Where(p => p.FlightReportId == i).Count() == 0)
+                        unChanged.Add(newEntity);
                 }
                 // if there are ids in the existing that are not in the new, they are being removed
                 toRemove = entity.InvoiceTimeReports.Where(x => !invoice.FlightReportIds.Contains(x.FlightReportId)).ToList();
-
-
             }
-
             return unChanged;
         }
-
     }
 }
