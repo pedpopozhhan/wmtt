@@ -298,7 +298,9 @@ namespace WCDS.WebFuncions.Migrations
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.InvoiceTimeReportCostDetails", b =>
                 {
                     b.Property<Guid>("FlightReportCostDetailsId")
-                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("InvoiceId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Account")
@@ -340,9 +342,6 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("InternalOrder")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<Guid>("InvoiceId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<decimal>("NoOfUnits")
                         .HasColumnType("decimal(18,2)");
 
@@ -364,7 +363,7 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<DateTime?>("UpdatedByDateTime")
                         .HasColumnType("datetime2");
 
-                    b.HasKey("FlightReportCostDetailsId");
+                    b.HasKey("FlightReportCostDetailsId", "InvoiceId");
 
                     b.HasIndex("InvoiceId");
 

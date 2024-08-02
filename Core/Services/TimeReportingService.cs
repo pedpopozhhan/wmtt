@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model.Services;
+using WCDS.WebFuncions.Enums;
 
 namespace WCDS.WebFuncions.Core.Services
 {
@@ -69,7 +70,9 @@ namespace WCDS.WebFuncions.Core.Services
             Response<TimeReportCostDetailDto> responseData = JsonConvert.DeserializeObject<Response<TimeReportCostDetailDto>>(json, settings);
             if (responseData.Data != null && responseData.Data.Count > 0)
             {
-                responseData.Data = responseData.Data.Where(i => !_dbContext.InvoiceTimeReportCostDetails.Any(r => r.FlightReportCostDetailsId == i.FlightReportCostDetailsId)).ToList();
+                var softDeletedInvoices = _dbContext.Invoice.Where(p => p.InvoiceStatus == InvoiceStatus.DraftDeleted.ToString()).Select(inv => inv.InvoiceId).ToHashSet();
+                responseData.Data = responseData.Data.Where(i => !_dbContext.InvoiceTimeReportCostDetails.Any(r => r.FlightReportCostDetailsId == i.FlightReportCostDetailsId
+                                                                    && !softDeletedInvoices.Contains(r.InvoiceId))).ToList();
             }
 
             return responseData;
