@@ -7,6 +7,7 @@ namespace WCDS.WebFuncions.Core.Entity
     {
         [Key]
         public Guid FlightReportCostDetailsId { get; set; }
+        [Key]
         public Guid InvoiceId { get; set; }
         public DateTime FlightReportDate { get; set; }
         public string ContractRegistrationName { get; set; }
