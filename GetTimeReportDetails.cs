@@ -3,12 +3,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using WCDS.WebFuncions.Core.Context;
+using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Services;
@@ -24,29 +27,27 @@ namespace WCDS.WebFuncions
         private readonly ITimeReportingService _timeReportingService;
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly ApplicationDBContext _dbContext;
         JsonResult jsonResult = null;
 
-        public GetTimeReportDetails(IDomainService domainService, ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
+        public GetTimeReportDetails(IDomainService domainService, ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
             _domainService = domainService;
             _timeReportingService = timeReportingService;
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _dbContext = dbContext;
         }
-
 
         [FunctionName("GetTimeReportDetails")]
         public async Task<ActionResult<TimeReportDetailsResponse[]>> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
-
             await _auditLogService.Audit("GetTimeReportDetails");
             try
             {
                 log.LogInformation("Trigger function (GetTimeReportDetails) received a request.");
-
-
                 log.LogInformation("Reading rateunits from DomainService");
                 var rateUnits = await _domainService.GetRateUnits();
                 log.LogInformation("Reading ratetypes from DomainService");
@@ -63,7 +64,6 @@ namespace WCDS.WebFuncions
                     jsonResult = new JsonResult(rateUnits.ErrorMessage);
                     jsonResult.StatusCode = StatusCodes.Status424FailedDependency;
                     return jsonResult;
-
                 }
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<TimeReportDetailsRequest>(requestBody);
@@ -87,11 +87,9 @@ namespace WCDS.WebFuncions
                         StatusCode = StatusCodes.Status200OK
                     };
                     return jsonResult;
-
                 }
-                var details = await _timeReportingService.GetTimeReportByIds(data.TimeReportIds);
-
-
+                
+                var details = await new TimeReportController(_timeReportingService, log, _mapper, _dbContext).GetTimeReportDetailsByIds(data);
                 if (!string.IsNullOrEmpty(details.ErrorMessage))
                 {
                     jsonResult = new JsonResult(details.ErrorMessage)

@@ -52,8 +52,16 @@ namespace WCDS.WebFuncions.Core.Common
             CreateMap<ChargeExtractViewLog, ChargeExtractViewLogDto>().ReverseMap();
             CreateMap<Invoice, InvoiceRequestDto>().ForMember(x => x.FlightReportIds, opt => opt.Ignore()).ReverseMap();
             CreateMap<InvoiceTimeReports, InvoiceTimeReportsDto>().ReverseMap();
-
-
+            CreateMap<InvoiceTimeReportCostDetails, TimeReportCostDetailDto>()
+                .ForMember(i => i.ContractRegistrationId, opt => opt.Ignore())
+                .ForMember(i => i.Status, opt => opt.Ignore())
+                .ForMember(i => i.RateTypeId, opt => opt.Ignore())
+                .ForMember(i => i.RateUnitId, opt => opt.Ignore())
+                .ForMember(i => i.ContractId, opt => opt.Ignore())
+                .ForMember(i => i.VendorId, opt => opt.Ignore())
+                .ForMember(i => i.ContractNumber, opt => opt.Ignore())
+                .ForMember(i => i.VendorName, opt => opt.Ignore())
+                .ForMember(i => i.FinanceVendorId, opt => opt.Ignore()).ReverseMap();
         }
     }
 }
