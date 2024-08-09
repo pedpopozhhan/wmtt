@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity;
 using WCDS.WebFuncions.Core.Model;
+using WCDS.WebFuncions.Core.Validator;
 using WCDS.WebFuncions.Enums;
 
 namespace WCDS.WebFuncions.Controller
@@ -750,7 +751,10 @@ namespace WCDS.WebFuncions.Controller
                 Tables = new InvoiceDataSyncDeleteInvoiceMessageDetailCostDto
                 {
                     InvoiceOtherCostDetails = other.Select(x => x.InvoiceOtherCostDetailId).ToList(),
-                    InvoiceTimeReportCostDetails = costDetails.Select(x => x.FlightReportCostDetailsId).ToList(),
+                    InvoiceTimeReportCostDetails = costDetails.Select(x =>
+                    {
+                        return new InvoiceTimeReportCostDetailsDeleteRowDto { InvoiceId = x.InvoiceId, FlightReportCostDetailsId = x.FlightReportCostDetailsId };
+                    }).ToList(),
                     InvoiceTimeReports = timeReports.Select(x => x.InvoiceTimeReportId).ToList()
                 }
             };
@@ -926,13 +930,13 @@ namespace WCDS.WebFuncions.Controller
                     };
                     if (entity.InvoiceTimeReports.Any(x => x.FlightReportId == i))
                     {
-                        foreach(var item in invoice.InvoiceTimeReportCostDetails.Where(p => p.FlightReportId == i))
+                        foreach (var item in invoice.InvoiceTimeReportCostDetails.Where(p => p.FlightReportId == i))
                         {
                             if (entity.InvoiceTimeReportCostDetails
                                            .Where(p => p.FlightReportCostDetailsId == item.FlightReportCostDetailsId).Count() == 0 && toUpdate.Where(p => p.FlightReportId == i).Count() == 0)
                             {
                                 toUpdate.Add(newEntity);
-                            }   
+                            }
                         }
                     }
                     else
