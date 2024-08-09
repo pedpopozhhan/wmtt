@@ -23,7 +23,6 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public string FireYear { get; set; }
         public string InternalOrder { get; set; }
         public string Fund { get; set; }
-
-
+        public Guid InvoiceID { get; set; }
     }
 }

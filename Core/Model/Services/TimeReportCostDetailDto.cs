@@ -27,5 +27,6 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public string InternalOrder { get; set; }
         public string Fund { get; set; }
         public decimal RatePerUnit { get; set; }
+        public Guid InvoiceID { get; set; }
     }
 }
