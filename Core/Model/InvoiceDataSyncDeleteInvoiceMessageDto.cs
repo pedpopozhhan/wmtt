@@ -21,9 +21,16 @@ namespace WCDS.WebFuncions.Core.Model
 
         public InvoiceDataSyncDeleteInvoiceMessageDetailCostDto Tables { get; set; }
     }
+
+    public class InvoiceTimeReportCostDetailsDeleteRowDto
+    {
+        public Guid InvoiceId { get; set; }
+        public Guid FlightReportCostDetailsId { get; set; }
+    }
+
     public class InvoiceDataSyncDeleteInvoiceMessageDetailCostDto
     {
-        public List<Guid> InvoiceTimeReportCostDetails { get; set; }
+        public List<InvoiceTimeReportCostDetailsDeleteRowDto> InvoiceTimeReportCostDetails { get; set; }
         public List<Guid> InvoiceOtherCostDetails { get; set; }
         public List<Guid> InvoiceTimeReports { get; set; }
 
