@@ -720,16 +720,14 @@ namespace WCDS.WebFuncions.Controller
         private InvoiceDataSyncMessageDto CreateDataSyncInsertPayload(Invoice invoiceEntity,
                 IList<InvoiceTimeReportCostDetails> costDetails, IList<InvoiceOtherCostDetails> other, IList<InvoiceTimeReports> timeReports)
         {
-            var messageDetailInvoice = new InvoiceDataSyncMessageDetailInvoiceDto
+            var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceEntity);
+            messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto
             {
-                Tables = new InvoiceDataSyncMessageDetailCostDto
-                {
-                    InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(other),
-                    InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(costDetails),
-                    InvoiceTimeReports = _mapper.Map<List<InvoiceTimeReportsDto>>(timeReports)
-                }
+                InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(other),
+                InvoiceTimeReportCostDetails = _mapper.Map<List<InvoiceTimeReportCostDetailDto>>(costDetails),
+                InvoiceTimeReports = _mapper.Map<List<InvoiceTimeReportsDto>>(timeReports)
             };
-            // only updated records
+
             var payload = new InvoiceDataSyncMessageDto
             {
                 Action = "insert-invoice",
@@ -746,6 +744,7 @@ namespace WCDS.WebFuncions.Controller
         private static InvoiceDataSyncDeleteInvoiceMessageDto CreateDataSyncDeletePayload(
         IList<InvoiceTimeReportCostDetails> costDetails, IList<InvoiceOtherCostDetails> other, IList<InvoiceTimeReports> timeReports)
         {
+
             var messageDetailInvoice = new InvoiceDataSyncDeleteInvoiceMessageDetailInvoiceDto
             {
                 Tables = new InvoiceDataSyncDeleteInvoiceMessageDetailCostDto
