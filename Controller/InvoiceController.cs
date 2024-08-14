@@ -136,30 +136,18 @@ namespace WCDS.WebFuncions.Controller
             IDbContextTransaction transaction = _dbContext.Database.BeginTransaction();
             try
             {
-                var newInvoice = new Invoice
-                {
-                    InvoiceId = invoice.InvoiceId.Value,
-                    UniqueServiceSheetName = invoice.UniqueServiceSheetName,
-                    UpdatedBy = invoice.UpdatedBy,
-                    UpdatedByDateTime = DateTime.UtcNow,
-                    InvoiceStatus = InvoiceStatus.Processed.ToString()
-                };
-
-                _dbContext.Attach(newInvoice);
-
-                // Mark specific properties as modified
-                _dbContext.Entry(newInvoice).Property(x => x.UniqueServiceSheetName).IsModified = true;
-                _dbContext.Entry(newInvoice).Property(x => x.UpdatedBy).IsModified = true;
-                _dbContext.Entry(newInvoice).Property(x => x.UpdatedByDateTime).IsModified = true;
-                _dbContext.Entry(newInvoice).Property(x => x.InvoiceStatus).IsModified = true;
-                // Save changes to the database
-                _dbContext.SaveChanges();
-                transaction.Commit();
-                var entity = _dbContext.Invoice.FirstOrDefault(ss => ss.InvoiceId == invoice.InvoiceId);
+                var entity = _dbContext.Invoice.Where(x => x.InvoiceId == invoice.InvoiceId.Value).FirstOrDefault();
                 if (entity == null)
                 {
                     throw new System.Exception($"No Invoice found for InvoiceId - {invoice.InvoiceId} in the Database.");
                 }
+                entity.UniqueServiceSheetName = invoice.UniqueServiceSheetName;
+                entity.UpdatedByDateTime = DateTime.UtcNow;
+                entity.InvoiceStatus = InvoiceStatus.Processed.ToString();
+
+                _dbContext.SaveChanges();
+                transaction.Commit();
+
                 var dataPayload = CreateDataSyncUpdatePayload(entity, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceOtherCostDetails>(), new List<InvoiceTimeReports>());
                 await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "update");
 
