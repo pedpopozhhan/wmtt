@@ -337,12 +337,7 @@ namespace WCDS.WebFuncions.Controller
 
                 _dbContext.SaveChanges();
                 transaction.Commit();
-                // update-invoice to data team
-                /**
-                    When we are updating, if we are updating the invoice, populate the invoice fields, otherwise set to null,
-                    1. When the child tables are updating, update payload should show the updating child records.
-2. When deleting, we need to send an update=invoice message that shows the DraftDeleted change.
-                **/
+
                 // send messages
                 var statusPayload = CreateStatusSyncPayload(entity, "update-invoice", costDetailsToAdd, costDetailsToRemove, costDetailsUnChanged);
                 await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(statusPayload, entity.InvoiceNumber);
