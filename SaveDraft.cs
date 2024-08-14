@@ -39,7 +39,7 @@ namespace WCDS.WebFuncions
         }
 
         [FunctionName("SaveDraft")]
-        public async Task<ActionResult<InvoiceResponseDto>> Run(
+        public async Task<ActionResult<InvoiceDto>> Run(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = null)] HttpRequest req,
             ILogger log)
         {
@@ -71,7 +71,7 @@ namespace WCDS.WebFuncions
                         jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                         return jsonResult;
                     }
-                    Guid result = Guid.Empty;
+                    InvoiceDto result = null;
                     if (!data.InvoiceId.HasValue || data.InvoiceId == Guid.Empty)
                     {
                         result = await invoiceController.CreateDraft(data, parsedTokenResult);

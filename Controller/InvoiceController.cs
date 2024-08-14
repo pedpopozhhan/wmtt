@@ -26,8 +26,8 @@ namespace WCDS.WebFuncions.Controller
         public Task<string> UpdateProcessedInvoice(InvoiceDto invoice);
         public Task<bool> UpdateInvoiceStatus(UpdateInvoiceStatusRequestDto request);
         public CostDetailsResponseDto GetCostDetails(CostDetailsRequestDto request);
-        public Task<Guid> UpdateDraft(InvoiceRequestDto invoice, string user);
-        public Task<Guid> CreateDraft(InvoiceRequestDto invoice, string user);
+        public Task<InvoiceDto> UpdateDraft(InvoiceRequestDto invoice, string user);
+        public Task<InvoiceDto> CreateDraft(InvoiceRequestDto invoice, string user);
         public Task<Guid> DeleteDraft(Guid invoiceId, string user);
     }
 
@@ -175,7 +175,7 @@ namespace WCDS.WebFuncions.Controller
         }
 
 
-        public async Task<Guid> CreateDraft(InvoiceRequestDto invoice, string user)
+        public async Task<InvoiceDto> CreateDraft(InvoiceRequestDto invoice, string user)
         {
 
             var dt = DateTime.UtcNow;
@@ -230,9 +230,9 @@ namespace WCDS.WebFuncions.Controller
                     var payload = CreateStatusSyncPayload(entity, "update-invoice", toInsert, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceTimeReportCostDetails>());
                     await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(payload, entity.InvoiceNumber);
 
-                    return entity.InvoiceId;
+                    return _mapper.Map<Invoice, InvoiceDto>(entity);
                 }
-                return Guid.Empty;
+                return null;
             }
             catch (Exception ex)
             {
@@ -244,7 +244,7 @@ namespace WCDS.WebFuncions.Controller
         }
 
 
-        public async Task<Guid> UpdateDraft(InvoiceRequestDto invoice, string user)
+        public async Task<InvoiceDto> UpdateDraft(InvoiceRequestDto invoice, string user)
         {
             var dt = DateTime.UtcNow;
             Invoice entity = null;
@@ -338,6 +338,11 @@ namespace WCDS.WebFuncions.Controller
                 _dbContext.SaveChanges();
                 transaction.Commit();
                 // update-invoice to data team
+                /**
+                    When we are updating, if we are updating the invoice, populate the invoice fields, otherwise set to null,
+                    1. When the child tables are updating, update payload should show the updating child records.
+2. When deleting, we need to send an update=invoice message that shows the DraftDeleted change.
+                **/
                 // send messages
                 var statusPayload = CreateStatusSyncPayload(entity, "update-invoice", costDetailsToAdd, costDetailsToRemove, costDetailsUnChanged);
                 await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(statusPayload, entity.InvoiceNumber);
@@ -346,7 +351,7 @@ namespace WCDS.WebFuncions.Controller
                 var updateDataPayload = CreateDataSyncUpdatePayload(entity, new List<InvoiceTimeReportCostDetails>(), otherCostDetailsToUpdate, new List<InvoiceTimeReports>());
                 await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(updateDataPayload, entity.InvoiceNumber, "update");
 
-                var insertDataPayload = CreateDataSyncInsertPayload(entity, costDetailsToAdd, otherCostDetailsToAdd, timeReportsToAdd);
+                var insertDataPayload = CreateDataSyncInsertPayload(null, costDetailsToAdd, otherCostDetailsToAdd, timeReportsToAdd);
                 await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(insertDataPayload, entity.InvoiceNumber, "insert");
 
                 var deleteDataPayload = CreateDataSyncDeletePayload(costDetailsToRemove, otherCostDetailsToRemove, timeReportsToRemove);
@@ -360,7 +365,7 @@ namespace WCDS.WebFuncions.Controller
                 throw;
             }
 
-            return entity.InvoiceId;
+            return _mapper.Map<Invoice, InvoiceDto>(entity);
         }
 
 
@@ -414,6 +419,9 @@ namespace WCDS.WebFuncions.Controller
 
                 var dataPayload = CreateDataSyncDeletePayload(updatedEntity.InvoiceTimeReportCostDetails, updatedEntity.InvoiceOtherCostDetails, updatedEntity.InvoiceTimeReports);
                 await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "delete");
+
+                var updatePayload = CreateDataSyncUpdatePayload(updatedEntity, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceOtherCostDetails>(), new List<InvoiceTimeReports>());
+                await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(updatePayload, entity.InvoiceNumber, "update");
 
 
                 var payload = CreateStatusSyncPayload(updatedEntity, "update-invoice", new List<InvoiceTimeReportCostDetails>(), updatedEntity.InvoiceTimeReportCostDetails, new List<InvoiceTimeReportCostDetails>());
@@ -720,7 +728,8 @@ namespace WCDS.WebFuncions.Controller
         private InvoiceDataSyncMessageDto CreateDataSyncInsertPayload(Invoice invoiceEntity,
                 IList<InvoiceTimeReportCostDetails> costDetails, IList<InvoiceOtherCostDetails> other, IList<InvoiceTimeReports> timeReports)
         {
-            var messageDetailInvoice = _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceEntity);
+
+            var messageDetailInvoice = (invoiceEntity == null) ? new InvoiceDataSyncMessageDetailInvoiceDto() : _mapper.Map<InvoiceDataSyncMessageDetailInvoiceDto>(invoiceEntity);
             messageDetailInvoice.Tables = new InvoiceDataSyncMessageDetailCostDto
             {
                 InvoiceOtherCostDetails = _mapper.Map<List<InvoiceOtherCostDetailDto>>(other),
