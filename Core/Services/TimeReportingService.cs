@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Net.Http;
+using System.Security.Principal;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
@@ -9,6 +10,7 @@ using Newtonsoft.Json;
 using WCDS.WebFuncions.Core.Common;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model.Services;
+using WCDS.WebFuncions.Enums;
 
 namespace WCDS.WebFuncions.Core.Services
 {
@@ -25,12 +27,14 @@ namespace WCDS.WebFuncions.Core.Services
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
         ApplicationDBContext _dbContext;
-        public TimeReportingService(ILogger<TimeReportingService> log, HttpClient httpClient, IHttpContextAccessor httpContextAccessor)
+        private readonly string _token;
+        public TimeReportingService(ILogger<TimeReportingService> log, HttpClient httpClient, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
         {
             _httpClient = httpClient;
             this._httpContextAccessor = httpContextAccessor;
             _log = log ?? throw new ArgumentNullException(nameof(log));
-            _dbContext = new ApplicationDBContext();
+            _dbContext = dbContext;
+            _token = GetToken();
         }
 
         public async Task<Response<TimeReportCostDetailDto>> GetTimeReportByIds(int[] ids)
@@ -49,11 +53,11 @@ namespace WCDS.WebFuncions.Core.Services
             var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
             using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
-            requestMessage.Headers.TryAddWithoutValidation("Authorization", GetToken());
+            requestMessage.Headers.TryAddWithoutValidation("Authorization", _token);
             requestMessage.Content = requestContent;
-            await LoggerHelper.LogRequestAsync(_log, requestMessage);
+            // await LoggerHelper.LogRequestAsync(_log, requestMessage);
             var response = await _httpClient.SendAsync(requestMessage);
-            await LoggerHelper.LogResponseAsync(_log, response);
+            // await LoggerHelper.LogResponseAsync(_log, response);
             response.EnsureSuccessStatusCode();
 
             // Handle the http response
@@ -66,7 +70,9 @@ namespace WCDS.WebFuncions.Core.Services
             Response<TimeReportCostDetailDto> responseData = JsonConvert.DeserializeObject<Response<TimeReportCostDetailDto>>(json, settings);
             if (responseData.Data != null && responseData.Data.Count > 0)
             {
-                responseData.Data = responseData.Data.Where(i => !_dbContext.InvoiceTimeReportCostDetails.Any(r => r.FlightReportCostDetailsId == i.FlightReportCostDetailsId)).ToList();
+                var softDeletedInvoices = _dbContext.Invoice.Where(p => p.InvoiceStatus == InvoiceStatus.DraftDeleted.ToString()).Select(inv => inv.InvoiceId).ToHashSet();
+                responseData.Data = responseData.Data.Where(i => !_dbContext.InvoiceTimeReportCostDetails.Any(r => r.FlightReportCostDetailsId == i.FlightReportCostDetailsId
+                                                                    && !softDeletedInvoices.Contains(r.InvoiceId))).ToList();
             }
 
             return responseData;
@@ -88,7 +94,7 @@ namespace WCDS.WebFuncions.Core.Services
             var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
             using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
-            requestMessage.Headers.TryAddWithoutValidation("Authorization", GetToken());
+            requestMessage.Headers.TryAddWithoutValidation("Authorization", _token);
             requestMessage.Content = requestContent;
             await LoggerHelper.LogRequestAsync(_log, requestMessage);
             var response = await _httpClient.SendAsync(requestMessage);
@@ -130,7 +136,7 @@ namespace WCDS.WebFuncions.Core.Services
             var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
 
             using var requestMessage = new HttpRequestMessage(HttpMethod.Post, url);
-            requestMessage.Headers.TryAddWithoutValidation("Authorization", GetToken());
+            requestMessage.Headers.TryAddWithoutValidation("Authorization", _token);
             requestMessage.Content = requestContent;
             await LoggerHelper.LogRequestAsync(_log, requestMessage);
             var response = await _httpClient.SendAsync(requestMessage);

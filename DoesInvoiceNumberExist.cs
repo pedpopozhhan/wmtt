@@ -5,8 +5,10 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
 using System;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using WCDS.WebFuncions.Controller;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions
@@ -15,13 +17,15 @@ namespace WCDS.WebFuncions
     {
         private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public DoesInvoiceNumberExist(IMapper mapper, IAuditLogService auditLogService)
+        public DoesInvoiceNumberExist(IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
+            _dbContext = dbContext;
         }
 
         [FunctionName("DoesInvoiceNumberExist")]
@@ -32,13 +36,21 @@ namespace WCDS.WebFuncions
             try
             {
 
+                if (!Guid.TryParse(req.Query["invoiceId"], out Guid invoiceId))
+                {
+                    jsonResult = new JsonResult("invoiceId must be a Guid")
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
+                    return jsonResult;
+                }
                 var invoiceNumber = req.Query["invoiceNumber"];
                 var contractNumber = req.Query["contractNumber"];
 
                 if (!string.IsNullOrEmpty(invoiceNumber) && !string.IsNullOrEmpty(contractNumber))
                 {
-                    IInvoiceController iController = new InvoiceController(_logger, _mapper);
-                    var exists = iController.InvoiceExistsForContract(invoiceNumber, contractNumber);
+                    IInvoiceController iController = new InvoiceController(_logger, _mapper, _dbContext);
+                    var exists = iController.InvoiceExistsForContract(invoiceId, invoiceNumber, contractNumber);
 
                     jsonResult = new JsonResult(exists);
                     jsonResult.StatusCode = StatusCodes.Status200OK;

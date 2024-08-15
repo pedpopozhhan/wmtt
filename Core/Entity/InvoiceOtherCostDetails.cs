@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace WCDS.WebFuncions.Core.Entity
 {
-    internal class InvoiceOtherCostDetails
+    public class InvoiceOtherCostDetails : EntityBase
     {
         [Key]
         public Guid InvoiceOtherCostDetailId { get; set; }
@@ -22,9 +22,5 @@ namespace WCDS.WebFuncions.Core.Entity
         public string InternalOrder { get; set; }
         public string Fund { get; set; }
         public string Remarks { get; set; }
-        public string CreatedBy { get; set; }
-        public DateTime? CreatedByDateTime { get; set; }
-        public string UpdatedBy { get; set; }
-        public DateTime? UpdatedByDateTime { get; set; }
     }
 }

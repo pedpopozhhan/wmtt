@@ -8,6 +8,8 @@ using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using WCDS.WebFuncions.Controller;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 
@@ -19,14 +21,18 @@ namespace WCDS.WebFuncions
     public class GetTimeReportCosts
     {
         private readonly ITimeReportingService _timeReportingService;
+        private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService)
+        public GetTimeReportCosts(ITimeReportingService timeReportingService, IMapper mapper, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
             _timeReportingService = timeReportingService;
+            _mapper = mapper;
             _auditLogService = auditLogService;
+            _dbContext = dbContext;
         }
 
 
@@ -49,23 +55,37 @@ namespace WCDS.WebFuncions
                     return jsonResult;
                 }
                 if (data != null)
-                {
-                    var costs = await _timeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
-                    if (!string.IsNullOrEmpty(costs.ErrorMessage))
+                { // Retrieves for the tabs tab
+                    if (data.Status.ToLower() == "approved")
                     {
-                        jsonResult = new JsonResult(costs.ErrorMessage);
-                        jsonResult.StatusCode = StatusCodes.Status424FailedDependency;
+                        var responseDto = await new TimeReportController(_timeReportingService, log, _mapper, _dbContext).GetApprovedTimeReports(data);
+                        var response = new TimeReportCostsResponse
+                        {
+                            Rows = responseDto.Data.ToArray()
+                        };
+                        jsonResult = new JsonResult(response);
+                        jsonResult.StatusCode = StatusCodes.Status200OK;
                         return jsonResult;
                     }
-
-                    var response = new TimeReportCostsResponse
+                    else
                     {
-                        Rows = costs.Data.ToArray()
-                    };
+                        var costs = await _timeReportingService.GetTimeReportCosts(data.ContractNumber, data.Status);
+                        if (!string.IsNullOrEmpty(costs.ErrorMessage))
+                        {
+                            jsonResult = new JsonResult(costs.ErrorMessage);
+                            jsonResult.StatusCode = StatusCodes.Status424FailedDependency;
+                            return jsonResult;
+                        }
 
-                    jsonResult = new JsonResult(response);
-                    jsonResult.StatusCode = StatusCodes.Status200OK;
-                    return jsonResult;
+                        var response = new TimeReportCostsResponse
+                        {
+                            Rows = costs.Data.ToArray()
+                        };
+
+                        jsonResult = new JsonResult(response);
+                        jsonResult.StatusCode = StatusCodes.Status200OK;
+                        return jsonResult;
+                    }
                 }
                 else
                 {
@@ -73,7 +93,6 @@ namespace WCDS.WebFuncions
                     jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                     return jsonResult;
                 }
-
             }
             catch (Exception ex)
             {

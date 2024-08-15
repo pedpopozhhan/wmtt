@@ -11,6 +11,7 @@ using System.Text;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity;
 using WCDS.WebFuncions.Core.Model.ChargeExtract;
+using WCDS.WebFuncions.Core.Services;
 
 namespace WCDS.WebFuncions.Controller
 {
@@ -19,6 +20,7 @@ namespace WCDS.WebFuncions.Controller
         public ChargeExtractResponseDto? CreateChargeExtract(CreateChargeExtractRequestDto chargeExtractReq);
         public ChargeExtractResponseDto GetChargeExtract(string chargeExtractId);
         public bool InvoiceAlreadyExtracted(string invoiceId, string contractNumber);
+        public bool InvoiceHasSESNumber(string invoiceId, string contractNumber);
     }
     public class ChargeExtractController : IChargeExtractController
     {
@@ -35,14 +37,15 @@ namespace WCDS.WebFuncions.Controller
         List<string> _filesPutInAzureStorage;
         List<ChargeExtractFileDto> _extractFiles;
         List<ChargeExtractDto> _extendedExtract;
+        private readonly IWildfireFinanceService _wildfireFinanceService;
 
         int _maxNumberOfCostItems = 995;
         StringBuilder _output;
         bool _abort = false;
 
-        public ChargeExtractController(ILogger log, IMapper mapper)
+        public ChargeExtractController(ILogger log, IMapper mapper, IWildfireFinanceService wildfireFinanceService, ApplicationDBContext dbContext)
         {
-            _dbContext = new ApplicationDBContext();
+            _dbContext = dbContext;
             _responseDto = new ChargeExtractResponseDto();
             _otherCosts = new List<InvoiceOtherCostDetails>();
             _timeReportCosts = new List<InvoiceTimeReportCostDetails>();
@@ -53,6 +56,7 @@ namespace WCDS.WebFuncions.Controller
             _filesPutInAzureStorage = new List<string>();
             _extractFiles = new List<ChargeExtractFileDto>();
             _extendedExtract = new List<ChargeExtractDto>();
+            _wildfireFinanceService = wildfireFinanceService;
 
             _logger = log;
             _mapper = mapper;
@@ -141,22 +145,22 @@ namespace WCDS.WebFuncions.Controller
                 }
 
                 // Remove records from database
-                using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
-                {
-                    foreach (var item in _updatedInvoices)
-                    {
-                        item.ChargeExtractId = null;
-                        _dbContext.Invoice.Update(item);
-                        _dbContext.SaveChanges();
-                    }
+                IDbContextTransaction transaction = _dbContext.Database.BeginTransaction();
 
-                    _newChargeExtracts.ForEach(item =>
-                    {
-                        _dbContext.ChargeExtract.Remove(item);
-                        _dbContext.SaveChanges();
-                    });
-                    transaction.Commit();
+                foreach (var item in _updatedInvoices)
+                {
+                    item.ChargeExtractId = null;
+                    _dbContext.Invoice.Update(item);
+                    _dbContext.SaveChanges();
                 }
+
+                _newChargeExtracts.ForEach(item =>
+                {
+                    _dbContext.ChargeExtract.Remove(item);
+                    _dbContext.SaveChanges();
+                });
+                transaction.Commit();
+
                 _responseDto = null;
             }
 
@@ -237,106 +241,115 @@ namespace WCDS.WebFuncions.Controller
             var contractNumber = invoice.ContractNumber;
             decimal grandTotal = _groupedRows.Sum(x => x.total);
 
+
+            var resp = _wildfireFinanceService.GetFinanceDocuments(new Core.Model.FinanceDocument.FinanceDocumentRequestDto
+            {
+                InvoiceNumber = invoice.InvoiceNumber,
+                InvoiceAmount = invoice.InvoiceAmount.Value,
+                VendorBusinessId = invoice.VendorBusinessId
+            }).Result?.Data?.FirstOrDefault();
+            string documentOrVoucherId = resp == null ? string.Empty : resp.AccountingDocument;
+
             ChargeExtractDto chargeExtractDto = null;
             _output = new StringBuilder();
-            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
+            IDbContextTransaction transaction = _dbContext.Database.BeginTransaction();
+
+            try
             {
-                try
+                //First Row
+                _output.Append(GetFirstRow());
+                _output.Append("\r\n");
+
+                // Main Header Row
+                _output.Append(GetHeaderRow());
+                _output.Append("\r\n");
+
+                // Detail Row Header
+                _output.Append(GetDetailHeaderRow());
+                _output.Append("\r\n");
+
+                // Main Header Row Data
+                var formattedVendorInfo = vendorName + " " + vendor;
+                _output.Append(GetHeaderDataRow(_requestDto.ChargeExtractDateTime, formattedVendorInfo));
+                _output.Append("\r\n");
+
+                //Detail Row Header Data
+                _output.Append(GetDetailHeaderDataRow(grandTotal));
+                _output.Append("\r\n");
+
+                // Get All break down rows
+                foreach (var item in _groupedRows)
                 {
-                    //First Row
-                    _output.Append(GetFirstRow());
+                    _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total, item.id.CostCenter, item.id.InternalOrder, item.id.Fund, vendor, documentOrVoucherId));
                     _output.Append("\r\n");
+                }
 
-                    // Main Header Row
-                    _output.Append(GetHeaderRow());
-                    _output.Append("\r\n");
+                // Create file in memory
+                byte[] byteArray = Encoding.ASCII.GetBytes(_output.ToString());
+                MemoryStream stream = new MemoryStream(byteArray);
 
-                    // Detail Row Header
-                    _output.Append(GetDetailHeaderRow());
-                    _output.Append("\r\n");
-
-                    // Main Header Row Data
-                    var formattedVendorInfo = vendorName + " " + vendor;
-                    _output.Append(GetHeaderDataRow(_requestDto.ChargeExtractDateTime, formattedVendorInfo));
-                    _output.Append("\r\n");
-                    
-                    //Detail Row Header Data
-                    _output.Append(GetDetailHeaderDataRow(grandTotal));
-                    _output.Append("\r\n");
-
-                    // Get All break down rows
-                    foreach (var item in _groupedRows)
-                    {
-                        _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total , item.id.CostCenter, item.id.InternalOrder, item.id.Fund, vendor));
-                        _output.Append("\r\n");
-                    }
-
-                    // Create file in memory
-                    byte[] byteArray = Encoding.ASCII.GetBytes(_output.ToString());
-                    MemoryStream stream = new MemoryStream(byteArray);
-
-                    // Write it to Azure
-                    string fileName = vendor + "." + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
-                    AzureStorageController azureStorageController = new AzureStorageController(_logger, _mapper);
-                    bool success = azureStorageController.CheckFileExistsAsync(fileName).GetAwaiter().GetResult();
+                // Write it to Azure
+                string fileName = vendor + "." + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
+                AzureStorageController azureStorageController = new AzureStorageController(_logger, _mapper);
+                bool success = azureStorageController.CheckFileExistsAsync(fileName).GetAwaiter().GetResult();
+                if (success)
+                {
+                    _logger.LogInformation(string.Format("File already exists: {0}", fileName));
+                    return null;
+                }
+                else
+                {
+                    success = azureStorageController.UploadFileAsync(fileName, byteArray.ToString()).GetAwaiter().GetResult();
                     if (success)
                     {
-                        _logger.LogInformation(string.Format("File already exists: {0}", fileName));
-                        return null;
+                        _logger.LogInformation(string.Format("File Uploaded: {0}", fileName));
+                        _filesPutInAzureStorage.Add(fileName);
                     }
-                    else
-                    {
-                        success = azureStorageController.UploadFileAsync(fileName, byteArray.ToString()).GetAwaiter().GetResult();
-                        if (success)
-                        {
-                            _logger.LogInformation(string.Format("File Uploaded: {0}", fileName));
-                            _filesPutInAzureStorage.Add(fileName);
-                        }
-                    }
-
-                    // Create transactions in database
-                    chargeExtractDto = new ChargeExtractDto();
-                    ChargeExtractDetailDto chargeExtractDetailDto;
-                    List<ChargeExtractDetailDto> chargeExtractDetailDtos = new List<ChargeExtractDetailDto>();
-
-                    chargeExtractDto.ChargeExtractDateTime = _requestDto.ChargeExtractDateTime;
-                    chargeExtractDto.AuditCreationDateTime = DateTime.UtcNow;
-                    chargeExtractDto.RequestedBy = _requestDto.RequestedBy;
-                    chargeExtractDto.ChargeExtractFileName = fileName;
-                    chargeExtractDto.VendorId = vendor;
-                    chargeExtractDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
-                    chargeExtractDto.ParentChargeExtractId = parentChargeExtractId;
-
-                    chargeExtractDetailDto = new ChargeExtractDetailDto();
-                    chargeExtractDetailDto.InvoiceId = invoice.InvoiceId;
-                    chargeExtractDetailDto.AuditCreationDateTime = DateTime.UtcNow;
-                    chargeExtractDetailDto.AuditLastUpdatedBy = _requestDto.RequestedBy;
-                    chargeExtractDetailDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
-                    chargeExtractDetailDtos.Add(chargeExtractDetailDto);
-
-                    chargeExtractDto.ChargeExtractDetail = chargeExtractDetailDtos;
-                    ChargeExtract CEEntity = _mapper.Map<ChargeExtract>(chargeExtractDto);
-                    _dbContext.ChargeExtract.Add(CEEntity);
-                    _dbContext.SaveChanges();
-
-                    _newChargeExtracts.Add(CEEntity);
-
-                    invoice.ChargeExtractId = CEEntity.ChargeExtractId;
-                    _dbContext.Invoice.Update(invoice);
-                    _dbContext.SaveChanges();
-
-                    chargeExtractDto = _mapper.Map<ChargeExtractDto>(CEEntity);
-                    chargeExtractDto.ExtractFile = JsonConvert.SerializeObject(Convert.ToBase64String(byteArray));
-
-                    transaction.Commit();
                 }
-                catch (Exception ex)
-                {
-                    chargeExtractDto = null;
-                    _logger.LogError(string.Format("CreateChargeExtract:ProcessInvoiceForMultiFileExtract - An error has occured while creating extract for Vendor: {0} - Invoice {1}, " +
-                                                   "ErrorMessage: {2}, InnerException: {3}", vendor, invoice.InvoiceNumber, ex.Message, ex.InnerException));
-                }
+
+                // Create transactions in database
+                chargeExtractDto = new ChargeExtractDto();
+                ChargeExtractDetailDto chargeExtractDetailDto;
+                List<ChargeExtractDetailDto> chargeExtractDetailDtos = new List<ChargeExtractDetailDto>();
+
+                chargeExtractDto.ChargeExtractDateTime = _requestDto.ChargeExtractDateTime;
+                chargeExtractDto.AuditCreationDateTime = DateTime.UtcNow;
+                chargeExtractDto.RequestedBy = _requestDto.RequestedBy;
+                chargeExtractDto.ChargeExtractFileName = fileName;
+                chargeExtractDto.VendorId = vendor;
+                chargeExtractDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
+                chargeExtractDto.ParentChargeExtractId = parentChargeExtractId;
+
+                chargeExtractDetailDto = new ChargeExtractDetailDto();
+                chargeExtractDetailDto.InvoiceId = invoice.InvoiceId;
+                chargeExtractDetailDto.AuditCreationDateTime = DateTime.UtcNow;
+                chargeExtractDetailDto.AuditLastUpdatedBy = _requestDto.RequestedBy;
+                chargeExtractDetailDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
+                chargeExtractDetailDtos.Add(chargeExtractDetailDto);
+
+                chargeExtractDto.ChargeExtractDetail = chargeExtractDetailDtos;
+                ChargeExtract CEEntity = _mapper.Map<ChargeExtract>(chargeExtractDto);
+                _dbContext.ChargeExtract.Add(CEEntity);
+                _dbContext.SaveChanges();
+
+                _newChargeExtracts.Add(CEEntity);
+
+                invoice.ChargeExtractId = CEEntity.ChargeExtractId;
+                _dbContext.Invoice.Update(invoice);
+                _dbContext.SaveChanges();
+
+                chargeExtractDto = _mapper.Map<ChargeExtractDto>(CEEntity);
+                chargeExtractDto.ExtractFile = JsonConvert.SerializeObject(Convert.ToBase64String(byteArray));
+
+                transaction.Commit();
             }
+            catch (Exception ex)
+            {
+                chargeExtractDto = null;
+                _logger.LogError(string.Format("CreateChargeExtract:ProcessInvoiceForMultiFileExtract - An error has occured while creating extract for Vendor: {0} - Invoice {1}, " +
+                                               "ErrorMessage: {2}, InnerException: {3}", vendor, invoice.InvoiceNumber, ex.Message, ex.InnerException));
+            }
+
 
             return chargeExtractDto;
         }
@@ -359,127 +372,143 @@ namespace WCDS.WebFuncions.Controller
             bool result = true;
 
             _output = new StringBuilder();
-            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
+            IDbContextTransaction transaction = _dbContext.Database.BeginTransaction();
+
+            try
             {
-                try
+                //First Row
+                _output.Append(GetFirstRow());
+                _output.Append("\r\n");
+
+                // Main Header Row
+                _output.Append(GetHeaderRow());
+                _output.Append("\r\n");
+
+                // Detail Row Header
+                _output.Append(GetDetailHeaderRow());
+                _output.Append("\r\n");
+
+                // Main Header Row Data
+                var formattedVendorInfo = vendorName + " " + vendor;
+                _output.Append(GetHeaderDataRow(_requestDto.ChargeExtractDateTime, formattedVendorInfo));
+                _output.Append("\r\n");
+
+                //Detail Row Header Data
+                _output.Append(GetDetailHeaderDataRow(grandTotal));
+                _output.Append("\r\n");
+
+                // Get All break down rows
+                var prevInvoiceNumber = _groupedRows.FirstOrDefault().id.InvoiceNumber;
+                var previousInvoice = invoices.Where(p => p.InvoiceNumber == prevInvoiceNumber).FirstOrDefault();
+                var resp = _wildfireFinanceService.GetFinanceDocuments(new Core.Model.FinanceDocument.FinanceDocumentRequestDto
                 {
-                    //First Row
-                    _output.Append(GetFirstRow());
-                    _output.Append("\r\n");
-
-                    // Main Header Row
-                    _output.Append(GetHeaderRow());
-                    _output.Append("\r\n");
-
-                    // Detail Row Header
-                    _output.Append(GetDetailHeaderRow());
-                    _output.Append("\r\n");
-
-                    // Main Header Row Data
-                    var formattedVendorInfo = vendorName + " " + vendor;
-                    _output.Append(GetHeaderDataRow(_requestDto.ChargeExtractDateTime, formattedVendorInfo));
-                    _output.Append("\r\n");
-
-                    //Detail Row Header Data
-                    _output.Append(GetDetailHeaderDataRow(grandTotal));
-                    _output.Append("\r\n");
-
-                    // Get All break down rows
-                    var prevInvoice = _groupedRows.FirstOrDefault().id.InvoiceNumber;
-                    foreach (var item in _groupedRows)
+                    InvoiceNumber = prevInvoiceNumber,
+                    InvoiceAmount = previousInvoice.InvoiceAmount.Value,
+                    VendorBusinessId = previousInvoice.VendorBusinessId
+                }).Result?.Data?.FirstOrDefault();
+                string documentOrVoucherId = resp == null ? string.Empty : resp.AccountingDocument;
+                foreach (var item in _groupedRows)
+                {
+                    if (item.id.InvoiceNumber != prevInvoiceNumber)
                     {
-                        if (item.id.InvoiceNumber != prevInvoice)
+                        //_output.Append(GetBlankRow());
+                        //_output.Append("\r\n");
+                        prevInvoiceNumber = item.id.InvoiceNumber;
+                        previousInvoice = invoices.Where(p => p.InvoiceNumber == prevInvoiceNumber).FirstOrDefault();
+                        resp = _wildfireFinanceService.GetFinanceDocuments(new Core.Model.FinanceDocument.FinanceDocumentRequestDto
                         {
-                            //_output.Append(GetBlankRow());
-                            //_output.Append("\r\n");
-                            prevInvoice = item.id.InvoiceNumber;
-                        }
-                        _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total, item.id.CostCenter, item.id.InternalOrder, item.id.Fund, contractNumber));
-                        _output.Append("\r\n");
+                            InvoiceNumber = prevInvoiceNumber,
+                            InvoiceAmount = previousInvoice.InvoiceAmount.Value,
+                            VendorBusinessId = previousInvoice.VendorBusinessId
+                        }).Result?.Data?.FirstOrDefault();
+                        documentOrVoucherId = resp == null ? string.Empty : resp.AccountingDocument;
                     }
+                    _output.Append(GetDetailItemDataRow(item.id.InvoiceNumber, item.total, item.id.CostCenter, item.id.InternalOrder, item.id.Fund, contractNumber, documentOrVoucherId));
+                    _output.Append("\r\n");
+                }
 
-                    // Create file in memory
-                    byte[] byteArray = Encoding.ASCII.GetBytes(_output.ToString());
-                    MemoryStream stream = new MemoryStream(byteArray);
+                // Create file in memory
+                byte[] byteArray = Encoding.ASCII.GetBytes(_output.ToString());
+                MemoryStream stream = new MemoryStream(byteArray);
 
-                    // Write it to Azure
-                    string fileName = vendor + "." + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
-                    AzureStorageController azureStorageController = new AzureStorageController(_logger, _mapper);
-                    bool success = azureStorageController.CheckFileExistsAsync(fileName).GetAwaiter().GetResult();
+                // Write it to Azure
+                string fileName = vendor + "." + DateTime.UtcNow.ToString("dd.MM.yyyy hh.mm.ss.ffff") + ".csv";
+                AzureStorageController azureStorageController = new AzureStorageController(_logger, _mapper);
+                bool success = azureStorageController.CheckFileExistsAsync(fileName).GetAwaiter().GetResult();
+                if (success)
+                {
+                    _logger.LogInformation(string.Format("File already exists: {0}", fileName));
+                    result = false;
+                    return result;
+                }
+                else
+                {
+                    success = azureStorageController.UploadFileAsync(fileName, byteArray.ToString()).GetAwaiter().GetResult();
                     if (success)
                     {
-                        _logger.LogInformation(string.Format("File already exists: {0}", fileName));
-                        result = false;
-                        return result;
+                        _logger.LogInformation(string.Format("File Uploaded: {0}", fileName));
+                        _filesPutInAzureStorage.Add(fileName);
                     }
-                    else
-                    {
-                        success = azureStorageController.UploadFileAsync(fileName, byteArray.ToString()).GetAwaiter().GetResult();
-                        if (success)
-                        {
-                            _logger.LogInformation(string.Format("File Uploaded: {0}", fileName));
-                            _filesPutInAzureStorage.Add(fileName);
-                        }
-                    }
-
-                    // Create transactions in database
-                    ChargeExtractDto chargeExtractDto = new ChargeExtractDto();
-                    ChargeExtractDetailDto chargeExtractDetailDto;
-                    List<ChargeExtractDetailDto> chargeExtractDetailDtos = new List<ChargeExtractDetailDto>();
-
-                    chargeExtractDto.ChargeExtractDateTime = _requestDto.ChargeExtractDateTime;
-                    chargeExtractDto.AuditCreationDateTime = DateTime.UtcNow;
-                    chargeExtractDto.RequestedBy = _requestDto.RequestedBy;
-                    chargeExtractDto.ChargeExtractFileName = fileName;
-                    chargeExtractDto.VendorId = vendor;
-                    chargeExtractDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
-                    chargeExtractDto.ParentChargeExtractId = null;
-
-                    invoices.ForEach(p =>
-                    {
-                        chargeExtractDetailDto = new ChargeExtractDetailDto();
-                        chargeExtractDetailDto.InvoiceId = p.InvoiceId;
-                        chargeExtractDetailDto.AuditCreationDateTime = DateTime.UtcNow;
-                        chargeExtractDetailDto.AuditLastUpdatedBy = _requestDto.RequestedBy;
-                        chargeExtractDetailDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
-                        chargeExtractDetailDtos.Add(chargeExtractDetailDto);
-                    });
-
-                    chargeExtractDto.ChargeExtractDetail = chargeExtractDetailDtos;
-                    ChargeExtract CEEntity = _mapper.Map<ChargeExtract>(chargeExtractDto);
-                    _dbContext.ChargeExtract.Add(CEEntity);
-                    _dbContext.SaveChanges();
-
-                    _newChargeExtracts.Add(CEEntity);
-
-                    invoices.ForEach(p =>
-                    {
-                        p.ChargeExtractId = CEEntity.ChargeExtractId;
-                        _dbContext.Invoice.Update(p);
-                        _updatedInvoices.Add(p);
-                    });
-
-                    _dbContext.SaveChanges();
-
-                    _responseDto.ChargeExtract = _mapper.Map<ChargeExtractDto>(CEEntity);
-                    _responseDto.ChargeExtract.ExtractFile = JsonConvert.SerializeObject(Convert.ToBase64String(byteArray));
-                    _extractFiles.Add(new ChargeExtractFileDto()
-                    {
-                        ExtractFile = _responseDto.ChargeExtract.ExtractFile,
-                        ExtractFileName = _responseDto.ChargeExtract.ChargeExtractFileName
-                    });
-                    _responseDto.ChargeExtract.ExtractFiles = _extractFiles;
-
-                    // if all is good then create response object and commit chages
-                    transaction.Commit();
                 }
-                catch (Exception ex)
+
+                // Create transactions in database
+                ChargeExtractDto chargeExtractDto = new ChargeExtractDto();
+                ChargeExtractDetailDto chargeExtractDetailDto;
+                List<ChargeExtractDetailDto> chargeExtractDetailDtos = new List<ChargeExtractDetailDto>();
+
+                chargeExtractDto.ChargeExtractDateTime = _requestDto.ChargeExtractDateTime;
+                chargeExtractDto.AuditCreationDateTime = DateTime.UtcNow;
+                chargeExtractDto.RequestedBy = _requestDto.RequestedBy;
+                chargeExtractDto.ChargeExtractFileName = fileName;
+                chargeExtractDto.VendorId = vendor;
+                chargeExtractDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
+                chargeExtractDto.ParentChargeExtractId = null;
+
+                invoices.ForEach(p =>
                 {
-                    result = false;
-                    _logger.LogError(string.Format("CreateChargeExtract:ProcessSingleFileExtract An error has occured while creating extract for Vendor: {0}, ErrorMessage: {1}, InnerException: {2}", vendor, ex.Message, ex.InnerException));
-                    transaction.Rollback();
-                }
+                    chargeExtractDetailDto = new ChargeExtractDetailDto();
+                    chargeExtractDetailDto.InvoiceId = p.InvoiceId;
+                    chargeExtractDetailDto.AuditCreationDateTime = DateTime.UtcNow;
+                    chargeExtractDetailDto.AuditLastUpdatedBy = _requestDto.RequestedBy;
+                    chargeExtractDetailDto.AuditLastUpdatedDateTime = DateTime.UtcNow;
+                    chargeExtractDetailDtos.Add(chargeExtractDetailDto);
+                });
+
+                chargeExtractDto.ChargeExtractDetail = chargeExtractDetailDtos;
+                ChargeExtract CEEntity = _mapper.Map<ChargeExtract>(chargeExtractDto);
+                _dbContext.ChargeExtract.Add(CEEntity);
+                _dbContext.SaveChanges();
+
+                _newChargeExtracts.Add(CEEntity);
+
+                invoices.ForEach(p =>
+                {
+                    p.ChargeExtractId = CEEntity.ChargeExtractId;
+                    _dbContext.Invoice.Update(p);
+                    _updatedInvoices.Add(p);
+                });
+
+                _dbContext.SaveChanges();
+
+                _responseDto.ChargeExtract = _mapper.Map<ChargeExtractDto>(CEEntity);
+                _responseDto.ChargeExtract.ExtractFile = JsonConvert.SerializeObject(Convert.ToBase64String(byteArray));
+                _extractFiles.Add(new ChargeExtractFileDto()
+                {
+                    ExtractFile = _responseDto.ChargeExtract.ExtractFile,
+                    ExtractFileName = _responseDto.ChargeExtract.ChargeExtractFileName
+                });
+                _responseDto.ChargeExtract.ExtractFiles = _extractFiles;
+
+                // if all is good then create response object and commit chages
+                transaction.Commit();
             }
+            catch (Exception ex)
+            {
+                result = false;
+                _logger.LogError(string.Format("CreateChargeExtract:ProcessSingleFileExtract An error has occured while creating extract for Vendor: {0}, ErrorMessage: {1}, InnerException: {2}", vendor, ex.Message, ex.InnerException));
+                transaction.Rollback();
+            }
+
             return result;
         }
 
@@ -493,26 +522,58 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceAlreadyExtracted(string invoiceId, string contractNumber)
         {
             bool bResult = false;
-            using (IDbContextTransaction transaction = _dbContext.Database.BeginTransaction())
+            IDbContextTransaction transaction = _dbContext.Database.BeginTransaction();
+
+            try
             {
-                try
+                Invoice invoice = _dbContext.Invoice.Where(x => x.InvoiceId.ToString() == invoiceId && x.ContractNumber == contractNumber).FirstOrDefault();
+                if (invoice != null)
                 {
-                    Invoice invoice = _dbContext.Invoice.Where(x => x.InvoiceId.ToString() == invoiceId && x.ContractNumber == contractNumber).FirstOrDefault();
-                    if (invoice != null)
+                    if (invoice.ChargeExtractId != null)
                     {
-                        if (invoice.ChargeExtractId != null)
-                        {
-                            bResult = true;
-                        }
+                        bResult = true;
                     }
                 }
-                catch
+            }
+            catch
+            {
+                _logger.LogError("An error has occured while looking up invoice: " + invoiceId);
+                transaction.Rollback();
+                throw;
+            }
+
+            return bResult;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="invoiceId"></param>
+        /// <param name="contractNumber"></param>
+        /// <returns></returns>
+        public bool InvoiceHasSESNumber(string invoiceId, string contractNumber)
+        {
+            bool bResult = false;
+            IDbContextTransaction transaction = _dbContext.Database.BeginTransaction();
+
+            try
+            {
+                Invoice invoice = _dbContext.Invoice.Where(x => x.InvoiceId.ToString() == invoiceId && x.ContractNumber == contractNumber).FirstOrDefault();
+                if (invoice != null)
                 {
-                    _logger.LogError("An error has occured while looking up invoice: " + invoiceId);
-                    transaction.Rollback();
-                    throw;
+                    if (invoice.UniqueServiceSheetName.Trim().Length > 0)
+                    {
+                        bResult = true;
+                    }
                 }
             }
+            catch
+            {
+                _logger.LogError("An error has occured while looking up invoice: " + invoiceId);
+                transaction.Rollback();
+                throw;
+            }
+
             return bResult;
         }
 
@@ -648,7 +709,7 @@ namespace WCDS.WebFuncions.Controller
             return sb;
         }
 
-        private StringBuilder GetDetailItemDataRow(string invoiceNumber, decimal amount, string cc, string io, string fund, string contractNumber)
+        private StringBuilder GetDetailItemDataRow(string invoiceNumber, decimal amount, string cc, string io, string fund, string contractNumber, string documentOrVoucherId)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("BD" + ","  // Column A
@@ -676,7 +737,7 @@ namespace WCDS.WebFuncions.Controller
                 + "" + "," // Column W
                 + invoiceNumber + "," // Column X
                 + contractNumber + "," // Column Y
-                + invoiceNumber + "," // Column Z
+                + documentOrVoucherId + "," // Column Z
                 + "Professional Service" + "," // Column AA
                 + "" + "," // Column AB
                 + "" + "," // Column AC

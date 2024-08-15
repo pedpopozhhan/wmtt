@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
+using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Protocols;
 using Newtonsoft.Json;
 using WCDS.WebFuncions.Core.Common;
+using WCDS.WebFuncions.Core.Model.ContractManagement;
+using WCDS.WebFuncions.Core.Model.FinanceDocument;
 using WCDS.WebFuncions.Core.Model.Services;
 
 namespace WCDS.WebFuncions.Core.Services
@@ -17,7 +21,11 @@ namespace WCDS.WebFuncions.Core.Services
         public Task<List<CustomlistDto>> GetCostCenterForDDL();
         public Task<List<CustomlistDto>> GetInternalOrderForDDL();
         public Task<List<CustomlistDto>> GetFundForDDL();
+        public Task<FinanceDocumentResponseDto> GetFinanceDocuments(FinanceDocumentRequestDto request);
+        public Task<CWSContractsResponseDto> GetCWSContracts();
+        public Task<CWSContractDetailResponseDto> GetCWSContract(CWSContractDetailRequestDto req);
     }
+
     public class WildfireFinanceService : IWildfireFinanceService
     {
         private readonly ILogger _log;
@@ -35,7 +43,6 @@ namespace WCDS.WebFuncions.Core.Services
 
         public async Task<List<CustomlistDto>> GetCostCenterForDDL()
         {
-
             var url = Environment.GetEnvironmentVariable(_urlKey);
             if (url == null)
             {
@@ -63,6 +70,111 @@ namespace WCDS.WebFuncions.Core.Services
             };
             List<CustomlistDto> responseData = JsonConvert.DeserializeObject<List<CustomlistDto>>(json, settings);
 
+            return responseData;
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="req"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public async Task<CWSContractDetailResponseDto> GetCWSContract(CWSContractDetailRequestDto req)
+        {
+            var url = Environment.GetEnvironmentVariable(_urlKey);
+            if (url == null)
+            {
+                _log.LogError(_urlKey + " not found!");
+                throw new Exception(_urlKey + " not found");
+            }
+            url = url + "/GetContract";
+            _log.LogInformation("GetContract url: {url}", url);
+            
+            var jsonRequest = JsonConvert.SerializeObject(req);
+            var requestContent = new StringContent(jsonRequest, Encoding.UTF8, "application/json");
+
+            var msg = new HttpRequestMessage(HttpMethod.Post, url);
+            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
+            msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
+            msg.Content = requestContent;
+
+            await LoggerHelper.LogRequestAsync(_log, msg);
+            var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
+            await LoggerHelper.LogResponseAsync(_log, response);
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync();
+
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore
+            };
+
+            CWSContractDetailResponseDto responseData = JsonConvert.DeserializeObject<CWSContractDetailResponseDto>(json, settings);
+            return responseData;
+        }
+
+        public async Task<CWSContractsResponseDto> GetCWSContracts()
+        {
+            var url = Environment.GetEnvironmentVariable(_urlKey);
+            if (url == null)
+            {
+                _log.LogError(_urlKey + " not found!");
+                throw new Exception(_urlKey + " not found");
+            }
+            url = url + "/GetContracts";
+            _log.LogInformation("GetContracts url: {url}", url);
+
+            var msg = new HttpRequestMessage(HttpMethod.Get, url);
+            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
+            msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
+
+            await LoggerHelper.LogRequestAsync(_log, msg);
+            var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
+            await LoggerHelper.LogResponseAsync(_log, response);
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync();
+
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore
+            };
+
+            CWSContractsResponseDto responseData = JsonConvert.DeserializeObject<CWSContractsResponseDto>(json, settings);
+            return responseData;
+        }
+
+        public async Task<FinanceDocumentResponseDto> GetFinanceDocuments(FinanceDocumentRequestDto request)
+        {
+            var url = Environment.GetEnvironmentVariable(_urlKey);
+            if (url == null)
+            {
+                _log.LogError(_urlKey + " not found!");
+                throw new Exception(_urlKey + " not found");
+            }
+
+            url = url + "/GetFinanceDocument?InvoiceNumber=" + request.InvoiceNumber + "&InvoiceAmount="
+                + request.InvoiceAmount + "&VendorBusinessId=" + request.VendorBusinessId;
+            _log.LogInformation("GetFinanceDocument url: {url}", url);
+
+            var msg = new HttpRequestMessage(HttpMethod.Get, url);
+            msg.Headers.Add("x-functions-key", Environment.GetEnvironmentVariable(_serviceApiKey));
+            msg.Headers.TryAddWithoutValidation("Authorization", GetToken());
+
+            await LoggerHelper.LogRequestAsync(_log, msg);
+            var response = _httpClient.SendAsync(msg).GetAwaiter().GetResult();
+            await LoggerHelper.LogResponseAsync(_log, response);
+            response.EnsureSuccessStatusCode();
+            var json = await response.Content.ReadAsStringAsync();
+
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                MissingMemberHandling = MissingMemberHandling.Ignore
+            };
+
+            FinanceDocumentResponseDto responseData = JsonConvert.DeserializeObject<FinanceDocumentResponseDto>(json, settings);
             return responseData;
         }
 

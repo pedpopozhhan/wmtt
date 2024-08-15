@@ -17,12 +17,14 @@ namespace WCDS.WebFuncions.Core.Model
         public DateTime? PeriodEndDate { get; set; }
         public DateTime? InvoiceReceivedDate { get; set; }
         public string PaymentStatus { get; set; }
+        public string InvoiceStatus { get; set; }
         public string VendorBusinessId { get; set; }
         public string VendorName { get; set; }
         public string ContractNumber { get; set; }
         public string Type { get; set; }
         public List<InvoiceTimeReportCostDetailDto> InvoiceTimeReportCostDetails { get; set; }
         public List<InvoiceOtherCostDetailDto> InvoiceOtherCostDetails { get; set; }
+        public List<InvoiceTimeReportsDto> InvoiceTimeReports { get; set; }
         public string UniqueServiceSheetName { get; set; }
         public string ServiceDescription { get; set; }
         public string CreatedBy { get; set; }
@@ -47,3 +49,5 @@ namespace WCDS.WebFuncions.Core.Model
         }
     }
 }
+
+

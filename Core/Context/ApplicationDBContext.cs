@@ -1,12 +1,10 @@
-﻿using Microsoft.AspNetCore.Hosting.Server;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Protocols;
+﻿using Microsoft.EntityFrameworkCore;
 using System;
 using WCDS.WebFuncions.Core.Entity;
 
 namespace WCDS.WebFuncions.Core.Context
 {
-    internal class ApplicationDBContext : DbContext
+    public class ApplicationDBContext : DbContext
     {
         public virtual DbSet<AuditLog> AuditLog { get; set; }
         public virtual DbSet<Invoice> Invoice { get; set; }
@@ -16,18 +14,20 @@ namespace WCDS.WebFuncions.Core.Context
         public virtual DbSet<ChargeExtract> ChargeExtract { get; set; }
         public virtual DbSet<ChargeExtractDetail> ChargeExtractDetail { get; set; }
         public virtual DbSet<ChargeExtractViewLog> ChargeExtractViewLog { get; set; }
+        public virtual DbSet<InvoiceTimeReports> InvoiceTimeReports { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
+             : base(options)
         {
-            base.OnConfiguring(optionsBuilder);
-            optionsBuilder.UseSqlServer(Environment.GetEnvironmentVariable("connectionstring"));
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<InvoiceTimeReportCostDetails>().HasKey(e => new { e.FlightReportCostDetailsId, e.InvoiceId });
             modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceTimeReportCostDetails).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
+            modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceTimeReports).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
             modelBuilder.Entity<Invoice>().HasMany(i => i.InvoiceStatusLogs).WithOne(i => i.Invoice).HasForeignKey(i => i.InvoiceId);
 
             modelBuilder.Entity<ChargeExtract>().HasMany(i => i.ChargeExtractDetail).WithOne(i => i.ChargeExtract).HasForeignKey(i => i.ChargeExtractId);

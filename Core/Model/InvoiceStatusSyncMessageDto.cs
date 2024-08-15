@@ -10,14 +10,22 @@ namespace WCDS.WebFuncions.Core.Model
         public Guid InvoiceId { get; set; }
         public string InvoiceNumber { get; set; }
         public string PaymentStatus { get; set; }
-        public List<CostDetails> Details { get; set; }
+        public string InvoiceStatus { get; set; }
 
-        public class CostDetails
-        {
-            public int FlightReportId { get; set; }
-            public Guid FlightReportCostDetailsId { get; set; }
-        }
+        public Details Details { get; set; }
+
+
 
     }
-
+    public class Details
+    {
+        public List<CostDetails> Inserted { get; set; }
+        public List<CostDetails> Removed { get; set; }
+        public List<CostDetails> NotChanged { get; set; }
+    }
+    public class CostDetails
+    {
+        public int FlightReportId { get; set; }
+        public Guid FlightReportCostDetailsId { get; set; }
+    }
 }

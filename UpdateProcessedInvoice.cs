@@ -13,6 +13,7 @@ using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
 using System.IdentityModel.Tokens.Jwt;
 using WCDS.WebFuncions.Core.Common;
+using WCDS.WebFuncions.Core.Context;
 
 namespace WCDS.WebFuncions
 {
@@ -22,14 +23,15 @@ namespace WCDS.WebFuncions
         private readonly IAuditLogService _auditLogService;
         JsonResult jsonResult = null;
         private readonly IHttpContextAccessor _httpContextAccessor;
-
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
 
-        public UpdateProcessedInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor)
+        public UpdateProcessedInvoice(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
             _auditLogService = auditLogService;
             _httpContextAccessor = httpContextAccessor;
+            _dbContext = dbContext;
         }
 
         [FunctionName("UpdateProcessedInvoice")]
@@ -45,21 +47,16 @@ namespace WCDS.WebFuncions
                     if (invoiceObj.InvoiceId == null || (invoiceObj.InvoiceId != null && invoiceObj.InvoiceId == Guid.Empty))
                     {
                         jsonResult = new JsonResult("Invalid Request: InvoiceId can not be null or empty");
-                        jsonResult.StatusCode = StatusCodes.Status400BadRequest;                        
-                        return jsonResult;
-                    }
-                    if (string.IsNullOrEmpty(invoiceObj.UniqueServiceSheetName))
-                    {
-                        jsonResult = new JsonResult("Invalid Request: UniqueServiceSheetName can not be null or empty");
                         jsonResult.StatusCode = StatusCodes.Status400BadRequest;
                         return jsonResult;
                     }
+
 
                     bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
                     if (tokenParsed)
                     {
                         invoiceObj.UpdatedBy = parsedTokenResult;
-                        IInvoiceController iController = new InvoiceController(_logger, _mapper);
+                        IInvoiceController iController = new InvoiceController(_logger, _mapper, _dbContext);
                         string result = await iController.UpdateProcessedInvoice(invoiceObj);
 
                         try
@@ -80,7 +77,7 @@ namespace WCDS.WebFuncions
                         jsonResult = new JsonResult(parsedTokenResult);
                         jsonResult.StatusCode = StatusCodes.Status401Unauthorized;
                         return jsonResult;
-                    }                   
+                    }
                 }
                 else
                 {
