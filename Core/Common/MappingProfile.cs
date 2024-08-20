@@ -37,8 +37,9 @@ namespace WCDS.WebFuncions.Core.Common
 
 
             CreateMap<TimeReportCostDetailDto, TimeReportCostDetail>()
-            .ForMember(x => x.RateType, opt => opt.Ignore())
-            .ForMember(x => x.RateUnit, opt => opt.Ignore()).ReverseMap();
+            .ForMember(x => x.RateType, opt => opt.MapFrom(src => src.RateTypeId))
+            .ForMember(x => x.RateUnit, opt => opt.MapFrom(src => src.RateUnitId)).ReverseMap();
+
             CreateMap<InvoiceTimeReportCostDetails, InvoiceTimeReportCostDetailDto>().ReverseMap();
             CreateMap<InvoiceOtherCostDetails, InvoiceOtherCostDetailDto>().ReverseMap();
             CreateMap<ChargeExtract, ChargeExtractDto>()
@@ -55,8 +56,8 @@ namespace WCDS.WebFuncions.Core.Common
             CreateMap<InvoiceTimeReportCostDetails, TimeReportCostDetailDto>()
                 .ForMember(i => i.ContractRegistrationId, opt => opt.Ignore())
                 .ForMember(i => i.Status, opt => opt.Ignore())
-                .ForMember(i => i.RateTypeId, opt => opt.Ignore())
-                .ForMember(i => i.RateUnitId, opt => opt.Ignore())
+                .ForMember(i => i.RateTypeId, opt => opt.MapFrom(src => src.RateType))
+                .ForMember(i => i.RateUnitId, opt => opt.MapFrom(src => src.RateUnit))
                 .ForMember(i => i.ContractId, opt => opt.Ignore())
                 .ForMember(i => i.VendorId, opt => opt.Ignore())
                 .ForMember(i => i.ContractNumber, opt => opt.Ignore())
