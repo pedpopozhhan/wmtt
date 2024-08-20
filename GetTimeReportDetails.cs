@@ -103,11 +103,12 @@ namespace WCDS.WebFuncions
                 {
                     var mapped = _mapper.Map<TimeReportCostDetailDto, TimeReportCostDetail>(detail);
 
-                    if (Guid.TryParse(mapped.RateType, out _) && Guid.TryParse(mapped.RateUnit, out _))
-                    {
+                    if (Guid.TryParse(mapped.RateType, out _) )
                         mapped.RateType = rateTypes.Data.SingleOrDefault(x => x.RateTypeId == detail.RateTypeId)?.Type;
+                    
+                    if (Guid.TryParse(mapped.RateUnit, out _))
                         mapped.RateUnit = rateUnits.Data.SingleOrDefault(x => x.RateUnitId == detail.RateUnitId)?.Type;
-                    }
+
                     return mapped;
                 });
                 var response = new TimeReportDetailsResponse
