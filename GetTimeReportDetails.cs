@@ -3,15 +3,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Controller;
+using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Services;
@@ -88,8 +87,9 @@ namespace WCDS.WebFuncions
                     };
                     return jsonResult;
                 }
-                
+
                 var details = await new TimeReportController(_timeReportingService, log, _mapper, _dbContext).GetTimeReportDetailsByIds(data);
+
                 if (!string.IsNullOrEmpty(details.ErrorMessage))
                 {
                     jsonResult = new JsonResult(details.ErrorMessage)
@@ -98,11 +98,16 @@ namespace WCDS.WebFuncions
                     };
                     return jsonResult;
                 }
+               
                 var mapped = details.Data?.Select(detail =>
                 {
                     var mapped = _mapper.Map<TimeReportCostDetailDto, TimeReportCostDetail>(detail);
-                    mapped.RateType = rateTypes.Data.SingleOrDefault(x => x.RateTypeId == detail.RateTypeId)?.Type;
-                    mapped.RateUnit = rateUnits.Data.SingleOrDefault(x => x.RateUnitId == detail.RateUnitId)?.Type;
+
+                    if (Guid.TryParse(mapped.RateType, out _) && Guid.TryParse(mapped.RateUnit, out _))
+                    {
+                        mapped.RateType = rateTypes.Data.SingleOrDefault(x => x.RateTypeId == detail.RateTypeId)?.Type;
+                        mapped.RateUnit = rateUnits.Data.SingleOrDefault(x => x.RateUnitId == detail.RateUnitId)?.Type;
+                    }
                     return mapped;
                 });
                 var response = new TimeReportDetailsResponse
