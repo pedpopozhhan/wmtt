@@ -855,6 +855,8 @@ namespace WCDS.WebFuncions.Controller
                     var existing = entity.InvoiceOtherCostDetails.Where(x => x.InvoiceOtherCostDetailId == i.InvoiceOtherCostDetailId).FirstOrDefault();
                     if (existing != null)
                     {
+                        i.CreatedBy = existing.CreatedBy;
+                        i.CreatedByDateTime = existing.CreatedByDateTime;
                         //does entity match
                         if (existing.Account == i.Account
                             && existing.Cost == i.Cost
