@@ -61,7 +61,9 @@ namespace WCDS.WebFuncions
                 foreach (var contract in contracts.Data)
                 {
                     var invoices = invoiceController.GetInvoices(new GetInvoiceRequestDto { ContractNumber = contract.ContractNumber });
-                    contract.DownloadsAvailable = invoices.Invoices.Where(p => p.InvoiceStatus == InvoiceStatus.Processed.ToString() && !p.DocumentDate.HasValue).Count();
+                    contract.DownloadsAvailable = invoices.Invoices.Where(p => p.InvoiceStatus == InvoiceStatus.Processed.ToString() 
+                                                                               && !p.DocumentDate.HasValue
+                                                                               && !string.IsNullOrEmpty(p.UniqueServiceSheetName)).Count();
 
                     log.LogInformation("GetContracts - pulling time reports for contract {0} with status {1}", contract.ContractNumber, signedOffReports);
                     var costs = await _timeReportingService.GetTimeReportCosts(contract.ContractNumber, signedOffReports);
