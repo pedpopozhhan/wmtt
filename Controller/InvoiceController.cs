@@ -400,12 +400,8 @@ namespace WCDS.WebFuncions.Controller
                     .Include(i => i.InvoiceStatusLogs)
                     .Include(i => i.InvoiceTimeReports).FirstOrDefault();
 
-                var dataPayload = CreateDataSyncDeletePayload(updatedEntity.InvoiceTimeReportCostDetails, updatedEntity.InvoiceOtherCostDetails, updatedEntity.InvoiceTimeReports);
-                await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(dataPayload, entity.InvoiceNumber, "delete");
-
                 var updatePayload = CreateDataSyncUpdatePayload(updatedEntity, new List<InvoiceTimeReportCostDetails>(), new List<InvoiceOtherCostDetails>(), new List<InvoiceTimeReports>());
                 await new InvoiceDataSyncMessageHandler(_logger).SendInvoiceDataSyncMessage(updatePayload, entity.InvoiceNumber, "update");
-
 
                 var payload = CreateStatusSyncPayload(updatedEntity, "update-invoice", new List<InvoiceTimeReportCostDetails>(), updatedEntity.InvoiceTimeReportCostDetails, new List<InvoiceTimeReportCostDetails>());
                 await new InvoiceStatusSyncMessageHandler(_logger).SendInvoiceStatusSyncMessage(payload, entity.InvoiceNumber);
@@ -813,8 +809,13 @@ namespace WCDS.WebFuncions.Controller
                 foreach (var i in incoming)
                 {
 
-                    if (entity.InvoiceTimeReportCostDetails.Any(x => x.FlightReportCostDetailsId == i.FlightReportCostDetailsId))
+                    var existing = entity.InvoiceTimeReportCostDetails.Where(x => x.FlightReportCostDetailsId == i.FlightReportCostDetailsId).FirstOrDefault();
+                    if (existing != null)
                     {
+                        i.CreatedBy = existing.CreatedBy;
+                        i.CreatedByDateTime = existing.CreatedByDateTime;
+                        i.UpdatedBy = existing.UpdatedBy;
+                        i.UpdatedByDateTime = existing.UpdatedByDateTime;
                         costDetailsUnChanged.Add(i);
                     }
                     else
