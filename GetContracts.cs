@@ -1,7 +1,6 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Amqp.Framing;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Extensions.Logging;
@@ -12,6 +11,7 @@ using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Model;
 using WCDS.WebFuncions.Core.Services;
+using WCDS.WebFuncions.Enums;
 
 namespace WCDS.WebFuncions
 {
@@ -60,7 +60,9 @@ namespace WCDS.WebFuncions
                 foreach (var contract in contracts.Data)
                 {
                     var invoices = invoiceController.GetInvoices(new GetInvoiceRequestDto { ContractNumber = contract.ContractNumber });
-                    contract.DownloadsAvailable = invoices.Invoices.Count(invoice => !invoice.DocumentDate.HasValue);
+                    contract.DownloadsAvailable = invoices.Invoices.Where(p => p.InvoiceStatus == InvoiceStatus.Processed.ToString()
+                                                               && !p.DocumentDate.HasValue
+                                                               && !string.IsNullOrEmpty(p.UniqueServiceSheetName)).Count();
 
                     log.LogInformation("GetContracts - pulling time reports for contract {0} with status {1}", contract.ContractNumber, signedOffReports);
                     var costs = await _timeReportingService.GetTimeReportCosts(contract.ContractNumber, signedOffReports);
