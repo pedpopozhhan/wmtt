@@ -522,8 +522,6 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceAlreadyExtracted(string invoiceId, string contractNumber)
         {
             bool bResult = false;
-            IDbContextTransaction transaction = _dbContext.Database.BeginTransaction();
-
             try
             {
                 Invoice invoice = _dbContext.Invoice.Where(x => x.InvoiceId.ToString() == invoiceId && x.ContractNumber == contractNumber).FirstOrDefault();
@@ -538,7 +536,6 @@ namespace WCDS.WebFuncions.Controller
             catch
             {
                 _logger.LogError("An error has occured while looking up invoice: " + invoiceId);
-                transaction.Rollback();
                 throw;
             }
 
@@ -554,8 +551,7 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceHasSESNumber(string invoiceId, string contractNumber)
         {
             bool bResult = false;
-            IDbContextTransaction transaction = _dbContext.Database.BeginTransaction();
-
+            
             try
             {
                 Invoice invoice = _dbContext.Invoice.Where(x => x.InvoiceId.ToString() == invoiceId && x.ContractNumber == contractNumber).FirstOrDefault();
@@ -570,13 +566,10 @@ namespace WCDS.WebFuncions.Controller
             catch
             {
                 _logger.LogError("An error has occured while looking up invoice: " + invoiceId);
-                transaction.Rollback();
                 throw;
             }
-
             return bResult;
         }
-
 
         #region create csv rows
         private StringBuilder GetBlankRow()
