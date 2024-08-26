@@ -293,8 +293,6 @@ namespace WCDS.WebFuncions.Controller
                 {
                     timeReportCostDetail.CreatedBy = user;
                     timeReportCostDetail.CreatedByDateTime = dt;
-                    timeReportCostDetail.UpdatedBy = user;
-                    timeReportCostDetail.UpdatedByDateTime = dt;
                 }
                 foreach (var otherCostDetail in otherCostDetailsToUpdate)
                 {
@@ -306,8 +304,6 @@ namespace WCDS.WebFuncions.Controller
                 {
                     otherCostDetail.CreatedBy = user;
                     otherCostDetail.CreatedByDateTime = dt;
-                    otherCostDetail.UpdatedBy = user;
-                    otherCostDetail.UpdatedByDateTime = dt;
                 }
 
                 foreach (var timeReport in timeReportsToUpdate)
@@ -368,28 +364,6 @@ namespace WCDS.WebFuncions.Controller
                 entity.UpdatedBy = user;
                 entity.UpdatedByDateTime = DateTime.UtcNow;
 
-                // save the modified entities
-                foreach (var timeReportCostDetail in entity.InvoiceTimeReportCostDetails)
-                {
-                    timeReportCostDetail.UpdatedBy = user;
-                    timeReportCostDetail.UpdatedByDateTime = dt;
-                    _dbContext.Entry(timeReportCostDetail).State = EntityState.Modified;
-                }
-
-                foreach (var detail in entity.InvoiceOtherCostDetails)
-                {
-                    detail.UpdatedBy = user;
-                    detail.UpdatedByDateTime = dt;
-                    _dbContext.Entry(detail).State = EntityState.Modified;
-                }
-
-                foreach (var detail in entity.InvoiceTimeReports)
-                {
-                    detail.AuditLastUpdatedBy = user;
-                    detail.AuditLastUpdatedDateTime = dt;
-                    _dbContext.Entry(detail).State = EntityState.Modified;
-                }
-
                 // Save changes to the database
                 _dbContext.SaveChanges();
                 transaction.Commit();
@@ -446,27 +420,6 @@ namespace WCDS.WebFuncions.Controller
                     entity.UpdatedBy = request.UpdatedBy;
                     entity.UpdatedByDateTime = DateTime.UtcNow;
 
-                    // save the modified entities
-                    foreach (var timeReportCostDetail in entity.InvoiceTimeReportCostDetails)
-                    {
-                        timeReportCostDetail.UpdatedBy = request.UpdatedBy;
-                        timeReportCostDetail.UpdatedByDateTime = request.UpdatedDateTime;
-                        _dbContext.Entry(timeReportCostDetail).State = EntityState.Modified;
-                    }
-
-                    foreach (var detail in entity.InvoiceOtherCostDetails)
-                    {
-                        detail.UpdatedBy = request.UpdatedBy;
-                        detail.UpdatedByDateTime = request.UpdatedDateTime;
-                        _dbContext.Entry(detail).State = EntityState.Modified;
-                    }
-
-                    foreach (var detail in entity.InvoiceTimeReports)
-                    {
-                        detail.AuditLastUpdatedBy = request.UpdatedBy;
-                        detail.AuditLastUpdatedDateTime = request.UpdatedDateTime.Value;
-                        _dbContext.Entry(detail).State = EntityState.Modified;
-                    }
 
                     _dbContext.SaveChanges();
                     transaction.Commit();
@@ -503,20 +456,7 @@ namespace WCDS.WebFuncions.Controller
         public bool InvoiceExistsForContract(Guid? _invoiceId, string invoiceNumber, string contractNumber)
         {
             var invoiceId = _invoiceId ?? Guid.Empty;
-            /* // if creating a draft, this is valid...if not creating a draft, but sving a draft, it is not a valid
-            var invoiceId = invoiceId ?? Guid.Empty
-            if (request.InvoiceId.HasValue && request.InvoiceId.Value != Guid.Empty)
-            {
-                var invoiceResponse = _invoiceController.GetInvoiceDetails(new InvoiceDetailRequestDto { InvoiceId = request.InvoiceId.Value });
-                if (string.Compare(invoiceResponse.Invoice.InvoiceNumber, request.InvoiceNumber) == 0)
-                {
-                    return true;
-                }
-            }*/
-            /*if (string.Compare(invoiceResponse.Invoice.InvoiceNumber, request.InvoiceNumber) == 0)
-                {
-                    return true;
-                }*/
+
             bool bResult = false;
             // this will still fail....for updates, should not call this
 
