@@ -4,15 +4,15 @@ using System;
 
 namespace WCDS.WebFuncions.Core.Context
 {
-    public class CASDBContextFactory : IDesignTimeDbContextFactory<ApplicationDBContext>
+    public class CASDBContextFactory : IDesignTimeDbContextFactory<CASDBContext>
     {
-        public ApplicationDBContext CreateDbContext(string[] args)
+        public CASDBContext CreateDbContext(string[] args)
         {
-            var optionsBuilder = new DbContextOptionsBuilder<ApplicationDBContext>();
+            var optionsBuilder = new DbContextOptionsBuilder<CASDBContext>();
             var connectionString = Environment.GetEnvironmentVariable("casconnectionstring");
             optionsBuilder.UseOracle(connectionString);
 
-            return new ApplicationDBContext(optionsBuilder.Options);
+            return new CASDBContext(optionsBuilder.Options);
         }
     }
 }

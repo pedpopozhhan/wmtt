@@ -22,12 +22,11 @@ public class CASDBContext : DbContext
 {
     builder.AddConsole().AddFilter(DbLoggerCategory.Database.Command.Name, LogLevel.Trace);
 });
-    public CASDBContext(string connectionString)
+
+    public CASDBContext(DbContextOptions<CASDBContext> options)
+                 : base(options)
     {
-        _connectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
-
     }
-
     public async Task<int> ExecuteStoredProcedure(string sql, OracleParameter[] parameters)
     {
         return await Database.ExecuteSqlRawAsync(sql, parameters);

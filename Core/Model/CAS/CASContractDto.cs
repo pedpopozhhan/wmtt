@@ -31,17 +31,12 @@ public class CASContractDto
 
     public CASContractDto()
     {
-
         DomainCodeIdSelectionType = 9;
         DomainCodeIdCurrencyType = 35;
         CorporateRegionId = 121;
         ContractTypeId = 29;
         CorporateServiceId = 172;
         EmployeeIdExpOfficer = 3055;
-
-
-
-
     }
 
 }
