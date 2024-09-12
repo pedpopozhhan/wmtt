@@ -1,6 +1,8 @@
 using AutoMapper;
 using WCDS.WebFuncions.Core.Entity;
+using WCDS.WebFuncions.Core.Entity.CAS;
 using WCDS.WebFuncions.Core.Model;
+using WCDS.WebFuncions.Core.Model.CAS;
 using WCDS.WebFuncions.Core.Model.ChargeExtract;
 using WCDS.WebFuncions.Core.Model.Services;
 
@@ -63,6 +65,8 @@ namespace WCDS.WebFuncions.Core.Common
                 .ForMember(i => i.ContractNumber, opt => opt.Ignore())
                 .ForMember(i => i.VendorName, opt => opt.Ignore())
                 .ForMember(i => i.FinanceVendorId, opt => opt.Ignore()).ReverseMap();
+
+            CreateMap<CASContract, CASContractDto>().ReverseMap();
         }
     }
 }
