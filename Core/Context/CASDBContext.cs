@@ -12,16 +12,15 @@ namespace WCDS.WebFuncions.Core.Context;
 
 public class CASDBContext : DbContext
 {
-    private readonly string _connectionString;
-
-    public DbSet<CASContract> contracts { get; set; }
-    public DbSet<CASVendor> vendors { get; set; }
-    public DbSet<CASVendorAddress> vendorAddresses { get; set; }
-    public DbSet<CASVendorLocation> vendorLocations { get; set; }
-    public static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
-{
-    builder.AddConsole().AddFilter(DbLoggerCategory.Database.Command.Name, LogLevel.Trace);
-});
+    public DbSet<CASContract> Contracts { get; set; }
+    public DbSet<CASVendor> Vendors { get; set; }
+    public DbSet<CASVendorAddress> VendorAddresses { get; set; }
+    public DbSet<CASVendorLocation> VendorLocations { get; set; }
+    //TODO: enable this logging if necessary
+    //     public static readonly ILoggerFactory loggerFactory = LoggerFactory.Create(builder =>
+    // {
+    //     builder.AddConsole().AddFilter(DbLoggerCategory.Database.Command.Name, LogLevel.Trace);
+    // });
 
     public CASDBContext(DbContextOptions<CASDBContext> options)
                  : base(options)
@@ -34,7 +33,8 @@ public class CASDBContext : DbContext
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-        optionsBuilder.UseOracle(_connectionString).UseLoggerFactory(loggerFactory);
+        //TODO: enable this logging if necessary
+        // optionsBuilder.UseOracle(_connectionString).UseLoggerFactory(loggerFactory);
 
     }
 
