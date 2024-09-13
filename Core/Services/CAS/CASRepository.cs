@@ -25,7 +25,7 @@ public class CASRepository : ICASRepository
 
     public async Task<List<CASContract>> GetLast10Contracts()
     {
-        var list = await _context.contracts.OrderByDescending(x => x.CreateTimestamp).Take(10).ToListAsync<CASContract>();
+        var list = await _context.Contracts.OrderByDescending(x => x.CreateTimestamp).Take(10).ToListAsync<CASContract>();
         return list;
     }
 
@@ -146,8 +146,8 @@ public class CASRepository : ICASRepository
     {
         // select va.vendor_address_id, vl.vendor_location_id from cas.cas_vendor v inner join cas.cas_vendor_address va on va.vendor_pk_id=v.vendor_pk_id inner join cas.cas_vendor_location vl on vl.vendor_pk_id=v.vendor_pk_id where v.vendor_id like '%20042213%'
         var result = await (
-        from v in _context.vendors
-        join vl in _context.vendorLocations on v.VENDOR_PK_ID equals vl.VENDOR_PK_ID
+        from v in _context.Vendors
+        join vl in _context.VendorLocations on v.VENDOR_PK_ID equals vl.VENDOR_PK_ID
         where v.VENDOR_ID.Contains(vendorId)
         select vl).FirstOrDefaultAsync();
 
@@ -157,8 +157,8 @@ public class CASRepository : ICASRepository
     public async Task<CASVendorAddress> GetVendorAddress(string vendorId)
     {
         var result = await (
-        from v in _context.vendors
-        join va in _context.vendorAddresses on v.VENDOR_PK_ID equals va.VENDOR_PK_ID
+        from v in _context.Vendors
+        join va in _context.VendorAddresses on v.VENDOR_PK_ID equals va.VENDOR_PK_ID
         where v.VENDOR_ID.Contains(vendorId)
         select va).FirstOrDefaultAsync();
 
