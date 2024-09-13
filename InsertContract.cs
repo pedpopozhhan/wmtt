@@ -21,20 +21,17 @@ namespace WCDS.WebFuncions
 {
     public class InsertContract
     {
-        private readonly IMapper _mapper;
         private readonly IAuditLogService _auditLogService;
         private readonly IHttpContextAccessor _httpContextAccessor;
-        private readonly CASDBContext _dbContext;
+
         private readonly ICASService _casService;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public InsertContract(IMapper mapper, IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor, CASDBContext dbContext, ICASService casService)
+        public InsertContract(IAuditLogService auditLogService, IHttpContextAccessor httpContextAccessor, ICASService casService)
         {
-            _mapper = mapper;
             _auditLogService = auditLogService;
             _httpContextAccessor = httpContextAccessor;
-            _dbContext = dbContext;
             _casService = casService;
         }
 
@@ -71,16 +68,20 @@ namespace WCDS.WebFuncions
                 }
                 else
                 {
-                    jsonResult = new JsonResult("Invalid Request");
-                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    jsonResult = new JsonResult("Invalid Request")
+                    {
+                        StatusCode = StatusCodes.Status400BadRequest
+                    };
                     return jsonResult;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
-                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
-                jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
+                jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException))
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
                 return jsonResult;
             }
         }
