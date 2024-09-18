@@ -398,6 +398,47 @@ namespace WCDS.WebFuncions.Migrations
                     b.ToTable("InvoiceTimeReports");
                 });
 
+            modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.OneGxContractDetail", b =>
+                {
+                    b.Property<Guid>("OneGxContractId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ContractManager")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContractNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ContractWorkspace")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid?>("CorporateRegion")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedByDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("HoldbackAmount")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PurchasingUnit")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedByDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("OneGxContractId");
+
+                    b.ToTable("OneGxContractDetail");
+                });
+
             modelBuilder.Entity("WCDS.WebFuncions.Core.Entity.ChargeExtractDetail", b =>
                 {
                     b.HasOne("WCDS.WebFuncions.Core.Entity.ChargeExtract", "ChargeExtract")
