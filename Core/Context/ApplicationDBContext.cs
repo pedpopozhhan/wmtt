@@ -15,6 +15,7 @@ namespace WCDS.WebFuncions.Core.Context
         public virtual DbSet<ChargeExtractDetail> ChargeExtractDetail { get; set; }
         public virtual DbSet<ChargeExtractViewLog> ChargeExtractViewLog { get; set; }
         public virtual DbSet<InvoiceTimeReports> InvoiceTimeReports { get; set; }
+        public virtual DbSet<OneGxContractDetail> OneGxContractDetail { get; set; }
 
         public ApplicationDBContext(DbContextOptions<ApplicationDBContext> options)
              : base(options)
