@@ -428,6 +428,9 @@ namespace WCDS.WebFuncions.Migrations
                     b.Property<string>("PurchasingUnit")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("RelatedContractId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 

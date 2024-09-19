@@ -13,5 +13,6 @@ namespace WCDS.WebFuncions.Core.Entity
         public Guid? CorporateRegion { get; set; }
         public string? PurchasingUnit { get; set; }
         public string? HoldbackAmount { get; set; }
+        public string? RelatedContractId { get; set; }
     }
 }
