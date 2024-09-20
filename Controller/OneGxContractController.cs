@@ -51,7 +51,7 @@ namespace WCDS.WebFuncions.Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(string.Format("CreateOneGxContractDetail: An error has occured while Creating detail record for contract number:  {0}, ErrorMessage: {1}, InnerException: {2}", oneGxContractDetail.ContractNumber, ex.Message, ex.InnerException));
+                _logger.LogError(string.Format("CreateOneGxContractDetail: An error has occured while Creating OneGxContractDetail:  ErrorMessage: {0}, InnerException: {1}", ex.Message, ex.InnerException));
                 transaction.Rollback();
                 throw;
             }
@@ -77,7 +77,7 @@ namespace WCDS.WebFuncions.Controller
             }
             catch (Exception ex)
             {
-                _logger.LogError(string.Format("CreateOneGxContractDetail: An error has occured while Updating detail record for contract number:  {0}, ErrorMessage: {1}, InnerException: {2}", oneGxContractDetail.ContractNumber, ex.Message, ex.InnerException));
+                _logger.LogError(string.Format("CreateOneGxContractDetail: An error has occured while Updating OneGxContractDetail:  ErrorMessage: {0}, InnerException: {1}", ex.Message, ex.InnerException));
                 transaction.Rollback();
                 throw;
             }
