@@ -17,5 +17,6 @@ namespace WCDS.WebFuncions.Core.Model.ContractManagement
         public string Supplierid { get; set; }
         public string SupplierName { get; set; }
         public ContractWorkspaceDto Workspace { get; set; }
+        public OneGxContractDetailDto OneGxContractDetail { get; set; }
     }
 }

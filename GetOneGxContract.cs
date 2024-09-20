@@ -13,6 +13,9 @@ using WCDS.WebFuncions.Controller;
 using WCDS.WebFuncions.Core.Model.Services;
 using WCDS.WebFuncions.Core.Model.ContractManagement;
 using WCDS.WebFuncions.Core.Model;
+using WCDS.WebFuncions.Core.Context;
+using AutoMapper;
+using System.Linq;
 
 namespace WCDS.WebFuncions
 {
@@ -20,13 +23,17 @@ namespace WCDS.WebFuncions
     {
         private readonly IWildfireFinanceService _wildfireFinanceService;
         private readonly IAuditLogService _auditLogService;
+        private readonly IMapper _mapper;
+        private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetOneGxContract(IWildfireFinanceService wildfireFinanceService, IAuditLogService auditLogService)
+        public GetOneGxContract(IMapper mapper, IWildfireFinanceService wildfireFinanceService, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
+            _mapper = mapper;
             _wildfireFinanceService = wildfireFinanceService;
             _auditLogService = auditLogService;
+            _dbContext = dbContext;
         }
 
         [FunctionName("GetOneGxContract")]
@@ -38,8 +45,6 @@ namespace WCDS.WebFuncions
             try
             {
                 log.LogInformation("Trigger function GetOneGxContract received a request.");
-                log.LogInformation("Reading OneGx contract from WildFireFinanceApi");
-
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<CWSContractDetailRequestDto>(requestBody);
                 if (data == null || data.ContractID <= 0)
@@ -50,7 +55,10 @@ namespace WCDS.WebFuncions
                 }
 
                 var response = await _wildfireFinanceService.GetCWSContract(data);
-                log.LogInformation("contract returned from WildFireFinanceApi is: {0} ", response == null ? -1 : response.ContractNumber);
+
+                var contractDetail = _dbContext.OneGxContractDetail.Where(p => p.ContractNumber.Trim().ToUpper() == response.ContractNumber.Trim().ToUpper() 
+                                                                            && p.ContractWorkspace.Trim().ToUpper() == response.ContractWorkspaceRef.Trim().ToUpper()).FirstOrDefault();
+                response.OneGxContractDetail = _mapper.Map<OneGxContractDetailDto>(contractDetail);
 
                 jsonResult = new JsonResult(response);
                 jsonResult.StatusCode = StatusCodes.Status200OK;

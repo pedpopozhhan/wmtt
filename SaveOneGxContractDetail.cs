@@ -15,6 +15,8 @@ using WCDS.WebFuncions.Core.Common;
 using System.Linq;
 using WCDS.WebFuncions.Core.Model.ChargeExtract;
 using WCDS.WebFuncions.Core.Context;
+using WCDS.WebFuncions.Core.Model;
+using WCDS.WebFuncions.Core.Model.ContractManagement;
 
 namespace WCDS.WebFuncions
 {
@@ -45,19 +47,59 @@ namespace WCDS.WebFuncions
             {
                 await _auditLogService.Audit("SaveOneGxContractDetail");
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+                var data = JsonConvert.DeserializeObject<OneGxContractDetailDto>(requestBody);
 
-                jsonResult = new JsonResult("Valid Request");
+                if (data == null)
+                {
+                    jsonResult = new JsonResult("Invalid Request");
+                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    return jsonResult;
+                }
+
+                bool tokenParsed = new Common().ParseToken(_httpContextAccessor.HttpContext.Request.Headers, "Authorization", out string parsedTokenResult);
+                if (tokenParsed)
+                {
+                    var oneGxContractController = new OneGxContractController(_logger, _mapper, _dbContext);
+                var validationRules = new OneGxContractDetailValidator();
+
+                var validationResult = validationRules.Validate(data);
+                if (!validationResult.IsValid)
+                {
+                    jsonResult = new JsonResult(validationResult.Errors.Select(i => i.ErrorMessage).ToList());
+                    jsonResult.StatusCode = StatusCodes.Status400BadRequest;
+                    return jsonResult;
+                }
+
+                OneGxContractDetailDto result = null;
+                if (!data.OneGxContractId.HasValue || data.OneGxContractId == Guid.Empty)
+                {
+                    result = await oneGxContractController.CreateOneGxContractDetail(data, parsedTokenResult);                    
+                }
+                else
+                {
+                    result = await oneGxContractController.UpdateOneGxContractDetail(data, parsedTokenResult);                    
+                }
+
+                jsonResult = new JsonResult(result);
                 jsonResult.StatusCode = StatusCodes.Status200OK;
                 return jsonResult;
             }
+                else
+            {
+                jsonResult = new JsonResult(parsedTokenResult)
+                {
+                    StatusCode = StatusCodes.Status401Unauthorized
+                };
+                return jsonResult;
+            }
+        }
             catch (Exception ex)
             {
-                _logger.LogError(string.Format(errorMessage, ex.Message, ex.InnerException));
+                _logger.LogError(string.Format("SaveOneGxContractDetail: ", errorMessage, ex.Message, ex.InnerException));
                 jsonResult = new JsonResult(string.Format(errorMessage, ex.Message, ex.InnerException));
                 jsonResult.StatusCode = StatusCodes.Status500InternalServerError;
                 return jsonResult;
             }
         }
-
     }
 }
