@@ -13,6 +13,7 @@ namespace WCDS.WebFuncions.Core.Model.ContractManagement
         public string ContractNumber { get; set; }
         public string? ContractManager { get; set; }
         public Guid? CorporateRegion { get; set; }
+        public string? CorporateRegionName { get; set; }
         public string? PurchasingUnit { get; set; }
         public string? HoldbackAmount { get; set; }
         public string? RelatedContractId { get; set; }

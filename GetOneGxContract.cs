@@ -22,15 +22,17 @@ namespace WCDS.WebFuncions
     public class GetOneGxContract
     {
         private readonly IWildfireFinanceService _wildfireFinanceService;
+        private readonly IDomainService _domainService;
         private readonly IAuditLogService _auditLogService;
         private readonly IMapper _mapper;
         private readonly ApplicationDBContext _dbContext;
         string errorMessage = "Error : {0}, InnerException: {1}";
         JsonResult jsonResult = null;
 
-        public GetOneGxContract(IMapper mapper, IWildfireFinanceService wildfireFinanceService, IAuditLogService auditLogService, ApplicationDBContext dbContext)
+        public GetOneGxContract(IMapper mapper, IWildfireFinanceService wildfireFinanceService, IDomainService domainService, IAuditLogService auditLogService, ApplicationDBContext dbContext)
         {
             _mapper = mapper;
+            _domainService = domainService;
             _wildfireFinanceService = wildfireFinanceService;
             _auditLogService = auditLogService;
             _dbContext = dbContext;
@@ -45,6 +47,10 @@ namespace WCDS.WebFuncions
             try
             {
                 log.LogInformation("Trigger function GetOneGxContract received a request.");
+
+                log.LogInformation("Reading Corporate Regions from DomainService");
+                var corporateRegions = await _domainService.GetCorporateRegion();
+
                 string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
                 var data = JsonConvert.DeserializeObject<CWSContractDetailRequestDto>(requestBody);
                 if (data == null || data.ContractID <= 0)
@@ -56,10 +62,14 @@ namespace WCDS.WebFuncions
 
                 var response = await _wildfireFinanceService.GetCWSContract(data);
 
-                var contractDetail = _dbContext.OneGxContractDetail.Where(p => p.ContractNumber.Trim().ToUpper() == response.ContractNumber.Trim().ToUpper() 
+                var contractDetail = _dbContext.OneGxContractDetail.Where(p => p.ContractNumber.Trim().ToUpper() == response.ContractNumber.Trim().ToUpper()
                                                                             && p.ContractWorkspace.Trim().ToUpper() == response.ContractWorkspaceRef.Trim().ToUpper()).FirstOrDefault();
                 response.OneGxContractDetail = _mapper.Map<OneGxContractDetailDto>(contractDetail);
 
+                if (response.OneGxContractDetail != null && response.OneGxContractDetail.CorporateRegion.HasValue)
+                    response.OneGxContractDetail.CorporateRegionName = corporateRegions.Data.SingleOrDefault(x => 
+                                    x.CorporateRegionId == response.OneGxContractDetail.CorporateRegion.ToString())?.Name;
+                                 
                 jsonResult = new JsonResult(response);
                 jsonResult.StatusCode = StatusCodes.Status200OK;
                 return jsonResult;

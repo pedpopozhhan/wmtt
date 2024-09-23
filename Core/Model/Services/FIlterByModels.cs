@@ -9,6 +9,12 @@ namespace WCDS.WebFuncions.Core.Model.Services
     {
 
     }
+
+    public class FilterByCorporateRegion : FilterBy
+    {
+       
+    }
+
     public class FilterByCostRequest : FilterBy
     {
         public string ContractNumber { get; set; }
