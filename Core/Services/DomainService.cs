@@ -16,6 +16,8 @@ namespace WCDS.WebFuncions.Core.Services
     {
         public Task<Response<RateUnit>> GetRateUnits();
         public Task<Response<RateType>> GetRateTypes();
+        public Task<Response<CorporateRegion>> GetCorporateRegion();
+
         public Task<Response<RateType>> GetRateTypesByService(string serviceName);
     }
 
@@ -40,6 +42,12 @@ namespace WCDS.WebFuncions.Core.Services
         public async Task<Response<RateType>> GetRateTypes()
         {
             return await GetDomainObjects<RateType, FilterByRateType>(new FilterByRateType(), "/rate_types/get");
+        }
+
+        public async Task<Response<CorporateRegion>> GetCorporateRegion()
+        {
+            return await GetDomainObjects<CorporateRegion, FilterByCorporateRegion>(new FilterByCorporateRegion() { ColumnName = "CorporateRegionTypeId", ColumnValue ="4" }
+                                                                                    , "/corporate_region/get"); ;
         }
 
         public async Task<Response<RateType>> GetRateTypesByService(string serviceName)
@@ -84,6 +92,8 @@ namespace WCDS.WebFuncions.Core.Services
 
             return responseData;
         }
+
+        
     }
 }
 

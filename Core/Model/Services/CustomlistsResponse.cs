@@ -15,5 +15,6 @@ namespace WCDS.WebFuncions.Core.Model.Services
         public CustomlistDto[] CostCenterList { get; set; }
         public CustomlistDto[] InternalOrderList { get; set; }
         public CustomlistDto[] FundList { get; set; }
+        
     }
 }

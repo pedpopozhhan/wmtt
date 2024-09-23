@@ -68,7 +68,8 @@ namespace WCDS.WebFuncions.Core.Common
                 .ForMember(i => i.FinanceVendorId, opt => opt.Ignore()).ReverseMap();
 
             CreateMap<CASContract, CASContractDto>().ReverseMap();
-            CreateMap<OneGxContractDetail, OneGxContractDetailDto>().ReverseMap();
+            CreateMap<OneGxContractDetail, OneGxContractDetailDto>()
+                .ForMember(i => i.CorporateRegionName, opt => opt.Ignore()).ReverseMap();
         }
     }
 }
