@@ -1,9 +1,9 @@
 using System;
-using WCDS.WebFuncions.Core.Common.CAS;
+//using WCDS.WebFuncions.Core.Common.CAS;
 
 namespace WCDS.WebFuncions.Core.Entity.CAS;
 
-public class CASVendorLocation : ICASAudit
+public class CASVendorLocation : CASEntityBase
 {
     public int VENDOR_LOCATION_ID { get; set; }//	NUMBER(10,0)
     public string LOCATION_NUM { get; set; }//	VARCHAR2(10 BYTE)
@@ -25,8 +25,4 @@ public class CASVendorLocation : ICASAudit
     public string RETURN_VENDOR { get; set; }//	VARCHAR2(10 BYTE)
     public string BUYER_ID { get; set; }//	VARCHAR2(10 BYTE)
     public string LOCATION_STATUS { get; set; }//	VARCHAR2(1 BYTE)
-    public DateTime CreateTimestamp { get; set; }
-    public string CreateUserId { get; set; }
-    public DateTime? UpdateTimestamp { get; set; }
-    public string UpdateUserId { get; set; }
 }

@@ -13,6 +13,7 @@ namespace WCDS.WebFuncions.Core.Context;
 public class CASDBContext : DbContext
 {
     public DbSet<CASContract> Contracts { get; set; }
+    public DbSet<CASCorporateRegion> corporateRegions { get; set; }
     public DbSet<CASVendor> Vendors { get; set; }
     public DbSet<CASVendorAddress> VendorAddresses { get; set; }
     public DbSet<CASVendorLocation> VendorLocations { get; set; }
@@ -41,6 +42,7 @@ public class CASDBContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         TransformContract(modelBuilder.Entity<CASContract>());
+        TransformCorporateRegion(modelBuilder.Entity<CASCorporateRegion>());
         TransformDomainCode(modelBuilder.Entity<CASDomainCode>());
         TransformDomainName(modelBuilder.Entity<CASDomainName>());
         TransformEmployee(modelBuilder.Entity<CASEmployee>());
@@ -123,6 +125,38 @@ public class CASDBContext : DbContext
                       .IsUnicode(false);
         entity.Property(e => e.CertOfRecogExpiryDate)
                       .HasColumnName("CERT_OF_RECOG_EXPIRY_DATE");
+    }
+
+    private void TransformCorporateRegion(EntityTypeBuilder<CASCorporateRegion> entity)
+    {
+        entity.ToTable("CAS_CORPORATE_REGION", "CAS");
+        entity.HasKey(e => e.CorporateRegionId);
+        entity.Property(e => e.CorporateRegionId)
+                      .HasColumnName("CORPORATE_REGION_ID");
+        entity.Property(e => e.ParentCorporateRegionId)
+                      .HasColumnName("CORPORATE_REGION_ID_PARENT");
+        entity.Property(e => e.DomainCodeIdType)
+                      .HasColumnName("DOMAIN_CODE_ID_TYPE");
+        entity.Property(e => e.CorporateRegionName)
+                      .HasColumnName("NAME");
+        entity.Property(e => e.CorporateRegionId)
+                      .HasColumnName("CORPORATE_REGION_ID");
+        entity.Property(e => e.EffectiveDate)
+                      .HasColumnName("EFFECTIVE_DATE");
+        entity.Property(e => e.TerminationDate)
+                      .HasColumnName("TERMINATION_DATE");
+        entity.Property(e => e.CreateTimestamp)
+                      .HasColumnName("CREATE_TIMESTAMP");
+        entity.Property(e => e.CreateUserId)
+                      .HasColumnName("CREATE_USERID")
+                      .HasMaxLength(30)
+                      .IsUnicode(false);
+        entity.Property(e => e.UpdateTimestamp)
+                      .HasColumnName("UPDATE_TIMESTAMP");
+        entity.Property(e => e.UpdateUserId)
+                      .HasColumnName("UPDATE_USERID")
+                      .HasMaxLength(30)
+                      .IsUnicode(false);
     }
 
     private void TransformEmployee(EntityTypeBuilder<CASEmployee> entity)
