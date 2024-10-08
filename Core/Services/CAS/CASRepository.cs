@@ -6,12 +6,23 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Oracle.ManagedDataAccess.Client;
 using Oracle.ManagedDataAccess.Types;
-using WCDS.WebFuncions.Core.Common.CAS;
+//using WCDS.WebFuncions.Core.Common.CAS;
 using WCDS.WebFuncions.Core.Context;
 using WCDS.WebFuncions.Core.Entity.CAS;
 using WCDS.WebFuncions.Core.Model.CAS;
 
 namespace WCDS.WebFuncions.Core.Services.CAS;
+
+public interface ICASRepository
+{
+    Task<CASCorporateRegion> GetCASCorporateRegion(string name);
+    Task<DbReturnValue> InsertContract(CASContract newContract);
+    Task<CASContract> GetCASContract(string contractNumber);
+    Task<CASVendorAddress> GetVendorAddress(string vendorId);
+    Task<CASVendorLocation> GetVendorLocationId(string vendorId);
+    Task<DbReturnValue> InsertVendorContract(CASVendorContract vendorContract);
+}
+
 
 public class CASRepository : ICASRepository
 {
@@ -23,13 +34,17 @@ public class CASRepository : ICASRepository
         _context = context;
     }
 
-    public async Task<List<CASContract>> GetLast10Contracts()
+    public async Task<CASCorporateRegion> GetCASCorporateRegion(string name)
     {
-        var list = await _context.Contracts.OrderByDescending(x => x.CreateTimestamp).Take(10).ToListAsync<CASContract>();
-        return list;
+        var item = await _context.corporateRegions.Where(x => x.CorporateRegionName.Trim().ToUpper() == name.Trim().ToUpper()).FirstOrDefaultAsync<CASCorporateRegion>();
+        return item;
     }
 
-
+    public async Task<CASContract> GetCASContract(string contractNumber)
+    {
+        var item = await _context.Contracts.Where(x => x.ContractNumber == contractNumber).FirstOrDefaultAsync<CASContract>();
+        return item;
+    }
 
     public async Task<DbReturnValue> InsertContract(CASContract newContract)
     {
@@ -39,8 +54,6 @@ public class CASRepository : ICASRepository
         {
             Size = 30
         };
-
-
 
         OracleParameter[] parameters ={
         new("p_DOMAIN_CODE_ID_SELECT_TYPE", OracleDbType.Int32, newContract.DomainCodeIdSelectionType, ParameterDirection.Input),
