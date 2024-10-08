@@ -83,7 +83,7 @@ public class CASService : ICASService
             casContract.CorporateRegionId = corportateRegion.Result.CorporateRegionId.Value;
             casContract.DomainCodeIdSelectionType = 9;
             casContract.DomainCodeIdCurrencyType = 35;            
-            casContract.ContractTypeId = 29;
+            casContract.ContractTypeId = 14;
             casContract.CorporateServiceId = 172;
             casContract.EmployeeIdExpOfficer = 3055;
 
