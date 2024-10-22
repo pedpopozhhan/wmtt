@@ -28,7 +28,12 @@ namespace WCDS.WebFuncions.Core.Common
             "Nav Canada",
             "Passenger Fee",
             "Standby",
-            "Vehicle Rental",};
+            "Vehicle Rental",
+            "Gel",
+            "Fuel Truck",
+            "NVG",
+            "Overpayment",
+            "Underpayment"};
 
         public static string[] filteredRateUnits = {
             "Day",
