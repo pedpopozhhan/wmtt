@@ -18,6 +18,12 @@ namespace WCDS.WebFuncions.Core.Common
             .ForMember(dest => dest.AuditLastUpdateDateTime, opt => opt.Ignore())
             .ForMember(dest => dest.InvoiceTimeReportCostDetails, opt => opt.MapFrom(src => src.InvoiceTimeReportCostDetails))
             .ReverseMap();
+
+            CreateMap<Invoice, InvoiceListDto>()
+            .ForMember(dest => dest.AuditCreationDateTime, opt => opt.Ignore())
+            .ForMember(dest => dest.AuditLastUpdateDateTime, opt => opt.Ignore())            
+            .ReverseMap();
+
             CreateMap<Invoice, InvoiceDataSyncMessageDetailInvoiceDto>()
             .ForMember(i => i.Tables, opt => opt.Ignore())
             .ForMember(i => i.InvoiceId, dest => dest.MapFrom(src => src.InvoiceId))
