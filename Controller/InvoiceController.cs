@@ -510,6 +510,30 @@ namespace WCDS.WebFuncions.Controller
             return response;
         }
 
+
+        public InvoiceListResponseDto GetInvoiceList()
+        {
+            InvoiceListResponseDto response = new InvoiceListResponseDto();
+            List<Invoice> items;
+
+            try
+            {
+                items = _dbContext.Invoice.ToList();
+
+                var mapped = items.Select(item =>
+                {
+                    return _mapper.Map<Invoice, InvoiceListDto>(item);
+                });
+                response.InvoiceList = mapped.ToArray();
+            }
+            catch
+            {
+                _logger.LogError("An error has occured while retrieving InvoiceList.");
+                throw;
+            }
+
+            return response;
+        }
         public InvoiceDetailResponseDto GetInvoiceDetails(InvoiceDetailRequestDto invoiceDetailRequest)
         {
             InvoiceDetailResponseDto response = new InvoiceDetailResponseDto();
