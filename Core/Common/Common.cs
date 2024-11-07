@@ -51,6 +51,7 @@ namespace WCDS.WebFuncions.Core.Common
             StringValues headerValue;
             if (header.TryGetValue(key, out headerValue))
             {
+                ////testing--parham///
                 var parts = headerValue.ToString().Split(" ");
                 if (parts.Length != 2)
                 {
